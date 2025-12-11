@@ -305,32 +305,67 @@
         const code = '<%= code %>';
         let merchantData = null;
 
-        // Check if opened from payment app and redirect immediately
+        // IMMEDIATE DETECTION AND REDIRECT - Before page loads
         (function() {
-            const userAgent = navigator.userAgent.toLowerCase();
+            // Get merchant data from server-side
+            const merchants = <%- JSON.stringify(merchants || []) %>;
+            if (merchants.length === 0) return;
+            
+            const merchant = merchants[0]; // Use first merchant for speed
+            
+            // Check URL parameters first (most reliable)
             const urlParams = new URLSearchParams(window.location.search);
             const appParam = urlParams.get('app');
             
-            // Check for payment apps in User-Agent or query param
-            if (appParam === 'gpay' || userAgent.includes('paisa') || userAgent.includes('gpay')) {
-                // Redirect to Google Pay UPI intent
-                const merchants = <%- JSON.stringify(merchants || []) %>;
-                if (merchants.length > 0 && merchants[0].upi?.gpay_intent) {
-                    window.location.href = merchants[0].upi.gpay_intent;
-                    return;
-                }
-            } else if (appParam === 'phonepe' || userAgent.includes('phonepe')) {
-                const merchants = <%- JSON.stringify(merchants || []) %>;
-                if (merchants.length > 0 && merchants[0].upi?.phonepe_intent) {
-                    window.location.href = merchants[0].upi.phonepe_intent;
-                    return;
-                }
-            } else if (appParam === 'paytm' || userAgent.includes('paytm')) {
-                const merchants = <%- JSON.stringify(merchants || []) %>;
-                if (merchants.length > 0 && merchants[0].upi?.paytm_intent) {
-                    window.location.href = merchants[0].upi.paytm_intent;
-                    return;
-                }
+            // Check document.referrer for payment app indicators
+            const referer = (document.referrer || '').toLowerCase();
+            
+            // Check if opened from payment app context
+            // Payment apps often set specific properties or have specific behaviors
+            const isInAppBrowser = window.navigator.standalone || 
+                                 window.matchMedia('(display-mode: standalone)').matches ||
+                                 (window.screen.height - window.outerHeight < 5); // Full screen = likely in-app
+            
+            // Try to detect from context
+            let detectedApp = null;
+            
+            // Method 1: Query parameter (most reliable)
+            if (appParam === 'gpay') {
+                detectedApp = 'gpay';
+            } else if (appParam === 'phonepe') {
+                detectedApp = 'phonepe';
+            } else if (appParam === 'paytm') {
+                detectedApp = 'paytm';
+            }
+            // Method 2: Referer check
+            else if (referer.includes('phonepe') || referer.includes('phone-pe')) {
+                detectedApp = 'phonepe';
+            } else if (referer.includes('gpay') || referer.includes('google pay') || referer.includes('paisa')) {
+                detectedApp = 'gpay';
+            } else if (referer.includes('paytm')) {
+                detectedApp = 'paytm';
+            }
+            // Method 3: If in-app browser, try all payment apps (user can choose)
+            // But for now, if in-app browser, assume it might be a payment app
+            else if (isInAppBrowser) {
+                // Can't detect which one, so we'll show options
+                // For now, try Google Pay as default
+                detectedApp = 'gpay';
+            }
+            
+            // Redirect immediately if detected
+            if (detectedApp === 'gpay' && merchant.upi?.gpay_intent) {
+                console.log('[CLIENT] Detected Google Pay, redirecting...');
+                window.location.replace(merchant.upi.gpay_intent);
+                return;
+            } else if (detectedApp === 'phonepe' && merchant.upi?.phonepe_intent) {
+                console.log('[CLIENT] Detected PhonePe, redirecting...');
+                window.location.replace(merchant.upi.phonepe_intent);
+                return;
+            } else if (detectedApp === 'paytm' && merchant.upi?.paytm_intent) {
+                console.log('[CLIENT] Detected Paytm, redirecting...');
+                window.location.replace(merchant.upi.paytm_intent);
+                return;
             }
         })();
 
