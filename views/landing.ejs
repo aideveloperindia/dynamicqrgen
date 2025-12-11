@@ -357,44 +357,116 @@
                     upiIntent = merchant.upi.paytm_intent;
                 }
             }
+            // Method 4: If we're on the landing page and no detection worked,
+            // but user scanned from a payment app, try PhonePe first (most common)
+            // This is a fallback - if we're here, detection failed but user might be in payment app
+            else {
+                // Check if URL has any payment app indicators
+                const currentUrl = window.location.href.toLowerCase();
+                if (currentUrl.includes('phonepe') || currentUrl.includes('phone-pe')) {
+                    upiIntent = merchant.upi?.phonepe_intent;
+                } else if (currentUrl.includes('gpay') || currentUrl.includes('google pay') || currentUrl.includes('paisa')) {
+                    upiIntent = merchant.upi?.gpay_intent;
+                } else if (currentUrl.includes('paytm')) {
+                    upiIntent = merchant.upi?.paytm_intent;
+                }
+                // Last resort: if we can't detect, try PhonePe (most common in India)
+                if (!upiIntent && merchant.upi?.phonepe_intent) {
+                    upiIntent = merchant.upi.phonepe_intent;
+                }
+            }
             
             // IMMEDIATE REDIRECT - Multiple methods to ensure it works
             if (upiIntent) {
                 console.log('[CLIENT] Redirecting to UPI intent:', upiIntent);
                 
                 // Hide page content immediately
-                document.body.style.display = 'none';
-                
-                // Try all redirect methods immediately
-                try {
-                    window.location.replace(upiIntent);
-                } catch(e) {
-                    try {
-                        window.location.href = upiIntent;
-                    } catch(e2) {
-                        window.location = upiIntent;
-                    }
+                if (document.body) {
+                    document.body.style.display = 'none';
                 }
                 
-                // Multiple fallback attempts
-                setTimeout(function() {
-                    window.location = upiIntent;
-                    document.location = upiIntent;
-                }, 10);
+                // Create redirect page immediately
+                const redirectHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Opening Payment App...</title>
+                        <style>
+                            * { margin:0; padding:0; box-sizing:border-box; }
+                            body { 
+                                margin:0; padding:0; 
+                                font-family:Arial, sans-serif; 
+                                text-align:center; 
+                                background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                min-height:100vh;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                            }
+                            .container {
+                                background:white;
+                                padding:40px 30px;
+                                border-radius:15px;
+                                box-shadow:0 10px 40px rgba(0,0,0,0.2);
+                                max-width:400px;
+                                width:90%;
+                            }
+                            h1 { color:#333; margin-bottom:20px; font-size:24px; }
+                            p { color:#666; margin-bottom:30px; font-size:16px; }
+                            .btn { 
+                                display:inline-block; 
+                                padding:18px 40px; 
+                                background:#007bff; 
+                                color:white; 
+                                text-decoration:none; 
+                                border-radius:8px; 
+                                font-size:18px; 
+                                font-weight:bold;
+                                transition:all 0.3s;
+                                box-shadow:0 4px 15px rgba(0,123,255,0.3);
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h1>Opening Payment App...</h1>
+                            <p>If payment app doesn't open automatically, click below:</p>
+                            <a href="${upiIntent}" class="btn" id="openBtn">Open Payment App</a>
+                        </div>
+                        <script>
+                            // Try immediate redirect
+                            try {
+                                window.location.href = "${upiIntent}";
+                            } catch(e) {}
+                            
+                            // Auto-click button after load
+                            window.addEventListener('load', function() {
+                                setTimeout(function() {
+                                    const btn = document.getElementById('openBtn');
+                                    if (btn) btn.click();
+                                }, 300);
+                            });
+                            
+                            // Auto-click when returning from warning
+                            document.addEventListener('visibilitychange', function() {
+                                if (!document.hidden) {
+                                    setTimeout(function() {
+                                        const btn = document.getElementById('openBtn');
+                                        if (btn) btn.click();
+                                    }, 100);
+                                }
+                            });
+                        </script>
+                    </body>
+                    </html>
+                `;
                 
-                setTimeout(function() {
-                    window.location.replace(upiIntent);
-                }, 50);
-                
-                setTimeout(function() {
-                    window.location.href = upiIntent;
-                }, 100);
-                
-                // If still here after 200ms, show clickable link
-                setTimeout(function() {
-                    document.body.style.display = 'block';
-                    document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h2>Click to open payment app:</h2><a href="' + upiIntent + '" style="display:inline-block;padding:15px 30px;background:#007bff;color:white;text-decoration:none;border-radius:5px;font-size:18px;">Open Payment App</a></div>';
-                }, 200);
+                // Replace entire page
+                document.open();
+                document.write(redirectHtml);
+                document.close();
                 
                 return;
             }
