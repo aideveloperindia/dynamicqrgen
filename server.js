@@ -210,28 +210,49 @@ app.get('/p/:code', async (req, res) => {
       
       if (upiIntent) {
         console.log(`[UPI INTENT] ${appType} -> ${upiIntent}`);
-        // Return minimal HTML with immediate redirect - no delay, no user interaction
+        // Return minimal HTML with immediate redirect + clickable link as fallback
         const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opening Payment App...</title>
+<style>
+body { margin:0; padding:20px; font-family:Arial; text-align:center; background:#f5f5f5; }
+.btn { display:inline-block; padding:15px 30px; background:#007bff; color:white; text-decoration:none; border-radius:5px; font-size:18px; margin-top:20px; }
+</style>
 <script>
-// IMMEDIATE redirect - no delay, executes before page renders
-window.location.replace("${upiIntent}");
-// Fallback - try multiple methods
-setTimeout(function() {
-  window.location.href = "${upiIntent}";
-  window.location = "${upiIntent}";
-}, 0);
+(function() {
+  const upiIntent = "${upiIntent}";
+  // Try immediate redirect
+  try {
+    window.location.replace(upiIntent);
+    window.location.href = upiIntent;
+    document.location = upiIntent;
+  } catch(e) {}
+  
+  // Also try after a tiny delay
+  setTimeout(function() {
+    window.location = upiIntent;
+    window.location.href = upiIntent;
+  }, 50);
+  
+  // And after 100ms
+  setTimeout(function() {
+    window.location.replace(upiIntent);
+  }, 100);
+})();
 </script>
 <meta http-equiv="refresh" content="0;url=${upiIntent}">
 </head>
 <body>
+<p>Opening payment app...</p>
+<a href="${upiIntent}" class="btn" id="openBtn">Click to Open Payment App</a>
 <script>
-// Triple redirect attempt
-window.location.replace("${upiIntent}");
-document.location = "${upiIntent}";
-window.location.href = "${upiIntent}";
+// Make button click immediately if redirect fails
+setTimeout(function() {
+  document.getElementById('openBtn').click();
+}, 200);
 </script>
 </body>
 </html>`;

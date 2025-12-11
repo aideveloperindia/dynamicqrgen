@@ -361,17 +361,41 @@
             // IMMEDIATE REDIRECT - Multiple methods to ensure it works
             if (upiIntent) {
                 console.log('[CLIENT] Redirecting to UPI intent:', upiIntent);
-                // Try all redirect methods
+                
+                // Hide page content immediately
+                document.body.style.display = 'none';
+                
+                // Try all redirect methods immediately
                 try {
                     window.location.replace(upiIntent);
                 } catch(e) {
-                    window.location.href = upiIntent;
+                    try {
+                        window.location.href = upiIntent;
+                    } catch(e2) {
+                        window.location = upiIntent;
+                    }
                 }
-                // Fallback
+                
+                // Multiple fallback attempts
                 setTimeout(function() {
                     window.location = upiIntent;
                     document.location = upiIntent;
                 }, 10);
+                
+                setTimeout(function() {
+                    window.location.replace(upiIntent);
+                }, 50);
+                
+                setTimeout(function() {
+                    window.location.href = upiIntent;
+                }, 100);
+                
+                // If still here after 200ms, show clickable link
+                setTimeout(function() {
+                    document.body.style.display = 'block';
+                    document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h2>Click to open payment app:</h2><a href="' + upiIntent + '" style="display:inline-block;padding:15px 30px;background:#007bff;color:white;text-decoration:none;border-radius:5px;font-size:18px;">Open Payment App</a></div>';
+                }, 200);
+                
                 return;
             }
         })();
