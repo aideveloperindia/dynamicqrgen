@@ -91,28 +91,5 @@
     "menu_url": "https://example.com/menu/restaurant",
     "coupon_url": "https://example.com/coupon/restaurant"
   },
-  {
-    "id": "merchant_e",
-    "name": "Merchant E - Events & Loyalty",
-    "codes": [
-      "SHARED1"
-    ],
-    "location": {
-      "lat": 12.965,
-      "lng": 77.615
-    },
-    "upi": {
-      "gpay_intent": "upi://pay?pa=nad.nandagiri-3%40okicici&pn=Events&am=0&cu=INR&tn=Demo%20Payment",
-      "phonepe_intent": "phonepe://pay?pa=nad.nandagiri-3%40okicici&pn=Events&am=0&cu=INR",
-      "paytm_intent": "paytmmp://pay?pa=nad.nandagiri-3%40okicici&pn=Events&am=0"
-    },
-    "google_place_id": "ChIJIQBpAG2ahYAR_6128GcTUEo",
-    "wifi": {
-      "ssid": "Events_WiFi",
-      "password": "Loyalty2024!"
-    },
-    "menu_url": null,
-    "coupon_url": "https://example.com/coupon/events-loyalty"
-  }
 ]
 
