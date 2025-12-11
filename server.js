@@ -194,7 +194,7 @@ app.get('/p/:code', async (req, res) => {
     // FINAL DETECTION LOG
     console.log(`[DETECTION RESULT] Code: ${code}, App: ${appType}`);
 
-    // IF PAYMENT APP DETECTED - RETURN UPI INTENT DIRECTLY (no redirect, no HTML)
+    // IF PAYMENT APP DETECTED - RETURN UPI INTENT DIRECTLY
     if (appType === AppType.GOOGLE_PAY || appType === AppType.PHONEPE || appType === AppType.PAYTM) {
       // Use first merchant for immediate response (fastest)
       const merchant = codeMerchants[0];
@@ -210,17 +210,39 @@ app.get('/p/:code', async (req, res) => {
       
       if (upiIntent) {
         console.log(`[UPI INTENT] ${appType} -> ${upiIntent}`);
-        // Try direct redirect first (307 for payment apps)
-        // If that doesn't work, payment apps might handle it better than browser redirect
-        res.writeHead(307, {
-          'Location': upiIntent,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        });
-        return res.end();
+        // Return minimal HTML with immediate redirect - no delay, no user interaction
+        const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script>
+// IMMEDIATE redirect - no delay, executes before page renders
+window.location.replace("${upiIntent}");
+// Fallback - try multiple methods
+setTimeout(function() {
+  window.location.href = "${upiIntent}";
+  window.location = "${upiIntent}";
+}, 0);
+</script>
+<meta http-equiv="refresh" content="0;url=${upiIntent}">
+</head>
+<body>
+<script>
+// Triple redirect attempt
+window.location.replace("${upiIntent}");
+document.location = "${upiIntent}";
+window.location.href = "${upiIntent}";
+</script>
+</body>
+</html>`;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.send(html);
       }
     }
+    
+    // IF NOT DETECTED AS PAYMENT APP - Show landing page with auto-redirect
+    // This handles cases where payment apps open URL in browser but don't send headers
     
     // Resolve merchant (only for non-payment apps or if payment app redirect failed)
     const merchant = await resolveMerchant(codeMerchants, coords, ip);
@@ -238,7 +260,8 @@ app.get('/p/:code', async (req, res) => {
       case AppType.CAMERA:
       case AppType.BROWSER:
       default:
-        // Only render landing page if NOT a payment app
+        // For browser/unknown - render landing page
+        // Landing page has client-side detection that will try to redirect
         return res.render('landing', { 
           code,
           merchant: null, // Will be resolved via geolocation
