@@ -424,40 +424,18 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
       }
     }
     
-    // IF NOT MOBILE BROWSER - Show landing page with auto-redirect
-    // This handles cases where payment apps open URL in browser but don't send headers
-    
-    // Resolve merchant (only for non-payment apps or if payment app redirect failed)
+    // IF NOT MOBILE BROWSER OR PAYMENT APP - Show landing page
+    // This handles: Camera scans, regular browser scans, WiFi scanner
+    // WiFi scanner typically opens URL in browser, so it will show landing page with WiFi password
     const merchant = await resolveMerchant(codeMerchants, coords, ip);
     console.log(`[RESOLUTION] Selected merchant: ${merchant.name} (${merchant.id})`);
-
-    // Handle other app types
-    switch (appType) {
-      case AppType.GOOGLE_LENS:
-        if (merchant.google_place_id) {
-          const reviewUrl = `https://search.google.com/local/writereview?placeid=${merchant.google_place_id}`;
-          return res.redirect(302, reviewUrl);
-        }
-        break;
-      
-      case AppType.CAMERA:
-      case AppType.BROWSER:
-      default:
-        // For browser/unknown - render landing page
-        // Landing page has client-side detection that will try to redirect
-        return res.render('landing', { 
-          code,
-          merchant: null, // Will be resolved via geolocation
-          merchants: codeMerchants
-        });
-    }
-
-    // If we get here, the app was detected but merchant doesn't have that action
-    // Show chooser page
-    return res.render('chooser', { 
+    console.log(`[REDIRECT] Browser/WiFi Scanner -> Landing page (WiFi, menu, reviews)`);
+    
+    // Landing page shows: WiFi password, menu, reviews, coupons
+    return res.render('landing', { 
       code,
-      merchant,
-      appType 
+      merchant: merchant,
+      merchants: codeMerchants
     });
 
   } catch (error) {
