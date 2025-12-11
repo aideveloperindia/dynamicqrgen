@@ -474,11 +474,12 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
     }
     
     // IF NOT MOBILE BROWSER OR PAYMENT APP - Show landing page
-    // This handles: Camera scans, regular browser scans, WiFi scanner
+    // CRITICAL: Only desktop browsers/Camera scans reach here (NOT mobile browsers or payment apps)
+    // This handles: Camera scans, desktop browser scans, WiFi scanner
     // WiFi scanner typically opens URL in browser, so it will show landing page with WiFi password
+    console.log(`[REDIRECT] Desktop browser/Camera/WiFi Scanner -> Landing page (WiFi, menu, reviews)`);
     const merchant = await resolveMerchant(codeMerchants, coords, ip);
     console.log(`[RESOLUTION] Selected merchant: ${merchant.name} (${merchant.id})`);
-    console.log(`[REDIRECT] Browser/WiFi Scanner -> Landing page (WiFi, menu, reviews)`);
     
     // Landing page shows: WiFi password, menu, reviews, coupons
     return res.render('landing', { 
