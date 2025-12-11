@@ -297,7 +297,8 @@ app.get('/p/:code', async (req, res) => {
         }
       }
       
-      // ALWAYS return redirect page for mobile browsers (even if upiIntent is null, we'll show error)
+      // ALWAYS return redirect page for mobile browsers
+      // Note: upiIntent might be set in the fallback error handler above
       if (upiIntent) {
         console.log(`[UPI INTENT] ${appType} -> ${upiIntent}`);
         // Escape UPI intent for HTML/JavaScript
