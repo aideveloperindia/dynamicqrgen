@@ -487,7 +487,7 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
     // This handles: Camera scans, desktop browser scans, WiFi scanner
     // WiFi scanner typically opens URL in browser, so it will show landing page with WiFi password
     console.log(`[REDIRECT] Desktop browser/Camera/WiFi Scanner -> Landing page (WiFi, menu, reviews)`);
-    const merchant = await resolveMerchant(codeMerchants, coords, ip);
+    const merchant = resolveMerchant(codeMerchants);
     console.log(`[RESOLUTION] Selected merchant: ${merchant.name} (${merchant.id})`);
     
     // Landing page shows: WiFi password, menu, reviews, coupons
