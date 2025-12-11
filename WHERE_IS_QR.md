@@ -84,3 +84,5 @@ Now scan the QR code from your phone with:
 
 **The QR code file is ready - just need to generate it with ngrok URL for mobile testing!**
 
+
+

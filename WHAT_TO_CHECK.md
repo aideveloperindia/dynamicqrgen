@@ -39,3 +39,5 @@ That's the problem! Payment apps are opening URLs in browser, not sending paymen
 
 **Please check the full logs and share what `[DETECTION]` shows!**
 
+
+

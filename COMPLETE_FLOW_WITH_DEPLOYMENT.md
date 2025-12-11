@@ -77,3 +77,5 @@
 
 **The QR code is ready to scan from any device, anywhere in the world!**
 
+
+

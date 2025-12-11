@@ -44,3 +44,5 @@ When investor scans QR code:
 
 **Everything is configured to use the deployment URL. No localhost references!**
 
+
+

@@ -164,3 +164,5 @@ open public/qr/SHARED1.png
 
 **The QR code is ready - just need to generate it with a public URL (ngrok or deployment)!**
 
+
+

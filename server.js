@@ -241,6 +241,9 @@ app.get('/p/:code', async (req, res) => {
       
       if (upiIntent) {
         console.log(`[UPI INTENT] ${appType} -> ${upiIntent}`);
+        // Escape UPI intent for HTML/JavaScript
+        const escapedUpiIntent = upiIntent.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const jsEscapedUpiIntent = upiIntent.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         // Return minimal HTML with clickable link that definitely works
         // PhonePe/Google Pay browsers often block JavaScript redirects, so use direct link
         // CRITICAL: PhonePe shows warning, then opens URL in browser
@@ -253,7 +256,7 @@ app.get('/p/:code', async (req, res) => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Opening Payment...</title>
 <!-- Meta refresh as backup -->
-<meta http-equiv="refresh" content="0;url=${upiIntent}">
+<meta http-equiv="refresh" content="0;url=${escapedUpiIntent}">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { 
@@ -298,11 +301,11 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
 <div class="container">
   <h1>Opening Payment...</h1>
   <p>Please wait...</p>
-  <a href="${upiIntent}" id="openBtn" class="btn" style="display:none;">Open Payment</a>
+  <a href="${escapedUpiIntent}" id="openBtn" class="btn" style="display:none;">Open Payment</a>
 </div>
 <script>
 (function() {
-  const upiIntent = "${upiIntent}";
+  const upiIntent = "${jsEscapedUpiIntent}";
   console.log('[REDIRECT] Target:', upiIntent);
   
   // IMMEDIATE redirect - try ALL methods
@@ -374,7 +377,7 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
     
     // IF NOT DETECTED AS PAYMENT APP - Check if mobile browser first
     // CRITICAL: Mobile browsers should NEVER see landing page (they should get redirect page)
-    const isMobileBrowser = /Mobile|Android|iPhone|iPad|webview|wv/.test(userAgent.toLowerCase());
+    // Note: isMobileBrowser already declared above, reuse it
     
     if (isMobileBrowser && codeMerchants.length > 0) {
       // Mobile browser but didn't get redirect page - force it now
@@ -390,6 +393,9 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
       
       if (upiIntent) {
         console.log(`[MOBILE FALLBACK] Mobile browser detected, forcing redirect to: ${upiIntent}`);
+        // Escape UPI intent for HTML/JavaScript
+        const escapedUpiIntent = upiIntent.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const jsEscapedUpiIntent = upiIntent.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         // Return redirect page
         const html = `<!DOCTYPE html>
 <html>
@@ -397,7 +403,7 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Opening Payment...</title>
-<meta http-equiv="refresh" content="0;url=${upiIntent}">
+<meta http-equiv="refresh" content="0;url=${escapedUpiIntent}">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; }
@@ -412,11 +418,11 @@ p { color:#666; margin-bottom:20px; font-size:14px; }
 <div class="container">
   <h1>Opening Payment...</h1>
   <p>Please wait...</p>
-  <a href="${upiIntent}" id="openBtn" class="btn" style="display:none;">Open Payment</a>
+  <a href="${escapedUpiIntent}" id="openBtn" class="btn" style="display:none;">Open Payment</a>
 </div>
 <script>
 (function() {
-  const upiIntent = "${upiIntent}";
+  const upiIntent = "${jsEscapedUpiIntent}";
   function redirect() {
     try {
       window.location.replace(upiIntent);

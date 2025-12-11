@@ -179,3 +179,5 @@ BASE_URL=https://abc123.ngrok.io npm run generate-qr
 
 **The flow is correct - we just need to generate QR code with ngrok URL instead of localhost!**
 
+
+

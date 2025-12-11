@@ -187,3 +187,5 @@ Investor enters amount, sees fake success
 
 **The honest answer:** You cannot show fake success inside real payment apps. But you can show impressive automatic routing, and use a simulator for the complete flow visualization.
 
+
+

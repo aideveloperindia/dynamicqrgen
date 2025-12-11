@@ -57,3 +57,5 @@ If app is detected as `browser` instead of `google_pay`, we need to adjust detec
 
 **The code is updated - need to test and see what headers Google Pay actually sends!**
 
+
+

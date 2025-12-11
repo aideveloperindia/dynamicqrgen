@@ -82,3 +82,5 @@ When scanned:
 
 **To generate it: `npm run generate-qr`**
 
+
+

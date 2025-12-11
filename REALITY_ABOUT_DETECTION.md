@@ -69,3 +69,5 @@ Some payment apps include their name in the Referer header when opening URLs.
 
 **After testing, check the logs to see what headers payment apps actually send, then we can improve detection!**
 
+
+

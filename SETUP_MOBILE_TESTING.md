@@ -97,3 +97,5 @@ BASE_URL=https://your-ngrok-url.ngrok.io npm run generate-qr
 
 **Remember:** The QR code must point to a public URL (ngrok) for mobile testing. Localhost only works on your computer!
 
+
+

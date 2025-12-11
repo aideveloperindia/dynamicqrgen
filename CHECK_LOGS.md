@@ -37,3 +37,5 @@ If it shows `browser`, that's why you see the website instead of direct payment 
 
 **Please check the full logs and share what `[DETECTION]` shows when scanning from Google Pay/PhonePe!**
 
+
+
