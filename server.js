@@ -5,9 +5,17 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Serve static files - MUST be before routes
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use('/qr', express.static(path.join(__dirname, 'public/qr')));
-app.use(express.static('public'));
+// For Vercel, static files in public/ are automatically served at root
+// But we also serve them via Express for local development
+app.use('/images', express.static(path.join(__dirname, 'public/images'), {
+  maxAge: '1y',
+  immutable: true
+}));
+app.use('/qr', express.static(path.join(__dirname, 'public/qr'), {
+  maxAge: '1y',
+  immutable: true
+}));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Set view engine
 app.set('view engine', 'ejs');
