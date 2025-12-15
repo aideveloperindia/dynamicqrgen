@@ -24,9 +24,10 @@ router.get('/:slug', async (req, res) => {
       return res.status(404).send('Page not found');
     }
 
-    if (!user.paymentCompleted) {
-      return res.status(403).send('This page is not active yet. Payment pending.');
-    }
+    // TEMPORARILY DISABLED for testing - uncomment after testing
+    // if (!user.paymentCompleted) {
+    //   return res.status(403).send('This page is not active yet. Payment pending.');
+    // }
 
     const links = await Link.find({ 
       userId: user._id, 

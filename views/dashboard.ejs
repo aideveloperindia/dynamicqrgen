@@ -355,7 +355,6 @@
         </div>
 
         <!-- QR Code Section -->
-        <% if (user.paymentCompleted) { %>
         <div class="section qr-section">
             <h2 class="section-title">Your QR Code</h2>
             <div id="qr-container">
@@ -365,7 +364,6 @@
                 Your page URL: <a href="/p/<%= user.uniqueSlug %>" target="_blank" style="color: #4285F4;">/p/<%= user.uniqueSlug %></a>
             </p>
         </div>
-        <% } %>
 
         <!-- Links Section -->
         <div class="section">
@@ -683,12 +681,10 @@
             }, 5000);
         }
 
-        // Load existing QR if payment completed
-        <% if (user.paymentCompleted) { %>
+        // Auto-generate QR on page load
         window.addEventListener('DOMContentLoaded', () => {
             generateQR();
         });
-        <% } %>
     </script>
 </body>
 </html>

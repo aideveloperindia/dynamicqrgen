@@ -25,12 +25,13 @@ router.get('/generate', auth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     
-    if (!user.paymentCompleted) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Please complete payment to generate QR code' 
-      });
-    }
+    // TEMPORARILY DISABLED for testing - uncomment after testing
+    // if (!user.paymentCompleted) {
+    //   return res.status(403).json({ 
+    //     success: false, 
+    //     message: 'Please complete payment to generate QR code' 
+    //   });
+    // }
 
     const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
     const pageUrl = `${baseUrl}/p/${user.uniqueSlug}`;
