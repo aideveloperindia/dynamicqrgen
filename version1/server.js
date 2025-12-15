@@ -1,53 +1,23 @@
-require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const session = require('express-session');
-const passport = require('./config/passport');
-const connectDB = require('./config/database');
-const auth = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Connect to MongoDB
-connectDB();
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
-
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Serve static files
+// Serve static files - MUST be before routes
+// CRITICAL: In Vercel, static files in public/ are auto-served, but Express handles them as fallback
 const publicPath = path.join(__dirname, 'public');
 const fs = require('fs');
-
-// Serve uploads
-app.use('/uploads', express.static(path.join(publicPath, 'uploads'), {
-  maxAge: '1y',
-  immutable: true
-}));
 
 // Serve images with explicit file reading for Vercel compatibility
 app.use('/images', (req, res, next) => {
   const filePath = path.join(publicPath, 'images', req.path);
   
+  // Check if file exists
   if (fs.existsSync(filePath)) {
     const ext = path.extname(filePath).toLowerCase();
     
+    // Set proper content-type
     if (ext === '.png') {
       res.setHeader('Content-Type', 'image/png');
     } else if (ext === '.jpeg' || ext === '.jpg') {
@@ -55,6 +25,8 @@ app.use('/images', (req, res, next) => {
     }
     
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    
+    // Send file
     res.sendFile(filePath);
   } else {
     next();
@@ -72,42 +44,23 @@ app.use(express.static(publicPath, {
   immutable: true
 }));
 
+// Debug route to check if files exist
+app.get('/debug/images', (req, res) => {
+  const fs = require('fs');
+  const imagesPath = path.join(__dirname, 'public/images');
+  try {
+    const files = fs.readdirSync(imagesPath);
+    res.json({ files, path: imagesPath });
+  } catch (error) {
+    res.json({ error: error.message, path: imagesPath });
+  }
+});
+
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Routes
-const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard');
-const paymentRoutes = require('./routes/payment');
-const qrRoutes = require('./routes/qr');
-const publicRoutes = require('./routes/public');
-
-app.use('/auth', authRoutes);
-app.use('/dashboard', dashboardRoutes);
-app.use('/payment', paymentRoutes);
-app.use('/qr', qrRoutes);
-app.use('/p', publicRoutes);
-
-// Home route - redirect to login or dashboard
-app.get('/', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.redirect('/dashboard');
-  } else {
-    res.render('login');
-  }
-});
-
-// Login route
-app.get('/login', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.redirect('/dashboard');
-  } else {
-    res.render('login');
-  }
-});
-
-// Legacy routes for backward compatibility (old static page)
+// Links configuration
 const LINKS = {
   instagram: 'https://www.instagram.com/adx_transit?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
   payment: 'upi://pay?pa=starjay@ybl&pn=ADX%20Transit&am=0&cu=INR',
@@ -116,10 +69,12 @@ const LINKS = {
   google: 'https://share.google/29IalFzkiMoJRpQlj'
 };
 
-app.get('/legacy', (req, res) => {
+// Main route - shows the icons page
+app.get('/', (req, res) => {
   res.render('index', { links: LINKS });
 });
 
+// Redirect routes for each icon
 app.get('/instagram', (req, res) => {
   res.redirect(LINKS.instagram);
 });
