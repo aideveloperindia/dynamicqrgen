@@ -1,11 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const connectDB = require('../config/database');
 const User = require('../models/User');
 const Link = require('../models/Link');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+
+// Ensure DB connection for serverless
+router.use(async (req, res, next) => {
+  if (process.env.VERCEL) {
+    await connectDB();
+  }
+  next();
+});
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({

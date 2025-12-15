@@ -9,8 +9,11 @@ const auth = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (lazy connection for serverless)
+// Don't block serverless function startup
+if (!process.env.VERCEL) {
+  connectDB();
+}
 
 // Middleware
 app.use(express.json());

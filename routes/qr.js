@@ -1,10 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const connectDB = require('../config/database');
 const QRCode = require('qrcode');
 const User = require('../models/User');
 const path = require('path');
 const fs = require('fs');
+
+// Ensure DB connection for serverless
+router.use(async (req, res, next) => {
+  if (process.env.VERCEL) {
+    await connectDB();
+  }
+  next();
+});
 
 // Generate QR code for user
 router.get('/generate', auth, async (req, res) => {

@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const connectDB = require('../config/database');
 const passport = require('passport');
+
+// Ensure DB connection for serverless
+router.use(async (req, res, next) => {
+  if (process.env.VERCEL) {
+    await connectDB();
+  }
+  next();
+});
 
 // Google OAuth login
 router.get('/google',

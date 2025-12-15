@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const connectDB = require('../config/database');
 const User = require('../models/User');
 const Link = require('../models/Link');
+
+// Ensure DB connection for serverless
+router.use(async (req, res, next) => {
+  if (process.env.VERCEL) {
+    await connectDB();
+  }
+  next();
+});
 
 // Public page for user's QR code
 router.get('/:slug', async (req, res) => {
