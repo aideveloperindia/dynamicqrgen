@@ -6,10 +6,13 @@ const Link = require('../models/Link');
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
-  if (process.env.VERCEL) {
+  try {
     await connectDB();
+    next();
+  } catch (error) {
+    console.error('Public route DB error:', error);
+    next(error);
   }
-  next();
 });
 
 // Public page for user's QR code

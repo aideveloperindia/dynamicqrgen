@@ -28,7 +28,11 @@ const userSchema = new mongoose.Schema({
     default: ''
   },
   logo: {
-    type: String, // URL to uploaded logo
+    type: String, // Base64 data URL for logo
+    default: ''
+  },
+  qrCode: {
+    type: String, // Base64 data URL for QR code
     default: ''
   },
   paymentCompleted: {

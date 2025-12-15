@@ -4,21 +4,26 @@ const auth = require('../middleware/auth');
 const connectDB = require('../config/database');
 const QRCode = require('qrcode');
 const User = require('../models/User');
-const path = require('path');
-const fs = require('fs');
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
-  if (process.env.VERCEL) {
+  try {
     await connectDB();
+    next();
+  } catch (error) {
+    console.error('QR route DB error:', error);
+    next(error);
   }
-  next();
 });
 
-// Generate QR code for user
+// Generate QR code for user (returns base64 - works with Vercel)
 router.get('/generate', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
     
     if (!user.paymentCompleted) {
       return res.status(403).json({ 
@@ -27,17 +32,11 @@ router.get('/generate', auth, async (req, res) => {
       });
     }
 
-    const baseUrl = process.env.BASE_URL || 'http://localhost:4000';
-    const qrUrl = `${baseUrl}/p/${user.uniqueSlug}`;
+    const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
+    const pageUrl = `${baseUrl}/p/${user.uniqueSlug}`;
     
-    const qrPath = path.join(__dirname, '../public/qr');
-    if (!fs.existsSync(qrPath)) {
-      fs.mkdirSync(qrPath, { recursive: true });
-    }
-
-    const outputPath = path.join(qrPath, `${user.uniqueSlug}.png`);
-    
-    await QRCode.toFile(outputPath, qrUrl, {
+    // Generate QR as base64 data URL (works on Vercel's read-only filesystem)
+    const qrDataUrl = await QRCode.toDataURL(pageUrl, {
       width: 500,
       margin: 2,
       color: {
@@ -46,37 +45,44 @@ router.get('/generate', auth, async (req, res) => {
       }
     });
 
+    // Store QR in user document for persistence
+    user.qrCode = qrDataUrl;
+    await user.save();
+
     res.json({
       success: true,
-      qrUrl: `/qr/${user.uniqueSlug}.png`,
-      pageUrl: qrUrl,
+      qrUrl: qrDataUrl,
+      pageUrl: pageUrl,
       message: 'QR code generated successfully'
     });
   } catch (error) {
     console.error('QR generation error:', error);
-    res.status(500).json({ success: false, message: 'Error generating QR code' });
+    res.status(500).json({ success: false, message: 'Error generating QR code: ' + error.message });
   }
 });
 
-// Download QR code
-router.get('/download', auth, async (req, res) => {
+// Get existing QR code
+router.get('/get', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     
-    if (!user.paymentCompleted) {
-      return res.status(403).send('Please complete payment to download QR code');
+    if (!user || !user.paymentCompleted) {
+      return res.status(403).json({ success: false, message: 'Payment required' });
     }
 
-    const qrPath = path.join(__dirname, '../public/qr', `${user.uniqueSlug}.png`);
-    
-    if (fs.existsSync(qrPath)) {
-      res.download(qrPath, `qr-${user.uniqueSlug}.png`);
+    if (user.qrCode) {
+      const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
+      res.json({
+        success: true,
+        qrUrl: user.qrCode,
+        pageUrl: `${baseUrl}/p/${user.uniqueSlug}`
+      });
     } else {
-      res.status(404).send('QR code not found. Please generate it first.');
+      res.json({ success: false, message: 'QR code not generated yet' });
     }
   } catch (error) {
-    console.error('QR download error:', error);
-    res.status(500).send('Error downloading QR code');
+    console.error('QR get error:', error);
+    res.status(500).json({ success: false, message: 'Error getting QR code' });
   }
 });
 

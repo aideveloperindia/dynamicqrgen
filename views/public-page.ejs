@@ -323,7 +323,7 @@
             <div class="icons-row top-row">
                 <% topRow.forEach((link, index) => { %>
                     <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" class="icon-link <%= link.category %>" target="_blank">
-                        <% if (link.categoryType === 'custom' && link.icon.startsWith('/')) { %>
+                        <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
@@ -337,7 +337,7 @@
             <div class="icons-row bottom-row">
                 <% bottomRow.forEach((link) => { %>
                     <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" class="icon-link <%= link.category %>" target="_blank">
-                        <% if (link.categoryType === 'custom' && link.icon.startsWith('/')) { %>
+                        <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>

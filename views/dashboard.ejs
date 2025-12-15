@@ -422,7 +422,7 @@
                         <div class="link-item" data-link-id="<%= link._id %>">
                             <div class="link-info">
                                 <strong>
-                                    <% if (link.categoryType === 'custom' && link.icon.startsWith('/')) { %>
+                                    <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                                         <img src="<%= link.icon %>" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
                                     <% } else { %>
                                         <i class="<%= link.icon %>"></i>
@@ -432,7 +432,7 @@
                                 <span><%= link.url %></span>
                             </div>
                             <div class="link-actions">
-                                <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>', '<%= link.icon %>')">Edit</button>
+                                <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>')">Edit</button>
                                 <button class="btn btn-danger btn-small" onclick="deleteLink('<%= link._id %>')">Delete</button>
                             </div>
                         </div>
@@ -558,7 +558,7 @@
             document.getElementById('customIconGroup').style.display = 'none';
         }
 
-        function editLink(id, category, type, url, displayName, icon) {
+        function editLink(id, category, type, url, displayName) {
             toggleAddLinkForm();
             document.getElementById('linkId').value = id;
             document.getElementById('url').value = url;
