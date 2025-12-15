@@ -8,19 +8,10 @@
   ],
   "routes": [
     {
-      "src": "/images/(.*)",
-      "dest": "/public/images/$1",
+      "src": "/(.*\\.(jpg|jpeg|png|gif|svg|ico|css|js|woff|woff2|ttf|eot))",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
       }
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "/public/uploads/$1"
-    },
-    {
-      "src": "/qr/(.*)",
-      "dest": "/public/qr/$1"
     },
     {
       "src": "/(.*)",

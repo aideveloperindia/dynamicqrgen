@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const passport = require('./config/passport');
 const connectDB = require('./config/database');
 const auth = require('./middleware/auth');
@@ -19,37 +20,34 @@ if (!process.env.VERCEL) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
+// Session configuration with MongoDB store (required for serverless)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    touchAfter: 24 * 3600, // lazy session update
+    ttl: 24 * 60 * 60 // 24 hours
+  }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production' || process.env.VERCEL,
+    secure: true, // Always true for HTTPS
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' || process.env.VERCEL ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: process.env.VERCEL ? '.vercel.app' : undefined
+    sameSite: 'none', // Required for cross-site cookies
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
   },
-  name: 'sessionId' // Custom session name
+  name: 'sessionId'
 }));
 
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Serve static files
+// Serve static files - MUST be before routes for Vercel
 const publicPath = path.join(__dirname, 'public');
-const fs = require('fs');
 
-// Serve uploads
-app.use('/uploads', express.static(path.join(publicPath, 'uploads'), {
-  maxAge: '1y',
-  immutable: true
-}));
-
-// Serve images with explicit file reading for Vercel compatibility
-app.use('/images', express.static(path.join(publicPath, 'images'), {
+// Serve static files with proper headers
+app.use(express.static(publicPath, {
   maxAge: '1y',
   immutable: true,
   setHeaders: (res, filePath) => {
@@ -58,19 +56,11 @@ app.use('/images', express.static(path.join(publicPath, 'images'), {
       res.setHeader('Content-Type', 'image/png');
     } else if (ext === '.jpeg' || ext === '.jpg') {
       res.setHeader('Content-Type', 'image/jpeg');
+    } else if (ext === '.svg') {
+      res.setHeader('Content-Type', 'image/svg+xml');
     }
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   }
-}));
-
-app.use('/qr', express.static(path.join(publicPath, 'qr'), {
-  maxAge: '1y',
-  immutable: true
-}));
-
-// General static files fallback
-app.use(express.static(publicPath, {
-  maxAge: '1y',
-  immutable: true
 }));
 
 // Set view engine
@@ -91,19 +81,37 @@ app.use('/qr', qrRoutes);
 app.use('/p', publicRoutes);
 
 // Home route - redirect to login or dashboard
-app.get('/', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.redirect('/dashboard');
-  } else {
+app.get('/', async (req, res) => {
+  try {
+    // Ensure DB connection for serverless
+    if (process.env.VERCEL) {
+      await connectDB();
+    }
+    
+    if (req.isAuthenticated()) {
+      return res.redirect('/dashboard');
+    }
+    res.render('login');
+  } catch (error) {
+    console.error('Home route error:', error);
     res.render('login');
   }
 });
 
 // Login route
-app.get('/login', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.redirect('/dashboard');
-  } else {
+app.get('/login', async (req, res) => {
+  try {
+    // Ensure DB connection for serverless
+    if (process.env.VERCEL) {
+      await connectDB();
+    }
+    
+    if (req.isAuthenticated()) {
+      return res.redirect('/dashboard');
+    }
+    res.render('login');
+  } catch (error) {
+    console.error('Login route error:', error);
     res.render('login');
   }
 });

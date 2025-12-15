@@ -19,15 +19,27 @@ router.get('/google',
 // Google OAuth callback
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/login?error=auth_failed' }),
-  (req, res) => {
-    // Ensure session is saved before redirect
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.redirect('/login?error=session_error');
+  async (req, res) => {
+    try {
+      // Ensure DB connection
+      if (process.env.VERCEL) {
+        await connectDB();
       }
-      res.redirect('/dashboard');
-    });
+      
+      // Save session and redirect
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.redirect('/login?error=session_error');
+        }
+        // Set user in session explicitly
+        req.session.user = req.user;
+        res.redirect('/dashboard');
+      });
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect('/login?error=callback_error');
+    }
   }
 );
 
