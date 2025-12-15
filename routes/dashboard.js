@@ -6,38 +6,26 @@ const User = require('../models/User');
 const Link = require('../models/Link');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
-  if (process.env.VERCEL) {
+  try {
     await connectDB();
-  }
-  next();
-});
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
+    next();
+  } catch (error) {
+    console.error('Dashboard DB connection error:', error);
+    next(error);
   }
 });
 
+// Configure multer with MEMORY storage (Vercel has read-only filesystem)
 const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit for base64 storage
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|svg/;
+    const allowedTypes = /jpeg|jpg|png|gif|svg|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const mimetype = file.mimetype.startsWith('image/');
     
     if (extname && mimetype) {
       return cb(null, true);
@@ -46,6 +34,11 @@ const upload = multer({
     }
   }
 });
+
+// Helper function to convert buffer to base64 data URL
+function bufferToDataUrl(buffer, mimetype) {
+  return `data:${mimetype};base64,${buffer.toString('base64')}`;
+}
 
 // Default categories with icons
 const DEFAULT_CATEGORIES = {
@@ -85,17 +78,22 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
     const { businessName } = req.body;
     const user = await User.findById(req.user._id);
     
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
     user.businessName = businessName || '';
     
+    // Store logo as base64 data URL in MongoDB
     if (req.file) {
-      user.logo = '/uploads/' + req.file.filename;
+      user.logo = bufferToDataUrl(req.file.buffer, req.file.mimetype);
     }
     
     await user.save();
     res.json({ success: true, message: 'Profile updated successfully' });
   } catch (error) {
     console.error('Profile update error:', error);
-    res.status(500).json({ success: false, message: 'Error updating profile' });
+    res.status(500).json({ success: false, message: 'Error updating profile: ' + error.message });
   }
 });
 
@@ -111,7 +109,8 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
     let icon = '';
     if (categoryType === 'custom') {
       if (req.file) {
-        icon = '/uploads/' + req.file.filename;
+        // Store custom icon as base64 data URL
+        icon = bufferToDataUrl(req.file.buffer, req.file.mimetype);
       } else if (linkId) {
         // If updating and no new file, keep existing icon
         const existingLink = await Link.findById(linkId);
@@ -157,7 +156,7 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
     }
   } catch (error) {
     console.error('Link save error:', error);
-    res.status(500).json({ success: false, message: 'Error saving link' });
+    res.status(500).json({ success: false, message: 'Error saving link: ' + error.message });
   }
 });
 
