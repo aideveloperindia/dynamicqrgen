@@ -1,7 +1,11 @@
 node_modules/
 .env
+.env.*
 env.example
 Credentials.txt
+VERCEL_ENV_*.txt
+*.secret
+*.key
 .DS_Store
 public/uploads/
 public/qr/*.png
