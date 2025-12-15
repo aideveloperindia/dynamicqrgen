@@ -16,10 +16,6 @@
       "dest": "/public/images/$1"
     },
     {
-      "src": "/qr/(.*)",
-      "dest": "/public/qr/$1"
-    },
-    {
       "src": "/(.*)",
       "dest": "/server.js"
     }
