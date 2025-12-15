@@ -21,20 +21,32 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session configuration with MongoDB store (required for serverless)
+// Initialize store with error handling
+let sessionStore;
+try {
+  sessionStore = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    touchAfter: 24 * 3600,
+    ttl: 24 * 60 * 60,
+    autoRemove: 'native'
+  });
+} catch (error) {
+  console.error('Session store creation error:', error);
+  // Fallback to memory store if MongoDB fails
+  sessionStore = undefined;
+}
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    touchAfter: 24 * 3600, // lazy session update
-    ttl: 24 * 60 * 60 // 24 hours
-  }),
+  store: sessionStore,
   cookie: {
-    secure: true, // Always true for HTTPS
+    secure: true,
     httpOnly: true,
-    sameSite: 'none', // Required for cross-site cookies
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000,
+    path: '/'
   },
   name: 'sessionId'
 }));
