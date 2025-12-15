@@ -27,7 +27,7 @@ const razorpay = new Razorpay({
 // Create payment order
 router.post('/create-order', auth, async (req, res) => {
   try {
-    const amount = 10000; // ₹100.00 (amount in paise)
+    const amount = 500; // ₹5.00 (amount in paise)
     
     const options = {
       amount: amount,
