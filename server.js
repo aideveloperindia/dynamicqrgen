@@ -25,9 +25,13 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+    secure: process.env.NODE_ENV === 'production' || process.env.VERCEL,
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' || process.env.VERCEL ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    domain: process.env.VERCEL ? '.vercel.app' : undefined
+  },
+  name: 'sessionId' // Custom session name
 }));
 
 // Passport middleware
@@ -45,24 +49,18 @@ app.use('/uploads', express.static(path.join(publicPath, 'uploads'), {
 }));
 
 // Serve images with explicit file reading for Vercel compatibility
-app.use('/images', (req, res, next) => {
-  const filePath = path.join(publicPath, 'images', req.path);
-  
-  if (fs.existsSync(filePath)) {
+app.use('/images', express.static(path.join(publicPath, 'images'), {
+  maxAge: '1y',
+  immutable: true,
+  setHeaders: (res, filePath) => {
     const ext = path.extname(filePath).toLowerCase();
-    
     if (ext === '.png') {
       res.setHeader('Content-Type', 'image/png');
     } else if (ext === '.jpeg' || ext === '.jpg') {
       res.setHeader('Content-Type', 'image/jpeg');
     }
-    
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.sendFile(filePath);
-  } else {
-    next();
   }
-});
+}));
 
 app.use('/qr', express.static(path.join(publicPath, 'qr'), {
   maxAge: '1y',

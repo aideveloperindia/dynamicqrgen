@@ -18,9 +18,16 @@ router.get('/google',
 
 // Google OAuth callback
 router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  passport.authenticate('google', { failureRedirect: '/login?error=auth_failed' }),
   (req, res) => {
-    res.redirect('/dashboard');
+    // Ensure session is saved before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.redirect('/login?error=session_error');
+      }
+      res.redirect('/dashboard');
+    });
   }
 );
 
