@@ -36,31 +36,36 @@ function getRazorpay() {
 // Create payment order
 router.post('/create-order', auth, async (req, res) => {
   try {
+    // Log environment check
+    console.log('ENV CHECK - RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
+    console.log('ENV CHECK - RAZORPAY_KEY_SECRET exists:', !!process.env.RAZORPAY_KEY_SECRET);
+    
     // Check if Razorpay is configured
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      console.error('Razorpay credentials missing:', {
-        keyId: !!process.env.RAZORPAY_KEY_ID,
-        keySecret: !!process.env.RAZORPAY_KEY_SECRET
-      });
       return res.status(500).json({ 
         success: false, 
-        message: 'Payment service not configured. Please contact support.' 
+        message: 'Payment service not configured. Missing credentials.' 
       });
     }
 
-    const razorpay = getRazorpay();
+    // Create Razorpay instance directly (avoid caching issues in serverless)
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+    
     const amount = 500; // ₹5.00 (amount in paise)
     
     const options = {
       amount: amount,
       currency: 'INR',
-      receipt: `receipt_${req.user._id}_${Date.now()}`,
+      receipt: `rcpt_${Date.now()}`,
       notes: {
         userId: req.user._id.toString()
       }
     };
 
-    console.log('Creating Razorpay order with options:', options);
+    console.log('Creating Razorpay order...');
     const order = await razorpay.orders.create(options);
     console.log('Razorpay order created:', order.id);
     
@@ -81,10 +86,12 @@ router.post('/create-order', auth, async (req, res) => {
       key: process.env.RAZORPAY_KEY_ID
     });
   } catch (error) {
-    console.error('Payment order creation error:', error.message, error.stack);
+    console.error('Payment error:', error);
+    // Return detailed error for debugging
     res.status(500).json({ 
       success: false, 
-      message: 'Error creating payment order: ' + error.message 
+      message: error.message || 'Unknown error',
+      error: error.error ? error.error.description : undefined
     });
   }
 });
