@@ -22,34 +22,43 @@ router.get('/google',
   })
 );
 
-// Google OAuth callback
-router.get('/google/callback',
-  passport.authenticate('google', { 
-    failureRedirect: '/login?error=auth_failed',
-    failureMessage: true
-  }),
-  (req, res) => {
-    // User is authenticated - passport has set req.user
-    const user = req.user;
-    console.log('OAuth success, user:', user?.email);
+// Google OAuth callback with explicit error handling
+router.get('/google/callback', (req, res, next) => {
+  passport.authenticate('google', (err, user, info) => {
+    console.log('Passport authenticate callback:', { err: err?.message, user: user?.email, info });
+    
+    if (err) {
+      console.error('Passport auth error:', err);
+      return res.redirect('/login?error=auth_error&msg=' + encodeURIComponent(err.message));
+    }
     
     if (!user) {
-      console.error('No user after authentication');
+      console.error('No user returned from Google:', info);
       return res.redirect('/login?error=no_user');
     }
     
-    // Save session and redirect (skip regenerate for simplicity)
-    req.session.save((saveErr) => {
-      if (saveErr) {
-        console.error('Session save error:', saveErr);
-        return res.redirect('/login?error=save_error');
+    // Log in the user
+    req.login(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Login error:', loginErr);
+        return res.redirect('/login?error=login_error&msg=' + encodeURIComponent(loginErr.message));
       }
       
-      console.log('Session saved, redirecting to dashboard');
-      res.redirect('/dashboard');
+      console.log('User logged in:', user.email);
+      
+      // Save session and redirect
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error:', saveErr);
+          return res.redirect('/login?error=save_error');
+        }
+        
+        console.log('Session saved, redirecting to dashboard');
+        res.redirect('/dashboard');
+      });
     });
-  }
-);
+  })(req, res, next);
+});
 
 // Logout
 router.get('/logout', (req, res) => {

@@ -10,6 +10,9 @@ const auth = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Determine if we're in production (Vercel sets this)
+const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
+
 // Trust proxy - REQUIRED for Vercel (behind proxy)
 app.set('trust proxy', 1);
 
@@ -24,19 +27,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session configuration with MongoDB store (required for serverless)
-const sessionStore = MongoStore.create({
-  mongoUrl: process.env.MONGODB_URI,
-  touchAfter: 24 * 3600,
-  ttl: 24 * 60 * 60,
-  autoRemove: 'native',
-  crypto: {
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-this'
-  }
-});
-
-sessionStore.on('error', function(error) {
-  console.error('Session store error:', error);
-});
+let sessionStore;
+try {
+  sessionStore = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    touchAfter: 24 * 3600,
+    ttl: 24 * 60 * 60,
+    autoRemove: 'native'
+  });
+  
+  sessionStore.on('error', function(error) {
+    console.error('Session store error:', error);
+  });
+} catch (err) {
+  console.error('Failed to create session store:', err);
+}
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
@@ -45,9 +50,9 @@ app.use(session({
   store: sessionStore,
   proxy: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000
   },
   name: 'qr.sid'
