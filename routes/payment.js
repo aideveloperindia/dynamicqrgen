@@ -18,15 +18,37 @@ router.use(async (req, res, next) => {
   }
 });
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// Lazy Razorpay initialization (for serverless)
+let razorpayInstance = null;
+function getRazorpay() {
+  if (!razorpayInstance) {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      throw new Error('Razorpay credentials not configured');
+    }
+    razorpayInstance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+  }
+  return razorpayInstance;
+}
 
 // Create payment order
 router.post('/create-order', auth, async (req, res) => {
   try {
+    // Check if Razorpay is configured
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('Razorpay credentials missing:', {
+        keyId: !!process.env.RAZORPAY_KEY_ID,
+        keySecret: !!process.env.RAZORPAY_KEY_SECRET
+      });
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Payment service not configured. Please contact support.' 
+      });
+    }
+
+    const razorpay = getRazorpay();
     const amount = 500; // ₹5.00 (amount in paise)
     
     const options = {
@@ -38,7 +60,9 @@ router.post('/create-order', auth, async (req, res) => {
       }
     };
 
+    console.log('Creating Razorpay order with options:', options);
     const order = await razorpay.orders.create(options);
+    console.log('Razorpay order created:', order.id);
     
     // Save payment record
     const payment = new Payment({
@@ -57,8 +81,11 @@ router.post('/create-order', auth, async (req, res) => {
       key: process.env.RAZORPAY_KEY_ID
     });
   } catch (error) {
-    console.error('Payment order creation error:', error);
-    res.status(500).json({ success: false, message: 'Error creating payment order' });
+    console.error('Payment order creation error:', error.message, error.stack);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error creating payment order: ' + error.message 
+    });
   }
 });
 
