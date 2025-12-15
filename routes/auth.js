@@ -30,33 +30,23 @@ router.get('/google/callback',
   }),
   (req, res) => {
     // User is authenticated - passport has set req.user
-    console.log('OAuth success, user:', req.user?.email);
+    const user = req.user;
+    console.log('OAuth success, user:', user?.email);
     
-    // Regenerate session to prevent fixation
-    req.session.regenerate((err) => {
-      if (err) {
-        console.error('Session regenerate error:', err);
-        return res.redirect('/login?error=session_error');
+    if (!user) {
+      console.error('No user after authentication');
+      return res.redirect('/login?error=no_user');
+    }
+    
+    // Save session and redirect (skip regenerate for simplicity)
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Session save error:', saveErr);
+        return res.redirect('/login?error=save_error');
       }
       
-      // Re-establish passport login after regeneration
-      req.login(req.user, (loginErr) => {
-        if (loginErr) {
-          console.error('Login error after regenerate:', loginErr);
-          return res.redirect('/login?error=login_error');
-        }
-        
-        // Save session explicitly
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error('Session save error:', saveErr);
-            return res.redirect('/login?error=save_error');
-          }
-          
-          console.log('Session saved, redirecting to dashboard');
-          res.redirect('/dashboard');
-        });
-      });
+      console.log('Session saved, redirecting to dashboard');
+      res.redirect('/dashboard');
     });
   }
 );
