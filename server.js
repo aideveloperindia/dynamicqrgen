@@ -57,13 +57,16 @@ app.use(passport.session());
 
 // Serve static files - MUST be before routes for Vercel
 const publicPath = path.join(__dirname, 'public');
+const fs = require('fs');
 
-// Serve static files with proper headers
-app.use(express.static(publicPath, {
-  maxAge: '1y',
-  immutable: true,
-  setHeaders: (res, filePath) => {
+// Explicit image serving for Vercel compatibility
+app.use('/images', (req, res, next) => {
+  const filePath = path.join(publicPath, 'images', req.path);
+  
+  if (fs.existsSync(filePath)) {
     const ext = path.extname(filePath).toLowerCase();
+    
+    // Set proper content-type
     if (ext === '.png') {
       res.setHeader('Content-Type', 'image/png');
     } else if (ext === '.jpeg' || ext === '.jpg') {
@@ -71,8 +74,18 @@ app.use(express.static(publicPath, {
     } else if (ext === '.svg') {
       res.setHeader('Content-Type', 'image/svg+xml');
     }
+    
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.sendFile(filePath);
+  } else {
+    next();
   }
+});
+
+// Serve other static files
+app.use(express.static(publicPath, {
+  maxAge: '1y',
+  immutable: true
 }));
 
 // Set view engine
