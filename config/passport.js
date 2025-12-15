@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/User');
+const connectDB = require('./database');
 
 passport.use(
   new GoogleStrategy(
@@ -11,6 +12,9 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        // Ensure DB connection for serverless
+        await connectDB();
+        
         let user = await User.findOne({ googleId: profile.id });
 
         if (user) {
@@ -38,6 +42,7 @@ passport.use(
           return done(null, user);
         }
       } catch (error) {
+        console.error('Google Strategy error:', error);
         return done(error, null);
       }
     }
@@ -45,14 +50,23 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  done(null, user._id);
+  // Store user ID as string
+  done(null, user._id.toString());
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
+    // Ensure DB connection for serverless
+    await connectDB();
+    
     const user = await User.findById(id);
+    if (!user) {
+      console.log('User not found in deserializeUser:', id);
+      return done(null, false);
+    }
     done(null, user);
   } catch (error) {
+    console.error('Deserialize error:', error);
     done(error, null);
   }
 });
