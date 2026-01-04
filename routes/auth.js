@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const connectDB = require('../config/database');
 const passport = require('passport');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User');
 
 // Ensure DB connection for all auth routes
 router.use(async (req, res, next) => {
@@ -58,6 +60,104 @@ router.get('/google/callback', (req, res, next) => {
       });
     });
   })(req, res, next);
+});
+
+// Register with email/password
+router.post('/register', async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
+
+    // Generate unique slug
+    const baseSlug = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+    
+    while (await User.findOne({ uniqueSlug })) {
+      uniqueSlug = `${baseSlug}${counter}`;
+      counter++;
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = new User({
+      email,
+      password: hashedPassword,
+      name,
+      uniqueSlug
+    });
+
+    await user.save();
+
+    // Auto login
+    req.login(user, (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: 'Registration successful but login failed' });
+      }
+      res.json({ success: true, message: 'Registration successful', user: { email: user.email, name: user.name } });
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ success: false, message: 'Registration failed: ' + error.message });
+  }
+});
+
+// Login with email/password
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+
+    // Find user with password
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    // Check if user has password (might be Google-only account)
+    if (!user.password) {
+      return res.status(401).json({ success: false, message: 'Please login with Google or set a password' });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Login user
+    req.login(user, (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: 'Login failed' });
+      }
+      res.json({ success: true, message: 'Login successful', user: { email: user.email, name: user.name } });
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: 'Login failed: ' + error.message });
+  }
 });
 
 // Logout

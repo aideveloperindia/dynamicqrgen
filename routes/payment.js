@@ -33,18 +33,67 @@ function getRazorpay() {
   return razorpayInstance;
 }
 
-// Create payment order
+// Simplified payment - mark as paid (for testing, will integrate Razorpay later)
+router.post('/pay', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (user.subscriptionActive && new Date(user.subscriptionEndDate) > new Date()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'You already have an active subscription' 
+      });
+    }
+
+    // Mark payment as completed and activate subscription
+    const now = new Date();
+    const oneYearLater = new Date(now);
+    oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+
+    user.paymentCompleted = true;
+    user.subscriptionActive = true;
+    user.subscriptionStartDate = now;
+    user.subscriptionEndDate = oneYearLater;
+    user.subscriptionAmount = 999; // ₹999/year
+    user.paymentId = `manual_${Date.now()}`; // Temporary ID
+
+    await user.save();
+
+    // Save payment record
+    const payment = new Payment({
+      userId: user._id,
+      razorpayOrderId: user.paymentId,
+      amount: 99900, // ₹999 in paise
+      status: 'completed',
+      razorpayPaymentId: user.paymentId,
+      razorpaySignature: 'manual_payment'
+    });
+    await payment.save();
+
+    res.json({
+      success: true,
+      message: 'Payment successful! Your subscription is active for 1 year.',
+      subscriptionEndDate: oneYearLater
+    });
+  } catch (error) {
+    console.error('Payment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Payment processing failed: ' + error.message
+    });
+  }
+});
+
+// Create payment order (for future Razorpay integration)
 router.post('/create-order', auth, async (req, res) => {
   try {
-    // Log environment check
-    console.log('ENV CHECK - RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
-    console.log('ENV CHECK - RAZORPAY_KEY_SECRET exists:', !!process.env.RAZORPAY_KEY_SECRET);
-    
     // Check if Razorpay is configured
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Payment service not configured. Missing credentials.' 
+      // Fallback to manual payment
+      return res.status(200).json({ 
+        success: true,
+        useManualPayment: true,
+        message: 'Use /payment/pay endpoint for now'
       });
     }
 
@@ -54,7 +103,7 @@ router.post('/create-order', auth, async (req, res) => {
       key_secret: process.env.RAZORPAY_KEY_SECRET
     });
     
-    const amount = 500; // ₹5.00 (amount in paise)
+    const amount = 99900; // ₹999.00 (amount in paise)
     
     const options = {
       amount: amount,
@@ -87,7 +136,6 @@ router.post('/create-order', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Payment error:', error);
-    // Return detailed error for debugging
     res.status(500).json({ 
       success: false, 
       message: error.message || 'Unknown error',
@@ -135,12 +183,17 @@ router.post('/verify', auth, async (req, res) => {
   }
 });
 
-// Check payment status
+// Check payment/subscription status
 router.get('/status', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
+    const now = new Date();
+    const isActive = user.subscriptionActive && new Date(user.subscriptionEndDate) > now;
+    
     res.json({ 
       paymentCompleted: user.paymentCompleted,
+      subscriptionActive: isActive,
+      subscriptionEndDate: user.subscriptionEndDate,
       paymentId: user.paymentId 
     });
   } catch (error) {

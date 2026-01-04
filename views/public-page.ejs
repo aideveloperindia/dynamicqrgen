@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <title><%= user.businessName || user.name %> - Connect With Us</title>
+    <link rel="icon" type="image/png" href="/images/qrconnect logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -308,7 +309,9 @@
             <% if (user.logo) { %>
                 <img src="<%= user.logo %>" alt="<%= user.businessName || user.name %>" class="business-logo">
             <% } else { %>
-                <img src="/images/adxlogo.jpeg" alt="<%= user.businessName || user.name %>" class="default-logo">
+                <div class="default-logo-placeholder">
+                    <h2 style="color: #fff; font-size: 24px; margin: 0;"><%= user.businessName || user.name %></h2>
+                </div>
             <% } %>
         </div>
         

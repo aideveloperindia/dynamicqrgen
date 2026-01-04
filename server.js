@@ -105,12 +105,14 @@ const dashboardRoutes = require('./routes/dashboard');
 const paymentRoutes = require('./routes/payment');
 const qrRoutes = require('./routes/qr');
 const publicRoutes = require('./routes/public');
+const adminRoutes = require('./routes/admin');
 
 app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/qr', qrRoutes);
 app.use('/p', publicRoutes);
+app.use('/admin', adminRoutes);
 
 // Home route - redirect to login or dashboard
 app.get('/', async (req, res) => {

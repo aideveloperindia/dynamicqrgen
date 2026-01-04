@@ -18,10 +18,25 @@ passport.use(
         let user = await User.findOne({ googleId: profile.id });
 
         if (user) {
+          // Update last login
+          user.lastLogin = new Date();
+          await user.save();
           return done(null, user);
         } else {
+          // Check if user exists with same email (password-based account)
+          const existingUser = await User.findOne({ email: profile.emails[0].value });
+          
+          if (existingUser) {
+            // Link Google account to existing user
+            existingUser.googleId = profile.id;
+            existingUser.picture = profile.photos[0]?.value || existingUser.picture;
+            existingUser.lastLogin = new Date();
+            await existingUser.save();
+            return done(null, existingUser);
+          }
+
           // Generate unique slug
-          const baseSlug = profile.emails[0].value.split('@')[0].toLowerCase();
+          const baseSlug = profile.emails[0].value.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
           let uniqueSlug = baseSlug;
           let counter = 1;
           
@@ -35,7 +50,8 @@ passport.use(
             email: profile.emails[0].value,
             name: profile.displayName,
             picture: profile.photos[0]?.value,
-            uniqueSlug: uniqueSlug
+            uniqueSlug: uniqueSlug,
+            lastLogin: new Date()
           });
 
           await user.save();
@@ -59,12 +75,21 @@ passport.deserializeUser(async (id, done) => {
     // Ensure DB connection for serverless
     await connectDB();
     
-    const user = await User.findById(id);
-    if (!user) {
-      console.log('User not found in deserializeUser:', id);
-      return done(null, false);
+    // Try User first
+    let user = await User.findById(id);
+    if (user) {
+      return done(null, user);
     }
-    done(null, user);
+    
+    // Try Admin if not found in User
+    const Admin = require('../models/Admin');
+    const admin = await Admin.findById(id);
+    if (admin) {
+      return done(null, admin);
+    }
+    
+    console.log('User/Admin not found in deserializeUser:', id);
+    return done(null, false);
   } catch (error) {
     console.error('Deserialize error:', error);
     done(error, null);

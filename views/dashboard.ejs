@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Dynamic QR Generator</title>
+    <link rel="icon" type="image/png" href="/images/qrconnect logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -341,16 +342,22 @@
             </form>
         </div>
 
-        <!-- Payment Section -->
+        <!-- Payment/Subscription Section -->
         <div class="section payment-section">
-            <h2>Payment Status</h2>
-            <% if (user.paymentCompleted) { %>
-                <p><span class="status-badge status-paid">✓ Payment Completed</span></p>
-                <p style="margin-top: 15px;">Your QR code is active and ready to share!</p>
+            <h2>Subscription Status</h2>
+            <% 
+            const now = new Date();
+            const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+            const endDate = user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('en-IN') : null;
+            %>
+            <% if (isActive) { %>
+                <p><span class="status-badge status-paid">✓ Subscription Active</span></p>
+                <p style="margin-top: 15px; color: #888;">Valid until: <strong><%= endDate %></strong></p>
+                <p style="margin-top: 10px;">Your QR code is active and ready to share!</p>
             <% } else { %>
-                <p><span class="status-badge status-pending">Payment Pending</span></p>
-                <p>Complete payment to activate your QR code</p>
-                <button class="btn btn-success" onclick="initiatePayment()" style="margin-top: 15px;">Pay ₹5</button>
+                <p><span class="status-badge status-pending">Subscription Inactive</span></p>
+                <p style="margin-top: 15px;">Subscribe for ₹999/year to activate your QR code</p>
+                <button class="btn btn-success" onclick="initiatePayment()" style="margin-top: 15px;">Pay ₹999</button>
             <% } %>
         </div>
 
@@ -591,59 +598,30 @@
 
         async function initiatePayment() {
             try {
-                const response = await fetch('/payment/create-order', {
-                    method: 'POST'
-                });
-                
-                const data = await response.json();
-                if (!data.success) {
-                    showAlert('Error creating payment order', 'error');
+                if (!confirm('Subscribe for ₹999/year to activate your QR code?')) {
                     return;
                 }
 
-                const options = {
-                    key: data.key,
-                    amount: data.amount,
-                    currency: data.currency,
-                    name: 'Dynamic QR Generator',
-                    description: 'QR Code Activation',
-                    order_id: data.orderId,
-                    handler: async function(response) {
-                        // Verify payment
-                        const verifyResponse = await fetch('/payment/verify', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature
-                            })
-                        });
-                        
-                        const verifyData = await verifyResponse.json();
-                        if (verifyData.success) {
-                            showAlert('Payment successful! Your QR code is now active.', 'success');
-                            setTimeout(() => location.reload(), 2000);
-                        } else {
-                            showAlert('Payment verification failed', 'error');
-                        }
-                    },
-                    prefill: {
-                        email: '<%= user.email %>',
-                        name: '<%= user.name %>'
-                    },
-                    theme: {
-                        color: '#4285F4'
+                showAlert('Processing payment...', 'info');
+                
+                const response = await fetch('/payment/pay', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
-                };
-
-                const rzp = new Razorpay(options);
-                rzp.open();
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Payment successful! Your subscription is active for 1 year.', 'success');
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showAlert(data.message || 'Payment failed. Please try again.', 'error');
+                }
             } catch (error) {
                 console.error('Payment error:', error);
-                showAlert('Error initiating payment', 'error');
+                showAlert('Error processing payment. Please try again.', 'error');
             }
         }
 

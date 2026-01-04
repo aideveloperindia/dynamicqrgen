@@ -3,13 +3,17 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   googleId: {
     type: String,
-    required: true,
+    sparse: true,
     unique: true
   },
   email: {
     type: String,
     required: true,
     unique: true
+  },
+  password: {
+    type: String, // Hashed password (bcrypt)
+    select: false // Don't return password by default
   },
   name: {
     type: String,
@@ -42,11 +46,34 @@ const userSchema = new mongoose.Schema({
   paymentId: {
     type: String
   },
+  subscriptionActive: {
+    type: Boolean,
+    default: false
+  },
+  subscriptionStartDate: {
+    type: Date
+  },
+  subscriptionEndDate: {
+    type: Date
+  },
+  subscriptionAmount: {
+    type: Number,
+    default: 999 // ₹999/year
+  },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  lastLogin: {
+    type: Date
   }
 });
+
+// Index for faster queries
+userSchema.index({ email: 1 });
+userSchema.index({ uniqueSlug: 1 });
+userSchema.index({ subscriptionActive: 1 });
+userSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('User', userSchema);
 

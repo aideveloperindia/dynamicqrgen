@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Dynamic QR Generator</title>
+    <link rel="icon" type="image/png" href="/images/qrconnect logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -77,6 +78,110 @@
             font-size: 20px;
         }
 
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ccc;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        .divider {
+            margin: 25px 0;
+            text-align: center;
+            color: #666;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #333;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .toggle-form {
+            margin-top: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .toggle-form a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #ff4444;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #4CAF50;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
         .footer {
             margin-top: 30px;
             padding-top: 20px;
@@ -98,14 +203,54 @@
 </head>
 <body>
     <div class="login-container">
-        <img src="/images/adxlogo.jpeg" alt="Logo" class="logo">
-        <h1>Welcome</h1>
-        <p>Sign in with Google to create your dynamic QR code</p>
+        <img src="/images/qrconnect logo.png" alt="QR Connect" class="logo">
+        <h1>Dynamic QR Generator</h1>
+        <p>Create your business QR code in minutes</p>
+        
+        <div id="errorMsg" class="error-message" style="display: none;"></div>
+        <div id="successMsg" class="success-message" style="display: none;"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm" style="display: block;">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Enter your password">
+            </div>
+            <button type="submit" class="btn-primary">Sign In</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" required placeholder="Your Name">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Min 6 characters" minlength="6">
+            </div>
+            <button type="submit" class="btn-primary">Create Account</button>
+        </form>
+
+        <div class="divider">OR</div>
         
         <a href="/auth/google" class="google-btn">
             <i class="fab fa-google"></i>
             Continue with Google
         </a>
+
+        <div class="toggle-form">
+            <span id="toggleText">Don't have an account? </span>
+            <a href="#" id="toggleLink">Sign up</a>
+        </div>
 
         <div class="footer">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -117,6 +262,113 @@
             </div>
         </div>
     </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const toggleLink = document.getElementById('toggleLink');
+        const toggleText = document.getElementById('toggleText');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+
+        // Toggle between login and register
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isLogin = loginForm.style.display === 'block';
+            loginForm.style.display = isLogin ? 'none' : 'block';
+            registerForm.style.display = isLogin ? 'block' : 'none';
+            toggleText.textContent = isLogin ? 'Already have an account? ' : 'Don't have an account? ';
+            toggleLink.textContent = isLogin ? 'Sign in' : 'Sign up';
+            hideMessages();
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+            successMsg.style.display = 'none';
+        }
+
+        function showSuccess(msg) {
+            successMsg.textContent = msg;
+            successMsg.style.display = 'block';
+            errorMsg.style.display = 'none';
+        }
+
+        function hideMessages() {
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+        }
+
+        // Login form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+            
+            const formData = new FormData(loginForm);
+            const data = {
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Login successful! Redirecting...');
+                    setTimeout(() => window.location.href = '/dashboard', 1000);
+                } else {
+                    showError(result.message || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        });
+
+        // Register form submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+            
+            const formData = new FormData(registerForm);
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Registration successful! Redirecting...');
+                    setTimeout(() => window.location.href = '/dashboard', 1000);
+                } else {
+                    showError(result.message || 'Registration failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        });
+
+        // Check for URL error parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+            showError('Authentication failed. Please try again.');
+        }
+    </script>
 </body>
 </html>
 
