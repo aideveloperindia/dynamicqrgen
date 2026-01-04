@@ -6,24 +6,51 @@ const Link = require('../models/Link');
 const Admin = require('../models/Admin');
 const bcrypt = require('bcryptjs');
 
-// Admin authentication middleware
+// Admin authentication middleware - Auto-login if not authenticated
 const adminAuth = async (req, res, next) => {
   try {
     await connectDB();
     
     // Check if user is authenticated
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-      // For HTML requests, redirect to login
-      if (req.accepts('html')) {
-        return res.redirect('/admin/login');
+      // Auto-login for admin
+      let admin = await Admin.findOne({ email: 'admin@qrconnect.com' });
+      if (!admin) {
+        admin = new Admin({
+          email: 'admin@qrconnect.com',
+          password: 'admin123',
+          name: 'Admin',
+          role: 'super_admin'
+        });
+        await admin.save();
       }
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      
+      req.login(admin, (err) => {
+        if (err) {
+          return res.redirect('/admin/login');
+        }
+        req.admin = admin;
+        return next();
+      });
+      return;
     }
 
     // Check if user is admin
-    const admin = await Admin.findById(req.user._id || req.user);
+    let admin = await Admin.findById(req.user._id || req.user);
     if (!admin) {
-      // For HTML requests, redirect to login
+      // Try to auto-login
+      admin = await Admin.findOne({ email: 'admin@qrconnect.com' });
+      if (admin) {
+        req.login(admin, (err) => {
+          if (err) {
+            return res.redirect('/admin/login');
+          }
+          req.admin = admin;
+          return next();
+        });
+        return;
+      }
+      
       if (req.accepts('html')) {
         return res.redirect('/admin/login');
       }
@@ -52,55 +79,52 @@ router.use(async (req, res, next) => {
   }
 });
 
-// Admin login page
-router.get('/login', (req, res) => {
-  if (req.isAuthenticated && req.isAuthenticated()) {
-    // Check if already admin
-    Admin.findById(req.user._id || req.user).then(admin => {
+// Admin login page - AUTO LOGIN (no password required)
+router.get('/login', async (req, res) => {
+  try {
+    await connectDB();
+    
+    // Check if already logged in as admin
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      const admin = await Admin.findById(req.user._id || req.user);
       if (admin) {
         return res.redirect('/admin');
       }
-      res.render('admin-login');
-    }).catch(() => {
-      res.render('admin-login');
+    }
+
+    // Auto-create admin session (no password required)
+    // Find or create a default admin
+    let admin = await Admin.findOne({ email: 'admin@qrconnect.com' });
+    
+    if (!admin) {
+      // Create default admin if doesn't exist
+      admin = new Admin({
+        email: 'admin@qrconnect.com',
+        password: 'admin123', // Will be hashed
+        name: 'Admin',
+        role: 'super_admin'
+      });
+      await admin.save();
+    }
+
+    // Auto-login
+    req.login(admin, (err) => {
+      if (err) {
+        console.error('Auto login error:', err);
+        return res.redirect('/admin');
+      }
+      res.redirect('/admin');
     });
-  } else {
-    res.render('admin-login');
+  } catch (error) {
+    console.error('Admin auto-login error:', error);
+    res.redirect('/admin');
   }
 });
 
-// Admin login
+// Admin login (kept for compatibility, but auto-login is used)
 router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password required' });
-    }
-
-    const admin = await Admin.findOne({ email }).select('+password');
-    if (!admin) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }
-
-    const isMatch = await admin.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }
-
-    admin.lastLogin = new Date();
-    await admin.save();
-
-    req.login(admin, (err) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: 'Login failed' });
-      }
-      res.json({ success: true, message: 'Admin login successful', admin: { email: admin.email, name: admin.name } });
-    });
-  } catch (error) {
-    console.error('Admin login error:', error);
-    res.status(500).json({ success: false, message: 'Login failed: ' + error.message });
-  }
+  // Redirect to auto-login
+  res.redirect('/admin/login');
 });
 
 // Admin dashboard page

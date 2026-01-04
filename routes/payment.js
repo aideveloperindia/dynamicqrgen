@@ -73,7 +73,8 @@ router.post('/pay', auth, async (req, res) => {
     res.json({
       success: true,
       message: 'Payment successful! Your subscription is active for 1 year.',
-      subscriptionEndDate: oneYearLater
+      subscriptionEndDate: oneYearLater,
+      subscriptionStartDate: now
     });
   } catch (error) {
     console.error('Payment error:', error);
