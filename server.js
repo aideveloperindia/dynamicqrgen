@@ -62,9 +62,43 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Set Content Security Policy headers to allow favicon and images
+app.use((req, res, next) => {
+  // Only set CSP if not already set (Vercel might set it)
+  if (!res.getHeader('Content-Security-Policy')) {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; " +
+      "img-src 'self' data: https: blob:; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://checkout.razorpay.com https://api.razorpay.com https://checkout-static-next.razorpay.com; " +
+      "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://checkout-static-next.razorpay.com; " +
+      "font-src 'self' https://cdnjs.cloudflare.com data:; " +
+      "connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com; " +
+      "frame-src https://api.razorpay.com https://checkout.razorpay.com; " +
+      "object-src 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self'; " +
+      "frame-ancestors 'none';"
+    );
+  }
+  next();
+});
+
 // Serve static files - MUST be before routes for Vercel
 const publicPath = path.join(__dirname, 'public');
 const fs = require('fs');
+
+// Favicon route - serve the logo as favicon
+app.get('/favicon.ico', (req, res) => {
+  const faviconPath = path.join(publicPath, 'images', 'qrconnect logo.png');
+  if (fs.existsSync(faviconPath)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.sendFile(faviconPath);
+  } else {
+    res.status(404).end();
+  }
+});
 
 // Explicit image serving for Vercel compatibility
 app.use('/images', (req, res, next) => {
