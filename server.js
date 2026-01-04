@@ -114,7 +114,7 @@ app.use('/qr', qrRoutes);
 app.use('/p', publicRoutes);
 app.use('/admin', adminRoutes);
 
-// Home route - redirect to login or dashboard
+// Home route - show landing page or redirect to dashboard
 app.get('/', async (req, res) => {
   try {
     // Ensure DB connection for serverless
@@ -125,10 +125,10 @@ app.get('/', async (req, res) => {
     if (req.isAuthenticated()) {
       return res.redirect('/dashboard');
     }
-    res.render('login');
+    res.render('landing');
   } catch (error) {
     console.error('Home route error:', error);
-    res.render('login');
+    res.render('landing');
   }
 });
 
