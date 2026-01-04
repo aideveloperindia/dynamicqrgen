@@ -12,6 +12,10 @@
   ],
   "routes": [
     {
+      "src": "/favicon.ico",
+      "dest": "/public/images/qrconnect logo.png"
+    },
+    {
       "src": "/images/(.*)",
       "dest": "/public/images/$1"
     },
