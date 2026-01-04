@@ -365,7 +365,28 @@
         <div class="section qr-section">
             <h2 class="section-title">Your QR Code</h2>
             <div id="qr-container">
-                <button class="btn btn-primary" onclick="generateQR()">Generate QR Code</button>
+                <% 
+                const hasLinks = links && links.length > 0;
+                const now = new Date();
+                const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+                %>
+                <% if (!hasLinks) { %>
+                    <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
+                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #ffc107; margin-bottom: 10px;"></i>
+                        <p style="color: #ffc107; font-weight: 600; margin-bottom: 5px;">Add Links First</p>
+                        <p style="color: #888; font-size: 0.9rem;">Please add at least one link before generating your QR code.</p>
+                    </div>
+                <% } else if (!isActive) { %>
+                    <div style="text-align: center; padding: 20px; background: rgba(255, 87, 34, 0.1); border-radius: 8px; border: 1px solid rgba(255, 87, 34, 0.3);">
+                        <i class="fas fa-lock" style="font-size: 2rem; color: #ff5722; margin-bottom: 10px;"></i>
+                        <p style="color: #ff5722; font-weight: 600; margin-bottom: 5px;">Subscription Required</p>
+                        <p style="color: #888; font-size: 0.9rem;">Please subscribe to generate your QR code.</p>
+                    </div>
+                <% } else { %>
+                    <button class="btn btn-primary" onclick="generateQR()" id="generateQRBtn">
+                        <i class="fas fa-qrcode"></i> Generate QR Code
+                    </button>
+                <% } %>
             </div>
             <p style="margin-top: 15px; color: #888;">
                 Your page URL: <a href="/p/<%= user.uniqueSlug %>" target="_blank" style="color: #4285F4;">/p/<%= user.uniqueSlug %></a>
@@ -593,6 +614,11 @@
                     credentials: 'include'
                 });
                 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 if (data.success) {
                     showAlert('Link deleted successfully!', 'success');
@@ -601,7 +627,8 @@
                     showAlert(data.message || 'Error deleting link', 'error');
                 }
             } catch (error) {
-                showAlert('Error deleting link', 'error');
+                console.error('Delete link error:', error);
+                showAlert(error.message || 'Error deleting link', 'error');
             }
         }
 
@@ -609,6 +636,12 @@
             try {
                 if (!confirm('Subscribe for ₹999/year to activate your QR code?')) {
                     return;
+                }
+
+                const payBtn = event?.target || document.querySelector('.btn-success');
+                if (payBtn) {
+                    payBtn.disabled = true;
+                    payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                 }
 
                 showAlert('Processing payment...', 'info');
@@ -621,6 +654,11 @@
                     credentials: 'include'
                 });
                 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
@@ -628,34 +666,71 @@
                     setTimeout(() => location.reload(), 2000);
                 } else {
                     showAlert(data.message || 'Payment failed. Please try again.', 'error');
+                    if (payBtn) {
+                        payBtn.disabled = false;
+                        payBtn.innerHTML = 'Pay ₹999';
+                    }
                 }
             } catch (error) {
                 console.error('Payment error:', error);
-                showAlert('Error processing payment. Please try again.', 'error');
+                showAlert(error.message || 'Error processing payment. Please try again.', 'error');
+                const payBtn = document.querySelector('.btn-success');
+                if (payBtn) {
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = 'Pay ₹999';
+                }
             }
         }
 
         async function generateQR() {
+            const btn = document.getElementById('generateQRBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            }
+            
             try {
                 const response = await fetch('/qr/generate', {
                     credentials: 'include'
                 });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
                     const qrContainer = document.getElementById('qr-container');
                     qrContainer.innerHTML = `
-                        <div class="qr-code">
-                            <img src="${data.qrUrl}" alt="QR Code">
+                        <div style="text-align: center;">
+                            <div class="qr-code" style="margin-bottom: 20px;">
+                                <img src="${data.qrUrl}" alt="QR Code" style="max-width: 300px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            </div>
+                            <a href="${data.qrUrl}" download="qr-code.png" class="btn btn-primary">
+                                <i class="fas fa-download"></i> Download QR Code
+                            </a>
+                            <p style="margin-top: 15px; color: #888; font-size: 0.9rem;">
+                                <i class="fas fa-check-circle" style="color: #4CAF50;"></i> QR Code generated successfully!
+                            </p>
                         </div>
-                        <a href="${data.qrUrl}" download class="btn btn-primary" style="margin-top: 15px;">Download QR Code</a>
                     `;
                     showAlert('QR code generated successfully!', 'success');
                 } else {
                     showAlert(data.message || 'Error generating QR code', 'error');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-qrcode"></i> Generate QR Code';
+                    }
                 }
             } catch (error) {
-                showAlert('Error generating QR code', 'error');
+                console.error('QR generation error:', error);
+                showAlert(error.message || 'Error generating QR code', 'error');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-qrcode"></i> Generate QR Code';
+                }
             }
         }
 
@@ -671,9 +746,54 @@
             }, 5000);
         }
 
-        // Auto-generate QR on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            generateQR();
+        // Update QR section when links are added/deleted
+        function updateQRSection() {
+            const linksList = document.getElementById('linksList');
+            const links = linksList.querySelectorAll('.link-item');
+            const qrContainer = document.getElementById('qr-container');
+            const hasLinks = links.length > 0;
+            
+            // Check subscription status from server-side rendered data
+            <% 
+            const now = new Date();
+            const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+            %>
+            const subscriptionActive = <%= isActive %>;
+            
+            if (!hasLinks) {
+                qrContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
+                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #ffc107; margin-bottom: 10px;"></i>
+                        <p style="color: #ffc107; font-weight: 600; margin-bottom: 5px;">Add Links First</p>
+                        <p style="color: #888; font-size: 0.9rem;">Please add at least one link before generating your QR code.</p>
+                    </div>
+                `;
+            } else if (!subscriptionActive) {
+                qrContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; background: rgba(255, 87, 34, 0.1); border-radius: 8px; border: 1px solid rgba(255, 87, 34, 0.3);">
+                        <i class="fas fa-lock" style="font-size: 2rem; color: #ff5722; margin-bottom: 10px;"></i>
+                        <p style="color: #ff5722; font-weight: 600; margin-bottom: 5px;">Subscription Required</p>
+                        <p style="color: #888; font-size: 0.9rem;">Please subscribe to generate your QR code.</p>
+                    </div>
+                `;
+            } else {
+                qrContainer.innerHTML = `
+                    <button class="btn btn-primary" onclick="generateQR()" id="generateQRBtn">
+                        <i class="fas fa-qrcode"></i> Generate QR Code
+                    </button>
+                `;
+            }
+        }
+        
+        // Monitor link form submissions to update QR section
+        document.addEventListener('DOMContentLoaded', () => {
+            const linkForm = document.getElementById('linkForm');
+            if (linkForm) {
+                linkForm.addEventListener('submit', () => {
+                    // Update QR section after link is saved (page will reload anyway)
+                    setTimeout(updateQRSection, 100);
+                });
+            }
         });
     </script>
 </body>

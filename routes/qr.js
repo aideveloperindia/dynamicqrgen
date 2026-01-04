@@ -36,6 +36,17 @@ router.get('/generate', auth, async (req, res) => {
       });
     }
 
+    // Check if user has at least one active link
+    const Link = require('../models/Link');
+    const activeLinks = await Link.find({ userId: user._id, isActive: true });
+    
+    if (!activeLinks || activeLinks.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please add at least one link before generating QR code' 
+      });
+    }
+
     const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
     const pageUrl = `${baseUrl}/p/${user.uniqueSlug}`;
     
