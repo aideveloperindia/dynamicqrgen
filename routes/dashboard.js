@@ -75,6 +75,15 @@ router.get('/', auth, async (req, res) => {
 // Update business name and logo
 router.post('/update-profile', auth, upload.single('logo'), async (req, res) => {
   try {
+    // Check authentication
+    if (!req.user || !req.user._id) {
+      console.error('Profile update: User not authenticated', { 
+        isAuthenticated: req.isAuthenticated(),
+        user: req.user 
+      });
+      return res.status(403).json({ success: false, message: 'Authentication required' });
+    }
+
     const { businessName } = req.body;
     const user = await User.findById(req.user._id);
     

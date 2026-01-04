@@ -481,8 +481,14 @@
             try {
                 const response = await fetch('/dashboard/update-profile', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'include' // Include cookies for session
                 });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
                 
                 const data = await response.json();
                 if (data.success) {
@@ -492,7 +498,8 @@
                     showAlert(data.message || 'Error updating profile', 'error');
                 }
             } catch (error) {
-                showAlert('Error updating profile', 'error');
+                console.error('Profile update error:', error);
+                showAlert(error.message || 'Error updating profile', 'error');
             }
         });
 
@@ -526,7 +533,8 @@
             try {
                 const response = await fetch('/dashboard/link', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'include'
                 });
                 
                 const data = await response.json();
@@ -581,7 +589,8 @@
             
             try {
                 const response = await fetch(`/dashboard/link/${id}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
                 
                 const data = await response.json();
@@ -608,7 +617,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 });
                 
                 const data = await response.json();
@@ -627,7 +637,9 @@
 
         async function generateQR() {
             try {
-                const response = await fetch('/qr/generate');
+                const response = await fetch('/qr/generate', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 
                 if (data.success) {
