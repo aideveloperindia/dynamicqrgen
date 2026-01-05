@@ -10,8 +10,9 @@ router.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (error) {
-    console.error('Public route DB error:', error);
-    next(error);
+    console.error('Public route DB error:', error.message);
+    // Don't crash - continue anyway, routes will handle DB errors individually
+    next();
   }
 });
 

@@ -13,8 +13,9 @@ router.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (error) {
-    console.error('Dashboard DB connection error:', error);
-    next(error);
+    console.error('Dashboard DB connection error:', error.message);
+    // Don't crash - continue anyway, routes will handle DB errors individually
+    next();
   }
 });
 

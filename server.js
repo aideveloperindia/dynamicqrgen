@@ -263,15 +263,15 @@ app.use((err, req, res, next) => {
   console.error('❌ Unhandled error:', err);
   console.error('Stack:', err.stack);
   
-  // Don't leak error details in production
-  const message = process.env.NODE_ENV === 'production' 
-    ? 'Internal server error' 
-    : err.message;
-  
   // If response already sent, delegate to default handler
   if (res.headersSent) {
     return next(err);
   }
+  
+  // Don't leak error details in production
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Internal server error' 
+    : (err.message || 'An unexpected error occurred');
   
   // Return JSON for API requests
   if (req.xhr || req.headers['content-type']?.includes('application/json') || req.path.startsWith('/api/')) {
@@ -282,11 +282,17 @@ app.use((err, req, res, next) => {
     });
   }
   
-  // Render error page for regular requests
-  res.status(500).render('error', { 
-    error: message,
-    stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
-  });
+  // Try to render error page, but fallback to plain text if that fails
+  try {
+    res.status(500).render('error', { 
+      error: message,
+      stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+    });
+  } catch (renderError) {
+    console.error('Failed to render error page:', renderError);
+    // Fallback to plain text response
+    res.status(500).send(`<html><body style="font-family: Arial; padding: 40px; text-align: center; background: #000; color: #fff;"><h1>Something Went Wrong</h1><p>${message}</p><a href="/" style="color: #4CAF50;">Go Home</a></body></html>`);
+  }
 });
 
 // 404 handler (must be after all routes)
