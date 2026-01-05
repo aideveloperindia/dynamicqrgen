@@ -27,24 +27,35 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session configuration with MongoDB store (required for serverless)
-let sessionStore;
+let sessionStore = null;
 try {
   if (!process.env.MONGODB_URI) {
     console.warn('⚠️  WARNING: MONGODB_URI not set. Sessions will not persist.');
   } else {
-    sessionStore = MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI,
-      touchAfter: 24 * 3600,
-      ttl: 24 * 60 * 60,
-      autoRemove: 'native'
-    });
-    
-    sessionStore.on('error', function(error) {
-      console.error('Session store error:', error);
-    });
+    try {
+      sessionStore = MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        touchAfter: 24 * 3600,
+        ttl: 24 * 60 * 60,
+        autoRemove: 'native'
+      });
+      
+      sessionStore.on('error', function(error) {
+        console.error('Session store error:', error);
+        // Don't crash - continue without session store
+        sessionStore = null;
+      });
+      
+      console.log('✅ Session store initialized');
+    } catch (storeError) {
+      console.error('Failed to create session store:', storeError.message);
+      sessionStore = null;
+      // Continue without session store (will use memory store as fallback)
+    }
   }
 } catch (err) {
-  console.error('Failed to create session store:', err);
+  console.error('Session store setup error:', err.message);
+  sessionStore = null;
   // Continue without session store (will use memory store as fallback)
 }
 
@@ -161,9 +172,14 @@ app.use('/admin', adminRoutes);
 // Home route - show landing page or redirect to dashboard
 app.get('/', async (req, res) => {
   try {
-    // Ensure DB connection for serverless
+    // Ensure DB connection for serverless (but don't fail if it doesn't work)
     if (process.env.VERCEL) {
-      await connectDB();
+      try {
+        await connectDB();
+      } catch (dbError) {
+        console.error('DB connection error in home route:', dbError.message);
+        // Continue anyway - landing page doesn't need DB
+      }
     }
     
     if (req.isAuthenticated()) {
@@ -172,16 +188,26 @@ app.get('/', async (req, res) => {
     res.render('landing');
   } catch (error) {
     console.error('Home route error:', error);
-    res.render('landing');
+    // Always render landing page even on error
+    try {
+      res.render('landing');
+    } catch (renderError) {
+      res.status(500).send('Error loading page. Please try again.');
+    }
   }
 });
 
 // Login route
 app.get('/login', async (req, res) => {
   try {
-    // Ensure DB connection for serverless
+    // Ensure DB connection for serverless (but don't fail if it doesn't work)
     if (process.env.VERCEL) {
-      await connectDB();
+      try {
+        await connectDB();
+      } catch (dbError) {
+        console.error('DB connection error in login route:', dbError.message);
+        // Continue anyway - login page doesn't need DB initially
+      }
     }
     
     if (req.isAuthenticated()) {
@@ -190,7 +216,12 @@ app.get('/login', async (req, res) => {
     res.render('login');
   } catch (error) {
     console.error('Login route error:', error);
-    res.render('login');
+    // Always render login page even on error
+    try {
+      res.render('login');
+    } catch (renderError) {
+      res.status(500).send('Error loading login page. Please try again.');
+    }
   }
 });
 

@@ -7,24 +7,24 @@ const connectDB = require('./database');
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   console.warn('⚠️  WARNING: Google OAuth credentials not configured. Gmail login will not work.');
   console.warn('   Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your environment variables.');
-}
+} else {
+  const callbackURL = process.env.GOOGLE_CALLBACK_URL || 
+    (process.env.BASE_URL ? `${process.env.BASE_URL}/auth/google/callback` : 'http://localhost:4000/auth/google/callback');
 
-const callbackURL = process.env.GOOGLE_CALLBACK_URL || 
-  (process.env.BASE_URL ? `${process.env.BASE_URL}/auth/google/callback` : 'http://localhost:4000/auth/google/callback');
+  console.log('🔐 Google OAuth configured:', {
+    hasClientID: !!process.env.GOOGLE_CLIENT_ID,
+    hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: callbackURL
+  });
 
-console.log('🔐 Google OAuth configured:', {
-  hasClientID: !!process.env.GOOGLE_CLIENT_ID,
-  hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: callbackURL
-});
-
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: callbackURL
-    },
+  try {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackURL: callbackURL
+        },
     async (accessToken, refreshToken, profile, done) => {
       try {
         // Validate profile data
@@ -105,8 +105,13 @@ passport.use(
         return done(error, null);
       }
     }
-  )
-);
+      )
+    );
+  } catch (error) {
+    console.error('❌ Failed to initialize Google OAuth Strategy:', error);
+    console.error('   Google OAuth will not work until credentials are fixed.');
+  }
+}
 
 passport.serializeUser((user, done) => {
   // Store user ID as string
