@@ -67,12 +67,23 @@ router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
+    // Validate input
     if (!email || !password || !name) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    if (name.trim().length < 2) {
+      return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });
     }
 
     // Check if user exists
@@ -83,12 +94,20 @@ router.post('/register', async (req, res) => {
 
     // Generate unique slug
     const baseSlug = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!baseSlug || baseSlug.length === 0) {
+      return res.status(400).json({ success: false, message: 'Invalid email format for slug generation' });
+    }
+
     let uniqueSlug = baseSlug;
     let counter = 1;
     
     while (await User.findOne({ uniqueSlug })) {
       uniqueSlug = `${baseSlug}${counter}`;
       counter++;
+      // Prevent infinite loop
+      if (counter > 1000) {
+        return res.status(500).json({ success: false, message: 'Unable to generate unique identifier. Please try again.' });
+      }
     }
 
     // Hash password
@@ -96,24 +115,68 @@ router.post('/register', async (req, res) => {
 
     // Create user
     const user = new User({
-      email,
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
-      name,
-      uniqueSlug
+      name: name.trim(),
+      uniqueSlug,
+      lastLogin: new Date()
     });
 
     await user.save();
 
-    // Auto login
-    req.login(user, (err) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: 'Registration successful but login failed' });
+    // Auto login with proper session handling
+    req.login(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Login after registration error:', loginErr);
+        // User created but login failed - still return success but ask to login
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Account created but auto-login failed. Please login manually.' 
+        });
       }
-      res.json({ success: true, message: 'Registration successful', user: { email: user.email, name: user.name } });
+
+      // Save session explicitly for serverless environments
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save after registration error:', saveErr);
+          return res.status(500).json({ 
+            success: false, 
+            message: 'Account created but session failed. Please login manually.' 
+          });
+        }
+
+        res.json({ 
+          success: true, 
+          message: 'Registration successful', 
+          user: { email: user.email, name: user.name } 
+        });
+      });
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ success: false, message: 'Registration failed: ' + error.message });
+    
+    // Handle MongoDB duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ 
+        success: false, 
+        message: `${field === 'email' ? 'Email' : 'Username'} already exists` 
+      });
+    }
+
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: messages.join(', ') 
+      });
+    }
+
+    res.status(500).json({ 
+      success: false, 
+      message: 'Registration failed. Please try again.' 
+    });
   }
 });
 
@@ -147,12 +210,22 @@ router.post('/login', async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Login user
-    req.login(user, (err) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: 'Login failed' });
+    // Login user with proper session handling
+    req.login(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Login error:', loginErr);
+        return res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
       }
-      res.json({ success: true, message: 'Login successful', user: { email: user.email, name: user.name } });
+
+      // Save session explicitly for serverless environments
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error:', saveErr);
+          return res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
+        }
+
+        res.json({ success: true, message: 'Login successful', user: { email: user.email, name: user.name } });
+      });
     });
   } catch (error) {
     console.error('Login error:', error);

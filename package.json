@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "generate-qr": "node scripts/generateQR.js"
+    "generate-qr": "node scripts/generateQR.js",
+    "cleanup": "node scripts/cleanup-inactive-accounts.js",
+    "cleanup:dry-run": "node scripts/cleanup-inactive-accounts.js --dry-run"
   },
   "keywords": [
     "qr",

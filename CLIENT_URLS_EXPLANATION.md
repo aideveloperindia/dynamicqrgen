@@ -56,3 +56,4 @@ This displays:
 4. QR code links to this URL
 5. Customers scan → See restaurant's page → Click links → Redirected to social media/payment/etc.
 
+

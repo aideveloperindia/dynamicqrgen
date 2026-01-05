@@ -119,3 +119,4 @@ node scripts/create-admin.js admin@yourdomain.com yourpassword "Admin Name"
 - All sensitive data stored securely in MongoDB
 - Base64 image storage for logos and QR codes (Vercel compatible)
 
+

@@ -61,3 +61,4 @@ Currently, admin panel uses auto-login for convenience. For production, consider
 - Adding 2FA
 - Restricting access to specific emails
 
+
