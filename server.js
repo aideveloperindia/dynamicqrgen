@@ -170,6 +170,15 @@ app.use('/qr', qrRoutes);
 app.use('/p', publicRoutes);
 app.use('/admin', adminRoutes);
 
+// Health check route (no DB needed)
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.VERCEL ? 'production' : 'development'
+  });
+});
+
 // Home route - show landing page or redirect to dashboard
 app.get('/', async (req, res) => {
   try {
