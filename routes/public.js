@@ -24,9 +24,13 @@ router.get('/:slug', async (req, res) => {
       return res.status(404).send('Page not found');
     }
 
+    // Check subscription status (consistent with rest of app)
+    const now = new Date();
+    const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+    
     // TEMPORARILY DISABLED for testing - uncomment after testing
-    // if (!user.paymentCompleted) {
-    //   return res.status(403).send('This page is not active yet. Payment pending.');
+    // if (!isActive) {
+    //   return res.status(403).send('This page is not active. Subscription expired.');
     // }
 
     const links = await Link.find({ 
@@ -50,9 +54,18 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
   try {
     const user = await User.findOne({ uniqueSlug: req.params.slug });
     
-    if (!user || !user.paymentCompleted) {
+    if (!user) {
       return res.status(404).send('Page not found');
     }
+
+    // Check subscription status (consistent with rest of app)
+    const now = new Date();
+    const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+    
+    // TEMPORARILY DISABLED for testing - uncomment after testing
+    // if (!isActive) {
+    //   return res.status(403).send('This page is not active. Subscription expired.');
+    // }
 
     const link = await Link.findById(req.params.linkId);
     

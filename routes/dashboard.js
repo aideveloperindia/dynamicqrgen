@@ -169,11 +169,12 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
   }
 });
 
-// Delete a link
+// Delete a link (soft delete - sets isActive to false)
 router.delete('/link/:id', auth, async (req, res) => {
   try {
     const link = await Link.findById(req.params.id);
     if (link && link.userId.toString() === req.user._id.toString()) {
+      // Soft delete: set isActive to false (preserves data for analytics)
       link.isActive = false;
       await link.save();
       return res.json({ success: true, message: 'Link deleted successfully' });

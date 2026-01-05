@@ -672,11 +672,13 @@ await user.save();
 /dashboard                  → Client dashboard (protected)
 /dashboard/update-profile   → Update business name/logo
 /dashboard/link             → Add/Edit link
-/dashboard/link/:id         → Delete link
+/dashboard/link/:id         → Delete link (soft delete)
+/dashboard/preview          → Get user's public page data (API)
 
 /payment/pay                → Process payment (simplified)
 /payment/create-order       → Create Razorpay order (future)
 /payment/verify             → Verify Razorpay payment (future)
+/payment/status             → Check payment/subscription status (API)
 
 /qr/generate                → Generate QR code (protected)
 /qr/get                     → Get existing QR code (protected)
@@ -684,10 +686,11 @@ await user.save();
 /p/:slug                    → Public page (anyone can access)
 /p/:slug/redirect/:linkId   → Redirect to actual link URL
 
-/admin/login                → Admin login
+/admin/login                → Admin login (auto-login enabled)
 /admin                      → Admin dashboard (protected)
 /admin/stats                → Admin statistics API
 /admin/clients               → Admin clients list API
+/admin/clients/:id          → Get specific client details (API)
 ```
 
 ### Middleware Chain
