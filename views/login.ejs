@@ -369,8 +369,29 @@
         // Check for URL error parameters
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
+        const errorMsg = urlParams.get('msg');
+        
         if (error) {
-            showError('Authentication failed. Please try again.');
+            let errorMessage = 'Authentication failed. ';
+            
+            switch(error) {
+                case 'auth_error':
+                    errorMessage = errorMsg ? decodeURIComponent(errorMsg) : 'Google authentication error. Please try again.';
+                    break;
+                case 'no_user':
+                    errorMessage = 'Unable to create account. Please try again or contact support.';
+                    break;
+                case 'login_error':
+                    errorMessage = errorMsg ? decodeURIComponent(errorMsg) : 'Login failed. Please try again.';
+                    break;
+                case 'save_error':
+                    errorMessage = 'Session error. Please try logging in again.';
+                    break;
+                default:
+                    errorMessage = 'Authentication failed. Please try again.';
+            }
+            
+            showError(errorMessage);
         }
     </script>
 </body>
