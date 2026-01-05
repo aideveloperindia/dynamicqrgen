@@ -59,16 +59,21 @@ router.post('/pay', auth, async (req, res) => {
 
     await user.save();
 
-    // Save payment record
-    const payment = new Payment({
-      userId: user._id,
-      razorpayOrderId: user.paymentId,
-      amount: 99900, // ₹999 in paise
-      status: 'completed',
-      razorpayPaymentId: user.paymentId,
-      razorpaySignature: 'manual_payment'
-    });
-    await payment.save();
+    // Save payment record (optional - don't fail if Payment model has issues)
+    try {
+      const payment = new Payment({
+        userId: user._id,
+        razorpayOrderId: user.paymentId,
+        amount: 99900, // ₹999 in paise
+        status: 'completed',
+        razorpayPaymentId: user.paymentId,
+        razorpaySignature: 'manual_payment'
+      });
+      await payment.save();
+    } catch (paymentError) {
+      // Log but don't fail the payment if Payment record save fails
+      console.warn('Payment record save failed (non-critical):', paymentError.message);
+    }
 
     res.json({
       success: true,

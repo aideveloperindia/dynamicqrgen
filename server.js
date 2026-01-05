@@ -29,18 +29,23 @@ app.use(express.urlencoded({ extended: true }));
 // Session configuration with MongoDB store (required for serverless)
 let sessionStore;
 try {
-  sessionStore = MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    touchAfter: 24 * 3600,
-    ttl: 24 * 60 * 60,
-    autoRemove: 'native'
-  });
-  
-  sessionStore.on('error', function(error) {
-    console.error('Session store error:', error);
-  });
+  if (!process.env.MONGODB_URI) {
+    console.warn('⚠️  WARNING: MONGODB_URI not set. Sessions will not persist.');
+  } else {
+    sessionStore = MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI,
+      touchAfter: 24 * 3600,
+      ttl: 24 * 60 * 60,
+      autoRemove: 'native'
+    });
+    
+    sessionStore.on('error', function(error) {
+      console.error('Session store error:', error);
+    });
+  }
 } catch (err) {
   console.error('Failed to create session store:', err);
+  // Continue without session store (will use memory store as fallback)
 }
 
 app.use(session({
@@ -61,6 +66,11 @@ app.use(session({
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Async error wrapper helper
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
 
 // Set Content Security Policy headers to allow favicon and images
 app.use((req, res, next) => {
@@ -215,6 +225,50 @@ app.get('/website', (req, res) => {
 
 app.get('/google', (req, res) => {
   res.redirect(LINKS.google);
+});
+
+// Global error handler middleware (must be last)
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled error:', err);
+  console.error('Stack:', err.stack);
+  
+  // Don't leak error details in production
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Internal server error' 
+    : err.message;
+  
+  // If response already sent, delegate to default handler
+  if (res.headersSent) {
+    return next(err);
+  }
+  
+  // Return JSON for API requests
+  if (req.xhr || req.headers['content-type']?.includes('application/json') || req.path.startsWith('/api/')) {
+    return res.status(500).json({ 
+      success: false, 
+      message: message,
+      error: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+    });
+  }
+  
+  // Render error page for regular requests
+  res.status(500).render('error', { 
+    error: message,
+    stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+  });
+});
+
+// 404 handler (must be after all routes)
+app.use((req, res) => {
+  // Return JSON for API requests
+  if (req.xhr || req.headers['content-type']?.includes('application/json') || req.path.startsWith('/api/')) {
+    return res.status(404).json({ 
+      success: false, 
+      message: 'Route not found' 
+    });
+  }
+  
+  res.status(404).send('Page not found');
 });
 
 // For local development
