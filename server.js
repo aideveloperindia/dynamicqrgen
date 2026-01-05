@@ -59,11 +59,12 @@ try {
   // Continue without session store (will use memory store as fallback)
 }
 
+// Session configuration - use store if available, otherwise memory store
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
   resave: false,
   saveUninitialized: false,
-  store: sessionStore,
+  store: sessionStore || undefined, // Use MongoDB store if available, otherwise memory store
   proxy: true,
   cookie: {
     secure: isProduction,
