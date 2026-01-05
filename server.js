@@ -41,9 +41,14 @@ try {
       });
       
       sessionStore.on('error', function(error) {
-        console.error('Session store error:', error);
+        console.error('❌ Session store error:', error.message);
+        console.error('   Session store will use memory fallback');
         // Don't crash - continue without session store
         sessionStore = null;
+      });
+      
+      sessionStore.on('connect', function() {
+        console.log('✅ Session store connected to MongoDB');
       });
       
       console.log('✅ Session store initialized');
