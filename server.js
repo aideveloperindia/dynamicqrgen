@@ -176,12 +176,41 @@ app.use('/p', publicRoutes);
 app.use('/admin', adminRoutes);
 
 // Health check route (no DB needed)
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+// Health check endpoint with MongoDB diagnostics
+app.get('/health', async (req, res) => {
+  const mongoose = require('mongoose');
+  const health = {
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: process.env.VERCEL ? 'production' : 'development'
-  });
+    environment: process.env.VERCEL ? 'vercel' : 'local',
+    mongodb: {
+      uri_set: !!process.env.MONGODB_URI,
+      uri_preview: process.env.MONGODB_URI ? 
+        process.env.MONGODB_URI.replace(/:[^:@]+@/, ':****@') : 'not set',
+      connected: false,
+      error: null
+    }
+  };
+
+  // Test MongoDB connection
+  if (process.env.MONGODB_URI) {
+    try {
+      await connectDB();
+      health.mongodb.connected = mongoose.connection.readyState === 1;
+      if (health.mongodb.connected) {
+        health.mongodb.host = mongoose.connection.host;
+        health.mongodb.database = mongoose.connection.name;
+      }
+    } catch (error) {
+      health.mongodb.error = error.message;
+      health.status = 'degraded';
+    }
+  } else {
+    health.status = 'degraded';
+    health.mongodb.error = 'MONGODB_URI not set in environment variables';
+  }
+
+  res.json(health);
 });
 
 // Home route - show landing page or redirect to dashboard
