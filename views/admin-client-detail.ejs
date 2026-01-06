@@ -180,7 +180,18 @@
             const container = document.getElementById('clientDetails');
 
             try {
-                const response = await fetch(`/admin/clients/${clientId}`);
+                // Use the API endpoint explicitly to ensure JSON response
+                const response = await fetch(`/admin/clients/${clientId}/api`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
 
                 if (!data.success) {
