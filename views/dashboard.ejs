@@ -756,8 +756,8 @@
             
             // Check subscription status from server-side rendered data
             <% 
-            const now = new Date();
-            const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+            const currentDate = new Date();
+            const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > currentDate;
             %>
             const subscriptionActive = <%= isActive %>;
             
