@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "generate-qr": "node scripts/generateQR.js",
     "cleanup": "node scripts/cleanup-inactive-accounts.js",
-    "cleanup:dry-run": "node scripts/cleanup-inactive-accounts.js --dry-run"
+    "cleanup:dry-run": "node scripts/cleanup-inactive-accounts.js --dry-run",
+    "cleanup:all": "node scripts/cleanup-all-clients.js"
   },
   "keywords": [
     "qr",

@@ -209,8 +209,8 @@ router.get('/clients', adminAuth, async (req, res) => {
   }
 });
 
-// Get client details
-router.get('/clients/:id', adminAuth, async (req, res) => {
+// Get client details - API endpoint (for JSON requests)
+router.get('/clients/:id/api', adminAuth, async (req, res) => {
   try {
     const client = await User.findById(req.params.id).select('-password');
     if (!client) {
@@ -227,6 +227,33 @@ router.get('/clients/:id', adminAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin client details error:', error);
     res.status(500).json({ success: false, message: 'Error fetching client details' });
+  }
+});
+
+// Get client details - Page view (for HTML requests)
+router.get('/clients/:id', adminAuth, async (req, res) => {
+  try {
+    // If it's an API request (JSON), return JSON
+    if (req.headers.accept && req.headers.accept.includes('application/json') || req.query.format === 'json') {
+      const client = await User.findById(req.params.id).select('-password');
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'Client not found' });
+      }
+
+      const links = await Link.find({ userId: client._id, isActive: true }).sort({ order: 1 });
+
+      return res.json({
+        success: true,
+        client,
+        links
+      });
+    }
+
+    // Otherwise, render the client detail page (it will fetch data via JavaScript)
+    res.render('admin-client-detail');
+  } catch (error) {
+    console.error('Admin client details error:', error);
+    res.status(500).send('Error loading client details');
   }
 });
 
