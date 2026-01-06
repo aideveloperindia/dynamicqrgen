@@ -387,6 +387,18 @@
                 case 'save_error':
                     errorMessage = 'Session error. Please try logging in again.';
                     break;
+                case 'config_error':
+                    errorMessage = errorMsg ? decodeURIComponent(errorMsg) : 'Google OAuth is not configured. Please contact support.';
+                    break;
+                case 'strategy_error':
+                    errorMessage = errorMsg ? decodeURIComponent(errorMsg) : 'Google OAuth is not available. Please contact support.';
+                    break;
+                case 'db_error':
+                    errorMessage = errorMsg ? decodeURIComponent(errorMsg) : 'Database connection failed. Please try again.';
+                    break;
+                case 'unexpected_error':
+                    errorMessage = errorMsg ? decodeURIComponent(errorMsg) : 'An unexpected error occurred. Please try again.';
+                    break;
                 default:
                     errorMessage = 'Authentication failed. Please try again.';
             }

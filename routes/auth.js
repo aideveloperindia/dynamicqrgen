@@ -18,49 +18,102 @@ router.use(async (req, res, next) => {
 });
 
 // Google OAuth login
-router.get('/google',
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    prompt: 'select_account'
-  })
-);
+router.get('/google', (req, res, next) => {
+  // Check if Google OAuth is configured
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.error('Google OAuth not configured - missing credentials');
+    return res.redirect('/login?error=config_error&msg=' + encodeURIComponent('Google OAuth is not configured. Please contact support.'));
+  }
+
+  // Check if strategy is registered
+  const strategies = passport._strategies;
+  if (!strategies || !strategies.google) {
+    console.error('Google OAuth strategy not registered');
+    return res.redirect('/login?error=strategy_error&msg=' + encodeURIComponent('Google OAuth is not available. Please contact support.'));
+  }
+
+  try {
+    passport.authenticate('google', { 
+      scope: ['profile', 'email'],
+      prompt: 'select_account'
+    })(req, res, next);
+  } catch (error) {
+    console.error('Error in Google OAuth route:', error);
+    res.redirect('/login?error=unexpected_error&msg=' + encodeURIComponent(error.message || 'An unexpected error occurred'));
+  }
+});
 
 // Google OAuth callback with explicit error handling
-router.get('/google/callback', (req, res, next) => {
-  passport.authenticate('google', (err, user, info) => {
-    console.log('Passport authenticate callback:', { err: err?.message, user: user?.email, info });
-    
-    if (err) {
-      console.error('Passport auth error:', err);
-      return res.redirect('/login?error=auth_error&msg=' + encodeURIComponent(err.message));
+router.get('/google/callback', async (req, res, next) => {
+  try {
+    // Check if Google OAuth is configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error('Google OAuth not configured in callback');
+      return res.redirect('/login?error=config_error&msg=' + encodeURIComponent('Google OAuth is not configured'));
     }
-    
-    if (!user) {
-      console.error('No user returned from Google:', info);
-      return res.redirect('/login?error=no_user');
+
+    // Check if strategy is registered
+    const strategies = passport._strategies;
+    if (!strategies || !strategies.google) {
+      console.error('Google OAuth strategy not registered in callback');
+      return res.redirect('/login?error=strategy_error&msg=' + encodeURIComponent('Google OAuth strategy not available'));
     }
-    
-    // Log in the user
-    req.login(user, (loginErr) => {
-      if (loginErr) {
-        console.error('Login error:', loginErr);
-        return res.redirect('/login?error=login_error&msg=' + encodeURIComponent(loginErr.message));
+
+    // Ensure DB connection before authentication
+    try {
+      await connectDB();
+    } catch (dbError) {
+      console.error('DB connection error in Google callback:', dbError);
+      return res.redirect('/login?error=db_error&msg=' + encodeURIComponent('Database connection failed'));
+    }
+
+    passport.authenticate('google', (err, user, info) => {
+      console.log('Passport authenticate callback:', { 
+        err: err?.message, 
+        user: user?.email, 
+        hasUser: !!user,
+        info: info?.message || info 
+      });
+      
+      if (err) {
+        console.error('Passport auth error:', err);
+        console.error('Error stack:', err.stack);
+        return res.redirect('/login?error=auth_error&msg=' + encodeURIComponent(err.message || 'Authentication failed'));
       }
       
-      console.log('User logged in:', user.email);
+      if (!user) {
+        console.error('No user returned from Google:', info);
+        return res.redirect('/login?error=no_user&msg=' + encodeURIComponent(info?.message || 'No user returned from Google'));
+      }
       
-      // Save session and redirect
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('Session save error:', saveErr);
-          return res.redirect('/login?error=save_error');
+      // Log in the user
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error('Login error:', loginErr);
+          console.error('Login error stack:', loginErr.stack);
+          return res.redirect('/login?error=login_error&msg=' + encodeURIComponent(loginErr.message || 'Login failed'));
         }
         
-        console.log('Session saved, redirecting to dashboard');
-        res.redirect('/dashboard');
+        console.log('User logged in:', user.email);
+        
+        // Save session and redirect
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+            console.error('Session save error stack:', saveErr.stack);
+            return res.redirect('/login?error=save_error&msg=' + encodeURIComponent('Session save failed'));
+          }
+          
+          console.log('Session saved, redirecting to dashboard');
+          res.redirect('/dashboard');
+        });
       });
-    });
-  })(req, res, next);
+    })(req, res, next);
+  } catch (error) {
+    console.error('Unexpected error in Google callback:', error);
+    console.error('Error stack:', error.stack);
+    res.redirect('/login?error=unexpected_error&msg=' + encodeURIComponent(error.message || 'An unexpected error occurred'));
+  }
 });
 
 // Register with email/password
