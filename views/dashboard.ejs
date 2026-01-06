@@ -756,10 +756,10 @@
             
             // Check subscription status from server-side rendered data
             <% 
-            const currentDate = new Date();
-            const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > currentDate;
+            const currentDateCheck = new Date();
+            const isSubActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > currentDateCheck;
             %>
-            const subscriptionActive = <%= isActive %>;
+            const subscriptionActive = <%= isSubActive %>;
             
             if (!hasLinks) {
                 qrContainer.innerHTML = `
