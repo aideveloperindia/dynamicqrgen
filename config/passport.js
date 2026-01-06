@@ -123,7 +123,12 @@ passport.deserializeUser(async (id, done) => {
     // Ensure DB connection for serverless
     await connectDB();
     
-    // Try User first
+    if (!id) {
+      console.error('DeserializeUser: No ID provided');
+      return done(null, false);
+    }
+    
+    // Try User first (most common case)
     let user = await User.findById(id);
     if (user) {
       return done(null, user);
@@ -136,11 +141,14 @@ passport.deserializeUser(async (id, done) => {
       return done(null, admin);
     }
     
-    console.log('User/Admin not found in deserializeUser:', id);
+    console.warn('DeserializeUser: User/Admin not found for ID:', id);
     return done(null, false);
   } catch (error) {
-    console.error('Deserialize error:', error);
-    done(error, null);
+    console.error('DeserializeUser error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('ID:', id);
+    // Return false instead of error to prevent session issues
+    done(null, false);
   }
 });
 

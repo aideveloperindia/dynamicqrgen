@@ -58,8 +58,34 @@ const DEFAULT_CATEGORIES = {
 // Dashboard page
 router.get('/', auth, async (req, res) => {
   try {
+    // Check if req.user exists
+    if (!req.user || !req.user._id) {
+      console.error('Dashboard: req.user is missing or invalid');
+      req.logout((err) => {
+        if (err) console.error('Logout error:', err);
+      });
+      return res.redirect('/login');
+    }
+    
+    // Check if req.user is actually a User (not an Admin)
+    // Admins have 'role' field, Users don't (or have 'uniqueSlug'/'businessName')
+    if (req.user.role) {
+      // Admin trying to access user dashboard - redirect to admin dashboard
+      return res.redirect('/admin');
+    }
+    
+    // Ensure req.user is a User document - always fetch fresh from DB to ensure it's a User
     const user = await User.findById(req.user._id);
-    const links = await Link.find({ userId: req.user._id, isActive: true }).sort({ order: 1 });
+    if (!user) {
+      // User not found - might be an Admin ID or deleted user
+      console.error('Dashboard: User not found for ID:', req.user._id);
+      req.logout((err) => {
+        if (err) console.error('Logout error:', err);
+      });
+      return res.redirect('/login');
+    }
+    
+    const links = await Link.find({ userId: user._id, isActive: true }).sort({ order: 1 });
     
     res.render('dashboard', {
       user,
@@ -69,6 +95,8 @@ router.get('/', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Dashboard error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('req.user:', req.user ? { _id: req.user._id, email: req.user.email, role: req.user.role } : 'null');
     res.status(500).send('Error loading dashboard');
   }
 });
