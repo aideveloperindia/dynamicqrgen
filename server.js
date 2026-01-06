@@ -179,6 +179,8 @@ app.use('/admin', adminRoutes);
 // Health check endpoint with MongoDB diagnostics
 app.get('/health', async (req, res) => {
   const mongoose = require('mongoose');
+  const passport = require('./config/passport');
+  
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -188,6 +190,14 @@ app.get('/health', async (req, res) => {
       uri_preview: process.env.MONGODB_URI ? 
         process.env.MONGODB_URI.replace(/:[^:@]+@/, ':****@') : 'not set',
       connected: false,
+      error: null
+    },
+    google_oauth: {
+      client_id_set: !!process.env.GOOGLE_CLIENT_ID,
+      client_secret_set: !!process.env.GOOGLE_CLIENT_SECRET,
+      callback_url: process.env.GOOGLE_CALLBACK_URL || 
+        (process.env.BASE_URL ? `${process.env.BASE_URL}/auth/google/callback` : 'http://localhost:4000/auth/google/callback'),
+      strategy_registered: false,
       error: null
     }
   };
@@ -208,6 +218,24 @@ app.get('/health', async (req, res) => {
   } else {
     health.status = 'degraded';
     health.mongodb.error = 'MONGODB_URI not set in environment variables';
+  }
+
+  // Check Google OAuth configuration
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    try {
+      const strategies = passport._strategies;
+      health.google_oauth.strategy_registered = !!(strategies && strategies.google);
+      if (!health.google_oauth.strategy_registered) {
+        health.google_oauth.error = 'Google OAuth strategy not registered. Check server logs for initialization errors.';
+        health.status = 'degraded';
+      }
+    } catch (error) {
+      health.google_oauth.error = error.message;
+      health.status = 'degraded';
+    }
+  } else {
+    health.google_oauth.error = 'Google OAuth credentials not set (GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET missing)';
+    health.status = 'degraded';
   }
 
   res.json(health);
