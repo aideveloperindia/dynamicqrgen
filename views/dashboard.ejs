@@ -347,12 +347,13 @@
             <h2>Subscription Status</h2>
             <% 
             const now = new Date();
-            const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
-            const endDate = user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('en-IN') : null;
+            const isSubscriptionActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+            const subscriptionEndDate = user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('en-IN') : null;
+            const hasLinks = links && links.length > 0;
             %>
-            <% if (isActive) { %>
+            <% if (isSubscriptionActive) { %>
                 <p><span class="status-badge status-paid">✓ Subscription Active</span></p>
-                <p style="margin-top: 15px; color: #888;">Valid until: <strong><%= endDate %></strong></p>
+                <p style="margin-top: 15px; color: #888;">Valid until: <strong><%= subscriptionEndDate %></strong></p>
                 <p style="margin-top: 10px;">Your QR code is active and ready to share!</p>
             <% } else { %>
                 <p><span class="status-badge status-pending">Subscription Inactive</span></p>
@@ -366,9 +367,7 @@
             <h2 class="section-title">Your QR Code</h2>
             <div id="qr-container">
                 <% 
-                const hasLinks = links && links.length > 0;
-                const now = new Date();
-                const isActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+                const isActive = isSubscriptionActive;
                 %>
                 <% if (!hasLinks) { %>
                     <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
