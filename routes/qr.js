@@ -138,8 +138,8 @@ router.get('/generate', auth, async (req, res) => {
         }
         ctx.fillText(line, textX, y);
         
-        // Convert canvas to base64 data URL
-        finalQrDataUrl = canvas.toDataURL('image/png');
+    // Convert canvas to base64 data URL
+    finalQrDataUrl = canvas.toDataURL('image/png');
       } catch (canvasError) {
         console.warn('Canvas error, using QR code without text:', canvasError.message);
         // Use QR code without text overlay if canvas fails
@@ -147,9 +147,9 @@ router.get('/generate', auth, async (req, res) => {
       }
     }
 
-    // Store QR in user document for persistence
-    user.qrCode = finalQrDataUrl;
-    await user.save();
+    // DON'T store QR code in database - generate on-demand to save storage costs
+    // QR codes are deterministic (same input = same output), so we can regenerate anytime
+    // This saves 100% of QR code storage costs for 10,000+ clients
 
     res.json({
       success: true,
@@ -163,7 +163,7 @@ router.get('/generate', auth, async (req, res) => {
   }
 });
 
-// Get existing QR code
+// Get QR code (generates on-demand, no storage needed)
 router.get('/get', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -188,16 +188,80 @@ router.get('/get', auth, async (req, res) => {
       });
     }
 
-    if (user.qrCode) {
-      const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
-      res.json({
-        success: true,
-        qrUrl: user.qrCode,
-        pageUrl: `${baseUrl}/p/${user.uniqueSlug}`
-      });
-    } else {
-      res.json({ success: false, message: 'QR code not generated yet' });
+    // Generate QR code on-demand (no storage needed)
+    const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
+    const pageUrl = `${baseUrl}/p/${user.uniqueSlug}`;
+    
+    // Generate QR as base64 data URL
+    const qrDataUrl = await QRCode.toDataURL(pageUrl, {
+      width: 500,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    let finalQrDataUrl = qrDataUrl;
+    
+    // Try to add business name below QR code if canvas is available
+    if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
+      try {
+        const businessName = user.businessName || user.name || 'QR Code';
+        const qrImage = await loadImage(qrDataUrl);
+        
+        const qrSize = 500;
+        const padding = 40;
+        const textHeight = 60;
+        const canvasWidth = qrSize + (padding * 2);
+        const canvasHeight = qrSize + (padding * 2) + textHeight;
+        
+        const canvas = createCanvas(canvasWidth, canvasHeight);
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
+        
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        const textX = canvasWidth / 2;
+        const textY = qrSize + padding + 10;
+        const maxWidth = qrSize;
+        const words = businessName.split(' ');
+        let line = '';
+        let y = textY;
+        
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' ';
+          const metrics = ctx.measureText(testLine);
+          const testWidth = metrics.width;
+          
+          if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, textX, y);
+            line = words[n] + ' ';
+            y += 40;
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line, textX, y);
+        
+        finalQrDataUrl = canvas.toDataURL('image/png');
+      } catch (canvasError) {
+        console.warn('Canvas error, using QR code without text:', canvasError.message);
+        finalQrDataUrl = qrDataUrl;
+      }
     }
+
+    res.json({
+      success: true,
+      qrUrl: finalQrDataUrl,
+      pageUrl: pageUrl
+    });
   } catch (error) {
     console.error('QR get error:', error);
     res.status(500).json({ success: false, message: 'Error getting QR code' });

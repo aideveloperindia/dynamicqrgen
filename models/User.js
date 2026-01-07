@@ -43,8 +43,12 @@ const userSchema = new mongoose.Schema({
     type: String, // Base64 data URL for logo
     default: ''
   },
+  // QR code is no longer stored - generated on-demand to save storage costs
+  // QR codes are deterministic (same input = same output), so we regenerate from uniqueSlug
+  // This saves 100% of QR code storage costs for 10,000+ clients
+  // qrCode field kept for backward compatibility but not used
   qrCode: {
-    type: String, // Base64 data URL for QR code
+    type: String, // Deprecated - QR codes generated on-demand now
     default: ''
   },
   paymentCompleted: {
