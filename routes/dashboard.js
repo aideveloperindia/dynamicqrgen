@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Link = require('../models/Link');
 const multer = require('multer');
 const path = require('path');
+const sharp = require('sharp');
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
@@ -22,7 +23,7 @@ router.use(async (req, res, next) => {
 // Configure multer with MEMORY storage (Vercel has read-only filesystem)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit for base64 storage
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit before compression
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|svg|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -36,7 +37,57 @@ const upload = multer({
   }
 });
 
-// Helper function to convert buffer to base64 data URL
+// Helper function to compress and convert image to base64 data URL
+async function compressAndConvertToDataUrl(buffer, mimetype) {
+  try {
+    // Target: Max 100KB for logos (saves 80-90% storage)
+    const maxSize = 100 * 1024; // 100KB
+    
+    // For SVG, don't compress (it's already text-based)
+    if (mimetype === 'image/svg+xml') {
+      return `data:${mimetype};base64,${buffer.toString('base64')}`;
+    }
+    
+    // Compress image using sharp
+    let compressedBuffer = await sharp(buffer)
+      .resize(800, 800, { 
+        fit: 'inside', 
+        withoutEnlargement: true 
+      }) // Max 800x800px
+      .jpeg({ quality: 85, mozjpeg: true }) // Convert to JPEG for better compression
+      .toBuffer();
+    
+    // If still too large, reduce quality further
+    if (compressedBuffer.length > maxSize) {
+      compressedBuffer = await sharp(buffer)
+        .resize(600, 600, { 
+          fit: 'inside', 
+          withoutEnlargement: true 
+        })
+        .jpeg({ quality: 75, mozjpeg: true })
+        .toBuffer();
+    }
+    
+    // If still too large, more aggressive compression
+    if (compressedBuffer.length > maxSize) {
+      compressedBuffer = await sharp(buffer)
+        .resize(400, 400, { 
+          fit: 'inside', 
+          withoutEnlargement: true 
+        })
+        .jpeg({ quality: 65, mozjpeg: true })
+        .toBuffer();
+    }
+    
+    return `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Image compression error:', error);
+    // Fallback to original if compression fails
+    return `data:${mimetype};base64,${buffer.toString('base64')}`;
+  }
+}
+
+// Legacy function for backward compatibility (for custom icons)
 function bufferToDataUrl(buffer, mimetype) {
   return `data:${mimetype};base64,${buffer.toString('base64')}`;
 }
@@ -109,7 +160,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Update business name and logo
+// Update business name and logo (logo is optional)
 router.post('/update-profile', auth, upload.single('logo'), async (req, res) => {
   try {
     // Check authentication
@@ -132,9 +183,10 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
     user.phoneNumber = phoneNumber || user.phoneNumber || '';
     user.address = address || '';
     
-    // Store logo as base64 data URL in MongoDB
+    // Store logo as compressed base64 data URL in MongoDB
     if (req.file) {
-      user.logo = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+      // Compress logo to max 100KB before storing (saves 80-90% storage)
+      user.logo = await compressAndConvertToDataUrl(req.file.buffer, req.file.mimetype);
     }
     
     await user.save();
@@ -157,8 +209,18 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
     let icon = '';
     if (categoryType === 'custom') {
       if (req.file) {
-        // Store custom icon as base64 data URL
-        icon = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+        // Store custom icon as compressed base64 data URL (smaller icons, less compression needed)
+        // Icons are smaller, so use lighter compression
+        try {
+          const compressedIcon = await sharp(req.file.buffer)
+            .resize(200, 200, { fit: 'inside', withoutEnlargement: true })
+            .png({ quality: 80 })
+            .toBuffer();
+          icon = `data:image/png;base64,${compressedIcon.toString('base64')}`;
+        } catch (error) {
+          // Fallback to original if compression fails
+          icon = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+        }
       } else if (linkId) {
         // If updating and no new file, keep existing icon
         const existingLink = await Link.findById(linkId);
