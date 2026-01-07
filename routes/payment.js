@@ -34,6 +34,25 @@ function getRazorpay() {
   return razorpayInstance;
 }
 
+// Get UPI payment URL
+router.get('/upi-url', auth, async (req, res) => {
+  try {
+    // UPI URL format: upi://pay?pa=UPI_ID&pn=PAYEE_NAME&am=AMOUNT&cu=CURRENCY
+    const upiId = process.env.UPI_ID || 'nad.nandagiri-3@okicici';
+    const payeeName = process.env.UPI_PAYEE_NAME || 'QR Connect';
+    const amount = 999; // ₹999
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+    
+    res.json({ 
+      success: true, 
+      upiUrl: upiUrl 
+    });
+  } catch (error) {
+    console.error('UPI URL error:', error);
+    res.status(500).json({ success: false, message: 'Error getting UPI URL' });
+  }
+});
+
 // Simplified payment - mark as paid (for testing, will integrate Razorpay later)
 router.post('/pay', auth, async (req, res) => {
   try {

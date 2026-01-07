@@ -39,8 +39,14 @@ router.get('/:slug', async (req, res) => {
       isActive: true 
     }).sort({ order: 1 });
 
+    // Get QR code if available
+    const qrCode = user.qrCode || null;
+
     res.render('public-page', {
-      user,
+      user: {
+        ...user.toObject(),
+        qrCode: qrCode
+      },
       links,
       isPublic: true
     });

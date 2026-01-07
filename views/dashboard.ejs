@@ -296,6 +296,77 @@
             background: #4285F4;
             color: white;
         }
+        
+        .payment-options {
+            text-align: center;
+        }
+        
+        .payment-apps {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .payment-app-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 25px 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+            min-width: 110px;
+            text-align: center;
+        }
+        
+        .payment-app-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .payment-app-btn:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+        
+        .payment-icon {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .payment-icon svg {
+            filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4));
+        }
+        
+        .payment-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 5px;
+        }
+        
+        .payment-googlepay:hover {
+            border-color: #4285F4;
+            box-shadow: 0 10px 30px rgba(66, 133, 244, 0.5);
+        }
+        
+        .payment-phonepe:hover {
+            border-color: #5F259F;
+            box-shadow: 0 10px 30px rgba(95, 37, 159, 0.5);
+        }
+        
+        .payment-paytm:hover {
+            border-color: #00BAF2;
+            box-shadow: 0 10px 30px rgba(0, 186, 242, 0.5);
+        }
 
         @media (max-width: 768px) {
             .form-grid {
@@ -335,6 +406,14 @@
                     <input type="text" name="businessName" value="<%= user.businessName || '' %>" placeholder="Enter business name">
                 </div>
                 <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phoneNumber" value="<%= user.phoneNumber || '' %>" placeholder="+91 9876543210">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" name="address" value="<%= user.address || '' %>" placeholder="Enter your business address">
+                </div>
+                <div class="form-group">
                     <label>Business Logo (Optional)</label>
                     <input type="file" name="logo" accept="image/*">
                 </div>
@@ -358,7 +437,45 @@
             <% } else { %>
                 <p><span class="status-badge status-pending">Subscription Inactive</span></p>
                 <p style="margin-top: 15px;">Subscribe for ₹999/year to activate your QR code</p>
-                <button class="btn btn-success" onclick="initiatePayment()" style="margin-top: 15px;">Pay ₹999</button>
+                <div class="payment-options" style="margin-top: 20px;">
+                    <button class="btn btn-success" onclick="showPaymentApps()" style="margin-bottom: 15px; width: 100%;">
+                        <i class="fas fa-credit-card"></i> Pay ₹999
+                    </button>
+                    <div class="payment-apps" id="paymentApps" style="display: none; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                        <button class="payment-app-btn payment-googlepay" onclick="openUPIPayment()" title="Google Pay">
+                            <div class="payment-icon">
+                                <svg viewBox="0 0 24 24" style="width: 50px; height: 50px;">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                            </div>
+                            <span class="payment-label">Google Pay</span>
+                        </button>
+                        <button class="payment-app-btn payment-phonepe" onclick="openUPIPayment()" title="PhonePe">
+                            <div class="payment-icon">
+                                <svg viewBox="0 0 24 24" style="width: 50px; height: 50px;">
+                                    <rect fill="#5F259F" x="2" y="2" width="20" height="20" rx="4"/>
+                                    <path fill="#FFFFFF" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+                                    <path fill="#FFFFFF" d="M12 9.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5z"/>
+                                </svg>
+                            </div>
+                            <span class="payment-label">PhonePe</span>
+                        </button>
+                        <button class="payment-app-btn payment-paytm" onclick="openUPIPayment()" title="Paytm">
+                            <div class="payment-icon">
+                                <svg viewBox="0 0 24 24" style="width: 50px; height: 50px;">
+                                    <rect fill="#00BAF2" x="2" y="2" width="20" height="20" rx="4"/>
+                                    <path fill="#FFFFFF" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+                                    <path fill="#FFFFFF" d="M12 9.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5z"/>
+                                </svg>
+                            </div>
+                            <span class="payment-label">Paytm</span>
+                        </button>
+                    </div>
+                    <p id="paymentInstruction" style="display: none; color: #888; font-size: 12px; margin-top: 15px; text-align: center;">Click on any payment app to pay ₹999</p>
+                </div>
             <% } %>
         </div>
 
@@ -368,6 +485,9 @@
             <div id="qr-container">
                 <% 
                 const isActive = isSubscriptionActive;
+                %>
+                <% 
+                const accountActivated = user.accountActivated || false;
                 %>
                 <% if (!hasLinks) { %>
                     <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
@@ -380,6 +500,12 @@
                         <i class="fas fa-lock" style="font-size: 2rem; color: #ff5722; margin-bottom: 10px;"></i>
                         <p style="color: #ff5722; font-weight: 600; margin-bottom: 5px;">Subscription Required</p>
                         <p style="color: #888; font-size: 0.9rem;">Please subscribe to generate your QR code.</p>
+                    </div>
+                <% } else if (!accountActivated) { %>
+                    <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
+                        <i class="fas fa-clock" style="font-size: 2rem; color: #ffc107; margin-bottom: 10px;"></i>
+                        <p style="color: #ffc107; font-weight: 600; margin-bottom: 5px;">Pending Approval</p>
+                        <p style="color: #888; font-size: 0.9rem;">You have paid and saved your URLs. Once admin approves, your account will be activated and you can download your QR code.</p>
                     </div>
                 <% } else { %>
                     <button class="btn btn-primary" onclick="generateQR()" id="generateQRBtn">
@@ -631,19 +757,54 @@
             }
         }
 
-        async function initiatePayment() {
+        function showPaymentApps() {
+            const paymentApps = document.getElementById('paymentApps');
+            const instruction = document.getElementById('paymentInstruction');
+            
+            if (paymentApps.style.display === 'none') {
+                paymentApps.style.display = 'flex';
+                instruction.style.display = 'block';
+            } else {
+                paymentApps.style.display = 'none';
+                instruction.style.display = 'none';
+            }
+        }
+        
+        async function openUPIPayment() {
             try {
-                if (!confirm('Subscribe for ₹999/year to activate your QR code?')) {
-                    return;
+                // Get UPI URL from server
+                const upiResponse = await fetch('/payment/upi-url', {
+                    credentials: 'include'
+                });
+                
+                if (!upiResponse.ok) {
+                    throw new Error('Failed to get payment URL');
                 }
-
-                const payBtn = event?.target || document.querySelector('.btn-success');
-                if (payBtn) {
-                    payBtn.disabled = true;
-                    payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                
+                const upiData = await upiResponse.json();
+                
+                if (upiData.success && upiData.upiUrl) {
+                    // Open UPI URL - this will work on mobile devices
+                    window.location.href = upiData.upiUrl;
+                    
+                    // After a delay, show confirmation dialog
+                    setTimeout(() => {
+                        if (confirm('Have you completed the payment of ₹999?')) {
+                            confirmPayment();
+                        }
+                    }, 2000);
+                } else {
+                    throw new Error('Payment URL not available');
                 }
-
-                showAlert('Processing payment...', 'info');
+            } catch (error) {
+                console.error('Payment error:', error);
+                showAlert(error.message || 'Error opening payment. Please try again.', 'error');
+            }
+        }
+        
+        async function confirmPayment() {
+            try {
+                showAlert('Processing payment confirmation...', 'info');
                 
                 const response = await fetch('/payment/pay', {
                     method: 'POST',
@@ -661,25 +822,15 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Show enhanced success message
                     const endDate = data.subscriptionEndDate ? new Date(data.subscriptionEndDate).toLocaleDateString('en-IN') : '1 year from now';
-                    showAlert(`✅ Payment Successful! Your subscription is active until ${endDate}. You can now generate your QR code!`, 'success');
+                    showAlert(`✅ Payment Successful! Your subscription is active until ${endDate}. Once admin approves, you can download your QR code!`, 'success');
                     setTimeout(() => location.reload(), 3000);
                 } else {
-                    showAlert(data.message || 'Payment failed. Please try again.', 'error');
-                    if (payBtn) {
-                        payBtn.disabled = false;
-                        payBtn.innerHTML = 'Pay ₹999';
-                    }
+                    showAlert(data.message || 'Payment confirmation failed. Please contact support.', 'error');
                 }
             } catch (error) {
-                console.error('Payment error:', error);
-                showAlert(error.message || 'Error processing payment. Please try again.', 'error');
-                const payBtn = document.querySelector('.btn-success');
-                if (payBtn) {
-                    payBtn.disabled = false;
-                    payBtn.innerHTML = 'Pay ₹999';
-                }
+                console.error('Payment confirmation error:', error);
+                showAlert(error.message || 'Error confirming payment. Please contact support.', 'error');
             }
         }
 

@@ -257,5 +257,34 @@ router.get('/clients/:id', adminAuth, async (req, res) => {
   }
 });
 
+// Activate client account
+router.post('/clients/:id/activate', adminAuth, async (req, res) => {
+  try {
+    const client = await User.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ success: false, message: 'Client not found' });
+    }
+
+    // Only activate if payment is completed
+    if (!client.paymentCompleted) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot activate account. Payment not completed.' 
+      });
+    }
+
+    client.accountActivated = true;
+    await client.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Account activated successfully' 
+    });
+  } catch (error) {
+    console.error('Account activation error:', error);
+    res.status(500).json({ success: false, message: 'Error activating account' });
+  }
+});
+
 module.exports = router;
 

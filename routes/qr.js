@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const connectDB = require('../config/database');
 const QRCode = require('qrcode');
+const { createCanvas, loadImage } = require('canvas');
 const User = require('../models/User');
 
 // Ensure DB connection for serverless
@@ -37,6 +38,14 @@ router.get('/generate', auth, async (req, res) => {
       });
     }
 
+    // Check if account is activated by admin
+    if (!user.accountActivated) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Your account is pending admin approval. Once approved, you can download your QR code.' 
+      });
+    }
+
     // Check if user has at least one active link
     const Link = require('../models/Link');
     const activeLinks = await Link.find({ userId: user._id, isActive: true });
@@ -61,13 +70,68 @@ router.get('/generate', auth, async (req, res) => {
       }
     });
 
+    // Create canvas with QR code and business name
+    const qrImage = await loadImage(qrDataUrl);
+    const businessName = user.businessName || user.name || 'QR Code';
+    
+    // Calculate canvas dimensions
+    const qrSize = 500;
+    const padding = 40;
+    const textHeight = 60;
+    const canvasWidth = qrSize + (padding * 2);
+    const canvasHeight = qrSize + (padding * 2) + textHeight;
+    
+    const canvas = createCanvas(canvasWidth, canvasHeight);
+    const ctx = canvas.getContext('2d');
+    
+    // White background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+    // Draw QR code
+    ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
+    
+    // Draw business name below QR code
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    
+    // Center the text
+    const textX = canvasWidth / 2;
+    const textY = qrSize + padding + 10;
+    
+    // Draw text with word wrapping if needed
+    const maxWidth = qrSize;
+    const words = businessName.split(' ');
+    let line = '';
+    let y = textY;
+    
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+      
+      if (testWidth > maxWidth && n > 0) {
+        ctx.fillText(line, textX, y);
+        line = words[n] + ' ';
+        y += 40; // Line height
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, textX, y);
+    
+    // Convert canvas to base64 data URL
+    const finalQrDataUrl = canvas.toDataURL('image/png');
+
     // Store QR in user document for persistence
-    user.qrCode = qrDataUrl;
+    user.qrCode = finalQrDataUrl;
     await user.save();
 
     res.json({
       success: true,
-      qrUrl: qrDataUrl,
+      qrUrl: finalQrDataUrl,
       pageUrl: pageUrl,
       message: 'QR code generated successfully'
     });
@@ -92,6 +156,14 @@ router.get('/get', auth, async (req, res) => {
     
     if (!isActive) {
       return res.status(403).json({ success: false, message: 'Active subscription required' });
+    }
+
+    // Check if account is activated by admin
+    if (!user.accountActivated) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Your account is pending admin approval. Once approved, you can download your QR code.' 
+      });
     }
 
     if (user.qrCode) {

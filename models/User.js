@@ -27,7 +27,15 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  phoneNumber: {
+    type: String,
+    default: ''
+  },
   businessName: {
+    type: String,
+    default: ''
+  },
+  address: {
     type: String,
     default: ''
   },
@@ -40,6 +48,10 @@ const userSchema = new mongoose.Schema({
     default: ''
   },
   paymentCompleted: {
+    type: Boolean,
+    default: false
+  },
+  accountActivated: {
     type: Boolean,
     default: false
   },

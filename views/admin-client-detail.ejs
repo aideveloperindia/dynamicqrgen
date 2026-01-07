@@ -234,8 +234,35 @@
                                 <div class="info-value">${client.businessName || 'Not set'}</div>
                             </div>
                             <div class="info-item">
+                                <div class="info-label">Phone Number</div>
+                                <div class="info-value">${client.phoneNumber || 'Not set'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Address</div>
+                                <div class="info-value">${client.address || 'Not set'}</div>
+                            </div>
+                            <div class="info-item">
                                 <div class="info-label">Unique Slug</div>
                                 <div class="info-value">${client.uniqueSlug || 'N/A'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Payment Status</div>
+                                <div class="info-value">
+                                    <span class="badge ${client.paymentCompleted ? 'badge-active' : 'badge-inactive'}">
+                                        ${client.paymentCompleted ? 'Paid' : 'Not Paid'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Account Activated</div>
+                                <div class="info-value">
+                                    <span class="badge ${client.accountActivated ? 'badge-active' : 'badge-inactive'}">
+                                        ${client.accountActivated ? 'Yes' : 'No'}
+                                    </span>
+                                    ${!client.accountActivated && client.paymentCompleted ? `
+                                        <button onclick="activateAccount('${client._id}')" style="margin-left: 10px; padding: 6px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Activate Account</button>
+                                    ` : ''}
+                                </div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Subscription Status</div>
@@ -304,6 +331,34 @@
                         <p>Failed to load client details. Please try again.</p>
                     </div>
                 `;
+            }
+        }
+
+        async function activateAccount(clientId) {
+            if (!confirm('Are you sure you want to activate this account? The client will be able to download their QR code after activation.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/clients/${clientId}/activate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Account activated successfully!');
+                    loadClientDetails();
+                } else {
+                    alert(data.message || 'Failed to activate account');
+                }
+            } catch (error) {
+                console.error('Activation error:', error);
+                alert('Error activating account. Please try again.');
             }
         }
 

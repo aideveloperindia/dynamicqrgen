@@ -330,6 +330,34 @@ app.get('/google', (req, res) => {
   res.redirect(LINKS.google);
 });
 
+// Terms and Conditions page
+app.get('/terms', (req, res) => {
+  res.render('terms');
+});
+
+// Complete Profile page (requires authentication)
+app.get('/complete-profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.redirect('/login');
+    }
+    
+    // Check if profile is already complete
+    const isProfileComplete = user.businessName && user.businessName.trim() !== '' && 
+                              user.phoneNumber && user.phoneNumber.trim() !== '';
+    
+    if (isProfileComplete) {
+      return res.redirect('/dashboard');
+    }
+    
+    res.render('complete-profile', { user });
+  } catch (error) {
+    console.error('Complete profile error:', error);
+    res.redirect('/login');
+  }
+});
+
 // Global error handler middleware (must be last)
 app.use((err, req, res, next) => {
   console.error('❌ Unhandled error:', err);

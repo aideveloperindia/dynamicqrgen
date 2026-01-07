@@ -251,7 +251,10 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Business</th>
+                                    <th>Phone</th>
+                                    <th>Paid</th>
                                     <th>Subscription</th>
+                                    <th>Activated</th>
                                     <th>Joined</th>
                                     <th>Actions</th>
                                 </tr>
@@ -264,15 +267,28 @@
                                        new Date(client.subscriptionEndDate) > new Date();
                         const endDate = client.subscriptionEndDate ? 
                                        new Date(client.subscriptionEndDate).toLocaleDateString('en-IN') : 'N/A';
+                        const isPaid = client.paymentCompleted || false;
+                        const isActivated = client.accountActivated || false;
                         
                         html += `
                             <tr>
                                 <td>${client.name || 'N/A'}</td>
                                 <td>${client.email}</td>
                                 <td>${client.businessName || 'N/A'}</td>
+                                <td>${client.phoneNumber || 'N/A'}</td>
+                                <td>
+                                    <span class="badge ${isPaid ? 'badge-active' : 'badge-inactive'}">
+                                        ${isPaid ? 'Paid' : 'Not Paid'}
+                                    </span>
+                                </td>
                                 <td>
                                     <span class="badge ${isActive ? 'badge-active' : 'badge-inactive'}">
                                         ${isActive ? `Active (${endDate})` : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge ${isActivated ? 'badge-active' : 'badge-inactive'}">
+                                        ${isActivated ? 'Yes' : 'No'}
                                     </span>
                                 </td>
                                 <td>${new Date(client.createdAt).toLocaleDateString('en-IN')}</td>

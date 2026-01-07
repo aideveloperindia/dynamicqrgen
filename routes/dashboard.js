@@ -85,6 +85,14 @@ router.get('/', auth, async (req, res) => {
       return res.redirect('/login');
     }
     
+    // Check if profile is complete - redirect to complete profile if not
+    const isProfileComplete = user.businessName && user.businessName.trim() !== '' && 
+                              user.phoneNumber && user.phoneNumber.trim() !== '';
+    
+    if (!isProfileComplete) {
+      return res.redirect('/complete-profile');
+    }
+    
     const links = await Link.find({ userId: user._id, isActive: true }).sort({ order: 1 });
     
     res.render('dashboard', {
@@ -113,7 +121,7 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
       return res.status(403).json({ success: false, message: 'Authentication required' });
     }
 
-    const { businessName } = req.body;
+    const { businessName, phoneNumber, address } = req.body;
     const user = await User.findById(req.user._id);
     
     if (!user) {
@@ -121,6 +129,8 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
     }
     
     user.businessName = businessName || '';
+    user.phoneNumber = phoneNumber || user.phoneNumber || '';
+    user.address = address || '';
     
     // Store logo as base64 data URL in MongoDB
     if (req.file) {

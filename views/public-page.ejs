@@ -42,10 +42,16 @@
         .logo-section {
             width: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             padding-top: 15px;
             padding-bottom: 10px;
+            gap: 15px;
+        }
+        
+        .business-name-section {
+            text-align: center;
         }
 
         .business-logo {
@@ -304,6 +310,38 @@
         .footer-link:hover {
             opacity: 0.7;
         }
+        
+        .download-qr-section {
+            width: 100%;
+            text-align: center;
+            padding: 30px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+        
+        .qr-preview {
+            margin: 15px 0;
+        }
+        
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #4285F4, #25D366);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -311,11 +349,10 @@
         <div class="logo-section">
             <% if (user.logo) { %>
                 <img src="<%= user.logo %>" alt="<%= user.businessName || user.name %>" class="business-logo">
-            <% } else { %>
-                <div class="default-logo-placeholder">
-                    <h2 style="color: #fff; font-size: 24px; margin: 0;"><%= user.businessName || user.name %></h2>
-                </div>
             <% } %>
+            <div class="business-name-section">
+                <h2 style="color: #fff; font-size: 24px; margin: 0; font-weight: 600;"><%= user.businessName || user.name %></h2>
+            </div>
         </div>
         
         <div class="icons-container">
@@ -354,6 +391,19 @@
             <% } %>
         </div>
         
+        <!-- Download QR Code Section -->
+        <% if (user.qrCode) { %>
+        <div class="download-qr-section">
+            <h3 style="color: #fff; font-size: 18px; margin-bottom: 15px; font-weight: 600;">Download QR Code</h3>
+            <div class="qr-preview">
+                <img src="<%= user.qrCode %>" alt="QR Code" style="max-width: 200px; width: 100%; border-radius: 12px; background: white; padding: 10px;">
+            </div>
+            <a href="<%= user.qrCode %>" download="qr-code.png" class="download-btn">
+                <i class="fas fa-download"></i> Download QR Code
+            </a>
+        </div>
+        <% } %>
+        
         <div class="footer">
             <div class="footer-content">
                 <span>Built by</span>
@@ -361,6 +411,9 @@
                     <img src="/images/A-logo-transparent.png" alt="AI Developer India" class="footer-logo">
                     <span class="footer-text">AI Developer India</span>
                 </a>
+            </div>
+            <div style="margin-top: 15px;">
+                <a href="/terms" class="footer-link" style="font-size: 12px; opacity: 0.7;">Terms & Conditions</a>
             </div>
         </div>
     </div>

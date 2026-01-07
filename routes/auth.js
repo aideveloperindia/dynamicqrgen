@@ -96,12 +96,22 @@ router.get('/google/callback', async (req, res, next) => {
         
         console.log('User logged in:', user.email);
         
+        // Check if profile is complete (has business name and phone number)
+        const isProfileComplete = user.businessName && user.businessName.trim() !== '' && 
+                                  user.phoneNumber && user.phoneNumber.trim() !== '';
+        
         // Save session and redirect
         req.session.save((saveErr) => {
           if (saveErr) {
             console.error('Session save error:', saveErr);
             console.error('Session save error stack:', saveErr.stack);
             return res.redirect('/login?error=save_error&msg=' + encodeURIComponent('Session save failed'));
+          }
+          
+          // Redirect to profile completion if profile is incomplete
+          if (!isProfileComplete) {
+            console.log('Profile incomplete, redirecting to complete profile');
+            return res.redirect('/complete-profile');
           }
           
           console.log('Session saved, redirecting to dashboard');
@@ -119,10 +129,10 @@ router.get('/google/callback', async (req, res, next) => {
 // Register with email/password
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, phoneNumber } = req.body;
 
     // Validate input
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !phoneNumber) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
@@ -172,6 +182,7 @@ router.post('/register', async (req, res) => {
       email: email.toLowerCase().trim(),
       password: hashedPassword,
       name: name.trim(),
+      phoneNumber: phoneNumber.trim(),
       uniqueSlug,
       lastLogin: new Date()
     });
