@@ -254,8 +254,25 @@ app.get('/', async (req, res) => {
       }
     }
     
-    if (req.isAuthenticated()) {
-      return res.redirect('/dashboard');
+    // If user is authenticated, check profile and redirect appropriately
+    if (req.isAuthenticated() && req.user && req.user._id) {
+      try {
+        const User = require('./models/User');
+        const user = await User.findById(req.user._id);
+        if (user) {
+          // Check if profile is complete
+          const isProfileComplete = user.businessName && user.businessName.trim() !== '' && 
+                                    user.phoneNumber && user.phoneNumber.trim() !== '';
+          
+          if (!isProfileComplete) {
+            return res.redirect('/complete-profile');
+          }
+          return res.redirect('/dashboard');
+        }
+      } catch (dbError) {
+        console.error('Error checking user profile in home route:', dbError);
+        // Continue to show landing page if there's an error
+      }
     }
     res.render('landing');
   } catch (error) {
@@ -282,8 +299,25 @@ app.get('/login', async (req, res) => {
       }
     }
     
-    if (req.isAuthenticated()) {
-      return res.redirect('/dashboard');
+    // If user is authenticated, check profile and redirect appropriately
+    if (req.isAuthenticated() && req.user && req.user._id) {
+      try {
+        const User = require('./models/User');
+        const user = await User.findById(req.user._id);
+        if (user) {
+          // Check if profile is complete
+          const isProfileComplete = user.businessName && user.businessName.trim() !== '' && 
+                                    user.phoneNumber && user.phoneNumber.trim() !== '';
+          
+          if (!isProfileComplete) {
+            return res.redirect('/complete-profile');
+          }
+          return res.redirect('/dashboard');
+        }
+      } catch (dbError) {
+        console.error('Error checking user profile in login route:', dbError);
+        // Continue to show login page if there's an error
+      }
     }
     res.render('login');
   } catch (error) {
@@ -338,8 +372,12 @@ app.get('/terms', (req, res) => {
 // Complete Profile page (requires authentication)
 app.get('/complete-profile', auth, async (req, res) => {
   try {
+    const User = require('./models/User');
     const user = await User.findById(req.user._id);
     if (!user) {
+      req.logout((err) => {
+        if (err) console.error('Logout error:', err);
+      });
       return res.redirect('/login');
     }
     
@@ -354,7 +392,8 @@ app.get('/complete-profile', auth, async (req, res) => {
     res.render('complete-profile', { user });
   } catch (error) {
     console.error('Complete profile error:', error);
-    res.redirect('/login');
+    // Don't redirect on error - just show error message
+    res.status(500).send('Error loading profile completion page. Please try again.');
   }
 });
 
