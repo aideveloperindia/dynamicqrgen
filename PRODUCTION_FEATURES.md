@@ -120,3 +120,5 @@ node scripts/create-admin.js admin@yourdomain.com yourpassword "Admin Name"
 - Base64 image storage for logos and QR codes (Vercel compatible)
 
 
+
+

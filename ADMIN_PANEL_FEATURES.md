@@ -62,3 +62,5 @@ Currently, admin panel uses auto-login for convenience. For production, consider
 - Restricting access to specific emails
 
 
+
+

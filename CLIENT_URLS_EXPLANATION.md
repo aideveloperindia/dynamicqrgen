@@ -57,3 +57,5 @@ This displays:
 5. Customers scan → See restaurant's page → Click links → Redirected to social media/payment/etc.
 
 
+
+
