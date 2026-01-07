@@ -414,8 +414,11 @@
                     <input type="text" name="address" value="<%= user.address || '' %>" placeholder="Enter your business address">
                 </div>
                 <div class="form-group">
-                    <label>Business Logo (Optional)</label>
+                    <label>Business Logo (Optional - Max 100KB)</label>
                     <input type="file" name="logo" accept="image/*">
+                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
+                        Maximum file size: 100KB. Use an image compressor if needed.
+                    </small>
                 </div>
                 <button type="submit" class="btn btn-primary">Update Profile</button>
             </form>
@@ -556,8 +559,11 @@
                     </div>
 
                     <div class="form-group" id="customIconGroup" style="display: none;">
-                        <label>Upload Custom Icon</label>
+                        <label>Upload Custom Icon (Max 100KB)</label>
                         <input type="file" id="customIcon" name="customIcon" accept="image/*">
+                        <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
+                            Maximum file size: 100KB
+                        </small>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -656,6 +662,15 @@
             if (!selectedCategory) {
                 showAlert('Please select a category', 'error');
                 return;
+            }
+            
+            // Validate custom icon file size (100KB max)
+            if (selectedCategoryType === 'custom') {
+                const customIconFile = document.getElementById('customIcon').files[0];
+                if (customIconFile && customIconFile.size > 100 * 1024) {
+                    showAlert('Icon file is too large. Maximum size is 100KB. Please compress your image.', 'error');
+                    return;
+                }
             }
 
             const formData = new FormData();
