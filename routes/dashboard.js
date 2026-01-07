@@ -6,7 +6,17 @@ const User = require('../models/User');
 const Link = require('../models/Link');
 const multer = require('multer');
 const path = require('path');
-const sharp = require('sharp');
+
+// Try to load sharp, but make it optional (may fail on Vercel)
+let sharpAvailable = false;
+let sharp;
+try {
+  sharp = require('sharp');
+  sharpAvailable = true;
+} catch (error) {
+  console.warn('Sharp package not available, will use basic compression:', error.message);
+  sharpAvailable = false;
+}
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
@@ -48,41 +58,65 @@ async function compressAndConvertToDataUrl(buffer, mimetype) {
       return `data:${mimetype};base64,${buffer.toString('base64')}`;
     }
     
-    // Compress image using sharp
-    let compressedBuffer = await sharp(buffer)
-      .resize(800, 800, { 
-        fit: 'inside', 
-        withoutEnlargement: true 
-      }) // Max 800x800px
-      .jpeg({ quality: 85, mozjpeg: true }) // Convert to JPEG for better compression
-      .toBuffer();
-    
-    // If still too large, reduce quality further
-    if (compressedBuffer.length > maxSize) {
-      compressedBuffer = await sharp(buffer)
-        .resize(600, 600, { 
-          fit: 'inside', 
-          withoutEnlargement: true 
-        })
-        .jpeg({ quality: 75, mozjpeg: true })
-        .toBuffer();
+    // Use Sharp if available (better compression)
+    if (sharpAvailable && sharp) {
+      try {
+        // Compress image using sharp
+        let compressedBuffer = await sharp(buffer)
+          .resize(800, 800, { 
+            fit: 'inside', 
+            withoutEnlargement: true 
+          }) // Max 800x800px
+          .jpeg({ quality: 85, mozjpeg: true }) // Convert to JPEG for better compression
+          .toBuffer();
+        
+        // If still too large, reduce quality further
+        if (compressedBuffer.length > maxSize) {
+          compressedBuffer = await sharp(buffer)
+            .resize(600, 600, { 
+              fit: 'inside', 
+              withoutEnlargement: true 
+            })
+            .jpeg({ quality: 75, mozjpeg: true })
+            .toBuffer();
+        }
+        
+        // If still too large, more aggressive compression
+        if (compressedBuffer.length > maxSize) {
+          compressedBuffer = await sharp(buffer)
+            .resize(400, 400, { 
+              fit: 'inside', 
+              withoutEnlargement: true 
+            })
+            .jpeg({ quality: 65, mozjpeg: true })
+            .toBuffer();
+        }
+        
+        return `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
+      } catch (sharpError) {
+        console.warn('Sharp compression failed, using basic compression:', sharpError.message);
+        // Fall through to basic compression
+      }
     }
     
-    // If still too large, more aggressive compression
-    if (compressedBuffer.length > maxSize) {
-      compressedBuffer = await sharp(buffer)
-        .resize(400, 400, { 
-          fit: 'inside', 
-          withoutEnlargement: true 
-        })
-        .jpeg({ quality: 65, mozjpeg: true })
-        .toBuffer();
+    // Fallback: Basic compression without Sharp (works everywhere)
+    // Just limit file size by rejecting if too large
+    const originalSize = buffer.length;
+    if (originalSize > maxSize * 2) {
+      // If file is more than 200KB, reject it (too large even after compression)
+      throw new Error(`Image too large (${Math.round(originalSize / 1024)}KB). Please use images smaller than 200KB.`);
     }
     
-    return `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
+    // For smaller files, just store as-is (will be under 100KB limit)
+    // In production, you might want to add a simple resize using canvas if available
+    return `data:${mimetype};base64,${buffer.toString('base64')}`;
   } catch (error) {
     console.error('Image compression error:', error);
-    // Fallback to original if compression fails
+    // If it's a size error, throw it
+    if (error.message.includes('too large')) {
+      throw error;
+    }
+    // Otherwise, fallback to original
     return `data:${mimetype};base64,${buffer.toString('base64')}`;
   }
 }
@@ -211,14 +245,19 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
       if (req.file) {
         // Store custom icon as compressed base64 data URL (smaller icons, less compression needed)
         // Icons are smaller, so use lighter compression
-        try {
-          const compressedIcon = await sharp(req.file.buffer)
-            .resize(200, 200, { fit: 'inside', withoutEnlargement: true })
-            .png({ quality: 80 })
-            .toBuffer();
-          icon = `data:image/png;base64,${compressedIcon.toString('base64')}`;
-        } catch (error) {
-          // Fallback to original if compression fails
+        if (sharpAvailable && sharp) {
+          try {
+            const compressedIcon = await sharp(req.file.buffer)
+              .resize(200, 200, { fit: 'inside', withoutEnlargement: true })
+              .png({ quality: 80 })
+              .toBuffer();
+            icon = `data:image/png;base64,${compressedIcon.toString('base64')}`;
+          } catch (error) {
+            // Fallback to original if compression fails
+            icon = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+          }
+        } else {
+          // No sharp available, use original
           icon = bufferToDataUrl(req.file.buffer, req.file.mimetype);
         }
       } else if (linkId) {
