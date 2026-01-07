@@ -3,8 +3,20 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const connectDB = require('../config/database');
 const QRCode = require('qrcode');
-const { createCanvas, loadImage } = require('canvas');
 const User = require('../models/User');
+
+// Try to load canvas, but make it optional (may fail on Vercel)
+let canvasAvailable = false;
+let createCanvas, loadImage;
+try {
+  const canvasModule = require('canvas');
+  createCanvas = canvasModule.createCanvas;
+  loadImage = canvasModule.loadImage;
+  canvasAvailable = true;
+} catch (error) {
+  console.warn('Canvas package not available, will use QR code without text overlay:', error.message);
+  canvasAvailable = false;
+}
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
@@ -70,60 +82,70 @@ router.get('/generate', auth, async (req, res) => {
       }
     });
 
-    // Create canvas with QR code and business name
-    const qrImage = await loadImage(qrDataUrl);
-    const businessName = user.businessName || user.name || 'QR Code';
+    let finalQrDataUrl = qrDataUrl;
     
-    // Calculate canvas dimensions
-    const qrSize = 500;
-    const padding = 40;
-    const textHeight = 60;
-    const canvasWidth = qrSize + (padding * 2);
-    const canvasHeight = qrSize + (padding * 2) + textHeight;
-    
-    const canvas = createCanvas(canvasWidth, canvasHeight);
-    const ctx = canvas.getContext('2d');
-    
-    // White background
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    
-    // Draw QR code
-    ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
-    
-    // Draw business name below QR code
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 32px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    
-    // Center the text
-    const textX = canvasWidth / 2;
-    const textY = qrSize + padding + 10;
-    
-    // Draw text with word wrapping if needed
-    const maxWidth = qrSize;
-    const words = businessName.split(' ');
-    let line = '';
-    let y = textY;
-    
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + ' ';
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-      
-      if (testWidth > maxWidth && n > 0) {
+    // Try to add business name below QR code if canvas is available
+    if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
+      try {
+        const businessName = user.businessName || user.name || 'QR Code';
+        const qrImage = await loadImage(qrDataUrl);
+        
+        // Calculate canvas dimensions
+        const qrSize = 500;
+        const padding = 40;
+        const textHeight = 60;
+        const canvasWidth = qrSize + (padding * 2);
+        const canvasHeight = qrSize + (padding * 2) + textHeight;
+        
+        const canvas = createCanvas(canvasWidth, canvasHeight);
+        const ctx = canvas.getContext('2d');
+        
+        // White background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        
+        // Draw QR code
+        ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
+        
+        // Draw business name below QR code
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        // Center the text
+        const textX = canvasWidth / 2;
+        const textY = qrSize + padding + 10;
+        
+        // Draw text with word wrapping if needed
+        const maxWidth = qrSize;
+        const words = businessName.split(' ');
+        let line = '';
+        let y = textY;
+        
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' ';
+          const metrics = ctx.measureText(testLine);
+          const testWidth = metrics.width;
+          
+          if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, textX, y);
+            line = words[n] + ' ';
+            y += 40; // Line height
+          } else {
+            line = testLine;
+          }
+        }
         ctx.fillText(line, textX, y);
-        line = words[n] + ' ';
-        y += 40; // Line height
-      } else {
-        line = testLine;
+        
+        // Convert canvas to base64 data URL
+        finalQrDataUrl = canvas.toDataURL('image/png');
+      } catch (canvasError) {
+        console.warn('Canvas error, using QR code without text:', canvasError.message);
+        // Use QR code without text overlay if canvas fails
+        finalQrDataUrl = qrDataUrl;
       }
     }
-    ctx.fillText(line, textX, y);
-    
-    // Convert canvas to base64 data URL
-    const finalQrDataUrl = canvas.toDataURL('image/png');
 
     // Store QR in user document for persistence
     user.qrCode = finalQrDataUrl;
