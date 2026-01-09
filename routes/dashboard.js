@@ -165,14 +165,102 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
   }
 });
 
+// Helper function to format UPI links as merchant payments (removes ₹2000 limit)
+function formatUPILinkAsMerchant(upiUrl) {
+  try {
+    // Check if it's a UPI link
+    const isUPI = upiUrl && (
+      upiUrl.toLowerCase().includes('upi://') ||
+      upiUrl.toLowerCase().includes('pay?pa=') ||
+      upiUrl.toLowerCase().includes('upiqr://')
+    );
+    
+    if (!isUPI) {
+      return upiUrl; // Not a UPI link, return as-is
+    }
+    
+    // Extract UPI URL if embedded
+    let cleanUrl = upiUrl;
+    if (upiUrl.includes('upi://')) {
+      const match = upiUrl.match(/upi:\/\/[^\s"']+/i);
+      if (match) {
+        cleanUrl = decodeURIComponent(match[0]);
+      }
+    }
+    
+    // Parse UPI parameters
+    let urlObj;
+    try {
+      // Try to parse as URL
+      if (cleanUrl.startsWith('upi://')) {
+        // Convert upi:// to http:// for URL parsing, then convert back
+        const httpUrl = cleanUrl.replace('upi://', 'http://');
+        urlObj = new URL(httpUrl);
+      } else {
+        urlObj = new URL(cleanUrl);
+      }
+    } catch (e) {
+      // If parsing fails, try to extract parameters manually
+      const paramsMatch = cleanUrl.match(/[?&]([^=]+)=([^&]+)/g);
+      if (paramsMatch) {
+        const params = {};
+        paramsMatch.forEach(param => {
+          const [key, value] = param.substring(1).split('=');
+          params[key] = decodeURIComponent(value);
+        });
+        
+        // Build proper UPI URL preserving ALL parameters (including aid)
+        const pa = params.pa || params.upi;
+        if (pa) {
+          let upiParams = `pa=${encodeURIComponent(pa)}`;
+          if (params.pn) upiParams += `&pn=${encodeURIComponent(params.pn)}`;
+          if (params.am) upiParams += `&am=${params.am}`;
+          if (params.cu) upiParams += `&cu=${params.cu}`;
+          if (params.aid) upiParams += `&aid=${encodeURIComponent(params.aid)}`; // Preserve aid if present
+          if (params.tn) upiParams += `&tn=${encodeURIComponent(params.tn)}`;
+          if (params.tr) upiParams += `&tr=${encodeURIComponent(params.tr)}`;
+          
+          return `upi://pay?${upiParams}`;
+        }
+      }
+      return cleanUrl; // Return as-is if we can't parse
+    }
+    
+    const params = new URLSearchParams(urlObj.search);
+    const pa = params.get('pa') || params.get('upi');
+    
+    if (!pa) {
+      return cleanUrl; // No UPI ID found, return as-is
+    }
+    
+    // Build merchant UPI URL preserving ALL parameters
+    // CRITICAL: Preserve 'aid' parameter if present (removes ₹2000 limit)
+    let upiParams = `pa=${encodeURIComponent(pa)}`;
+    if (params.get('pn')) upiParams += `&pn=${encodeURIComponent(params.get('pn'))}`;
+    if (params.get('am')) upiParams += `&am=${params.get('am')}`;
+    if (params.get('cu')) upiParams += `&cu=${params.get('cu')}`;
+    if (params.get('aid')) upiParams += `&aid=${encodeURIComponent(params.get('aid'))}`; // Preserve aid!
+    if (params.get('tn')) upiParams += `&tn=${encodeURIComponent(params.get('tn'))}`;
+    if (params.get('tr')) upiParams += `&tr=${encodeURIComponent(params.get('tr'))}`;
+    
+    return `upi://pay?${upiParams}`;
+  } catch (error) {
+    console.error('Error formatting UPI link:', error);
+    return upiUrl; // Return original if formatting fails
+  }
+}
+
 // Add or update a link
 router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
   try {
-    const { category, url, displayName, categoryType, linkId, order } = req.body;
+    let { category, url, displayName, categoryType, linkId, order } = req.body;
     
     if (!url || !displayName) {
       return res.status(400).json({ success: false, message: 'URL and display name are required' });
     }
+    
+    // Automatically format UPI links as merchant payments (preserves aid parameter)
+    url = formatUPILinkAsMerchant(url);
 
     let icon = '';
     if (categoryType === 'custom') {

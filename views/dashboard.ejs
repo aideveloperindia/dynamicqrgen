@@ -611,7 +611,53 @@
                         </div>
                         <div class="form-group">
                             <label style="font-weight: 600;">URL</label>
-                            <input type="url" id="url" name="url" required placeholder="https://..." style="padding: 14px; border-radius: 8px;">
+                            <input type="url" id="url" name="url" required placeholder="https://... or upi://pay?pa=..." style="padding: 14px; border-radius: 8px;" oninput="checkUPILink(this.value)">
+                        </div>
+                    </div>
+                    
+                    <!-- UPI Payment Link Info Box -->
+                    <div id="upiInfoBox" style="display: none; background: #1a1a2e; border: 2px solid #4CAF50; border-radius: 12px; padding: 20px; margin-top: 20px;">
+                        <div style="display: flex; align-items: start; gap: 15px;">
+                            <div style="color: #4CAF50; font-size: 24px;">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="color: #4CAF50; margin: 0 0 10px 0; font-size: 16px;">
+                                    UPI Payment Link Detected
+                                </h4>
+                                <p style="color: #ccc; margin: 0 0 10px 0; font-size: 14px; line-height: 1.6;">
+                                    To allow users to pay <strong style="color: #fff;">any amount without ₹2000 limit</strong>, your UPI link needs the <code style="background: #0a0a0a; padding: 2px 6px; border-radius: 4px; color: #4CAF50;">aid</code> parameter.
+                                </p>
+                                <div style="background: #0a0a0a; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                                    <p style="color: #ff6b6b; margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">
+                                        ⚠️ Without 'aid': ₹2000 limit applies
+                                    </p>
+                                    <p style="color: #4CAF50; margin: 0; font-size: 13px; font-weight: 600;">
+                                        ✅ With 'aid': No limit, users can pay any amount
+                                    </p>
+                                </div>
+                                <div style="margin-top: 15px;">
+                                    <p style="color: #fff; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+                                        How to get your 'aid' (App ID):
+                                    </p>
+                                    <ul style="color: #ccc; margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8;">
+                                        <li>Contact your bank's UPI merchant services</li>
+                                        <li>Register as a merchant with NPCI</li>
+                                        <li>If using Razorpay/Paytm, they provide the 'aid'</li>
+                                    </ul>
+                                </div>
+                                <div style="margin-top: 15px; padding: 12px; background: #0a0a0a; border-radius: 8px; border-left: 3px solid #4CAF50;">
+                                    <p style="color: #4CAF50; margin: 0 0 5px 0; font-size: 12px; font-weight: 600;">
+                                        Example Merchant UPI Link:
+                                    </p>
+                                    <code style="color: #ccc; font-size: 11px; word-break: break-all; display: block;">
+                                        upi://pay?pa=your.upi@okbank&pn=YourName&aid=YOUR_APP_ID&cu=INR
+                                    </code>
+                                </div>
+                                <p style="color: #888; margin: 15px 0 0 0; font-size: 12px; font-style: italic;">
+                                    💡 Tip: If your link already has 'aid', it will be preserved automatically.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -666,6 +712,65 @@
     <script>
         let selectedCategory = null;
         let selectedCategoryType = null;
+        
+        // Check if URL is a UPI payment link and show info box
+        function checkUPILink(url) {
+            const upiInfoBox = document.getElementById('upiInfoBox');
+            if (!upiInfoBox) return;
+            
+            if (!url || url.trim() === '') {
+                upiInfoBox.style.display = 'none';
+                return;
+            }
+            
+            // Check if it's a UPI link
+            const isUPI = url.toLowerCase().includes('upi://') || 
+                         url.toLowerCase().includes('pay?pa=') || 
+                         url.toLowerCase().includes('upiqr://') ||
+                         url.toLowerCase().includes('upi://pay');
+            
+            if (isUPI) {
+                upiInfoBox.style.display = 'block';
+                
+                // Check if 'aid' parameter is present
+                const hasAid = url.toLowerCase().includes('&aid=') || url.toLowerCase().includes('?aid=');
+                if (hasAid) {
+                    // Update info box to show that aid is present
+                    const infoContent = upiInfoBox.querySelector('div > div');
+                    if (infoContent) {
+                        const statusDiv = infoContent.querySelector('div[style*="background: #0a0a0a"]');
+                        if (statusDiv) {
+                            statusDiv.innerHTML = `
+                                <p style="color: #4CAF50; margin: 0; font-size: 13px; font-weight: 600;">
+                                    ✅ Your UPI link includes 'aid' parameter - No ₹2000 limit!
+                                </p>
+                                <p style="color: #888; margin: 8px 0 0 0; font-size: 12px;">
+                                    Users can pay any amount without restrictions.
+                                </p>
+                            `;
+                        }
+                    }
+                } else {
+                    // Reset to default warning if aid is not present
+                    const infoContent = upiInfoBox.querySelector('div > div');
+                    if (infoContent) {
+                        const statusDiv = infoContent.querySelector('div[style*="background: #0a0a0a"]');
+                        if (statusDiv) {
+                            statusDiv.innerHTML = `
+                                <p style="color: #ff6b6b; margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">
+                                    ⚠️ Without 'aid': ₹2000 limit applies
+                                </p>
+                                <p style="color: #4CAF50; margin: 0; font-size: 13px; font-weight: 600;">
+                                    ✅ With 'aid': No limit, users can pay any amount
+                                </p>
+                            `;
+                        }
+                    }
+                }
+            } else {
+                upiInfoBox.style.display = 'none';
+            }
+        }
 
         // Category selection
         document.querySelectorAll('.category-option').forEach(option => {
@@ -818,6 +923,9 @@
             if (categoryOption) {
                 categoryOption.click();
             }
+            
+            // Check if it's a UPI link and show info box
+            setTimeout(() => checkUPILink(url), 100);
         }
 
         async function deleteLink(id) {
