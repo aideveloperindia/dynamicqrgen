@@ -171,5 +171,106 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
   }
 });
 
+// Generate QR code for download (on-demand, exact same as client generated)
+router.get('/:slug/qr-code', async (req, res) => {
+  try {
+    const user = await User.findOne({ uniqueSlug: req.params.slug });
+    
+    if (!user) {
+      return res.status(404).send('Page not found');
+    }
+
+    const QRCode = require('qrcode');
+    const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
+    const pageUrl = `${baseUrl}/p/${user.uniqueSlug}`;
+    
+    // Generate QR code (exact same as client generated)
+    const qrDataUrl = await QRCode.toDataURL(pageUrl, {
+      width: 500,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    // Try to add business name if canvas is available (exact same as client version)
+    let canvasAvailable = false;
+    let createCanvas, loadImage;
+    try {
+      const canvasModule = require('canvas');
+      createCanvas = canvasModule.createCanvas;
+      loadImage = canvasModule.loadImage;
+      canvasAvailable = true;
+    } catch (error) {
+      canvasAvailable = false;
+    }
+
+    let finalQrDataUrl = qrDataUrl;
+    
+    if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
+      try {
+        const businessName = user.businessName || user.name || 'QR Code';
+        const qrImage = await loadImage(qrDataUrl);
+        
+        const qrSize = 500;
+        const padding = 40;
+        const textHeight = 60;
+        const canvasWidth = qrSize + (padding * 2);
+        const canvasHeight = qrSize + (padding * 2) + textHeight;
+        
+        const canvas = createCanvas(canvasWidth, canvasHeight);
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
+        
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        const textX = canvasWidth / 2;
+        const textY = qrSize + padding + 10;
+        const maxWidth = qrSize;
+        const words = businessName.split(' ');
+        let line = '';
+        let y = textY;
+        
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' ';
+          const metrics = ctx.measureText(testLine);
+          const testWidth = metrics.width;
+          
+          if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, textX, y);
+            line = words[n] + ' ';
+            y += 40;
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line, textX, y);
+        
+        finalQrDataUrl = canvas.toDataURL('image/png');
+      } catch (canvasError) {
+        finalQrDataUrl = qrDataUrl;
+      }
+    }
+
+    // Convert base64 to buffer and send as PNG
+    const base64Data = finalQrDataUrl.replace(/^data:image\/png;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `attachment; filename="qr-code-${user.uniqueSlug}.png"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('QR code generation error:', error);
+    res.status(500).send('Error generating QR code');
+  }
+});
+
 module.exports = router;
 

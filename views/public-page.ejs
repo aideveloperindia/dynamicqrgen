@@ -352,6 +352,11 @@
             <% } %>
             <div class="business-name-section">
                 <h2 style="color: #fff; font-size: 24px; margin: 0; font-weight: 600;"><%= user.businessName || user.name %></h2>
+                <% if (user.phoneNumber && user.phoneNumber.trim() !== '') { %>
+                    <a href="tel:<%= user.phoneNumber.replace(/\s+/g, '').replace(/[^0-9+]/g, '') %>" class="call-button" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 15px; padding: 12px 24px; background: #25D366; color: white; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; font-size: 16px;">
+                        <i class="fas fa-phone"></i> Call <%= user.phoneNumber %>
+                    </a>
+                <% } %>
             </div>
         </div>
         
@@ -392,17 +397,78 @@
         </div>
         
         <!-- Download QR Code Section -->
-        <% if (user.qrCode) { %>
         <div class="download-qr-section">
             <h3 style="color: #fff; font-size: 18px; margin-bottom: 15px; font-weight: 600;">Download QR Code</h3>
             <div class="qr-preview">
-                <img src="<%= user.qrCode %>" alt="QR Code" style="max-width: 200px; width: 100%; border-radius: 12px; background: white; padding: 10px;">
+                <% if (user.qrCode) { %>
+                    <img src="<%= user.qrCode %>" alt="QR Code" id="qrCodeImage" style="max-width: 200px; width: 100%; border-radius: 12px; background: white; padding: 10px;">
+                <% } else { %>
+                    <div style="padding: 20px; background: rgba(255,255,255,0.1); border-radius: 12px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #fff;"></i>
+                        <p style="color: #fff; margin-top: 10px; font-size: 14px;">Generating QR Code...</p>
+                    </div>
+                <% } %>
             </div>
-            <a href="<%= user.qrCode %>" download="qr-code.png" class="download-btn">
+            <a href="<%= user.qrCode || '#' %>" download="qr-code.png" class="download-btn" id="downloadQrBtn" onclick="if(!this.href || this.href === '#') { event.preventDefault(); generateQRForDownload(); }">
                 <i class="fas fa-download"></i> Download QR Code
             </a>
         </div>
-        <% } %>
+        
+        <script>
+            // Generate QR code on-demand if not already generated
+            async function generateQRForDownload() {
+                const btn = document.getElementById('downloadQrBtn');
+                const qrPreview = document.querySelector('.qr-preview');
+                
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                    btn.style.pointerEvents = 'none';
+                }
+                
+                try {
+                    // Get the slug from current URL
+                    const slug = window.location.pathname.split('/p/')[1];
+                    const response = await fetch(`/p/${slug}/qr-code`);
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Update image
+                        const img = document.getElementById('qrCodeImage');
+                        if (img) {
+                            img.src = url;
+                        } else {
+                            qrPreview.innerHTML = `<img src="${url}" alt="QR Code" id="qrCodeImage" style="max-width: 200px; width: 100%; border-radius: 12px; background: white; padding: 10px;">`;
+                        }
+                        
+                        // Update download link
+                        if (btn) {
+                            btn.href = url;
+                            btn.download = 'qr-code.png';
+                            btn.innerHTML = '<i class="fas fa-download"></i> Download QR Code';
+                            btn.style.pointerEvents = 'auto';
+                        }
+                    } else {
+                        throw new Error('Failed to generate QR code');
+                    }
+                } catch (error) {
+                    console.error('Error generating QR:', error);
+                    if (btn) {
+                        btn.innerHTML = '<i class="fas fa-download"></i> Download QR Code';
+                        btn.style.pointerEvents = 'auto';
+                    }
+                    alert('Failed to generate QR code. Please try again.');
+                }
+            }
+            
+            // Auto-generate if QR code not available
+            <% if (!user.qrCode) { %>
+            window.addEventListener('DOMContentLoaded', () => {
+                generateQRForDownload();
+            });
+            <% } %>
+        </script>
         
         <div class="footer">
             <div class="footer-content">
