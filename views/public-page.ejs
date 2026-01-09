@@ -409,66 +409,13 @@
                     </div>
                 <% } %>
             </div>
-            <a href="<%= user.qrCode || '#' %>" download="qr-code.png" class="download-btn" id="downloadQrBtn" onclick="if(!this.href || this.href === '#') { event.preventDefault(); generateQRForDownload(); }">
+            <a href="/p/<%= user.uniqueSlug %>/qr-code" download="qr-code-<%= user.uniqueSlug %>.png" class="download-btn" id="downloadQrBtn">
                 <i class="fas fa-download"></i> Download QR Code
             </a>
+            <p style="color: #888; font-size: 12px; margin-top: 10px; text-align: center;">
+                Same QR code as printed - generated on-demand
+            </p>
         </div>
-        
-        <script>
-            // Generate QR code on-demand if not already generated
-            async function generateQRForDownload() {
-                const btn = document.getElementById('downloadQrBtn');
-                const qrPreview = document.querySelector('.qr-preview');
-                
-                if (btn) {
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-                    btn.style.pointerEvents = 'none';
-                }
-                
-                try {
-                    // Get the slug from current URL
-                    const slug = window.location.pathname.split('/p/')[1];
-                    const response = await fetch(`/p/${slug}/qr-code`);
-                    
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        
-                        // Update image
-                        const img = document.getElementById('qrCodeImage');
-                        if (img) {
-                            img.src = url;
-                        } else {
-                            qrPreview.innerHTML = `<img src="${url}" alt="QR Code" id="qrCodeImage" style="max-width: 200px; width: 100%; border-radius: 12px; background: white; padding: 10px;">`;
-                        }
-                        
-                        // Update download link
-                        if (btn) {
-                            btn.href = url;
-                            btn.download = 'qr-code.png';
-                            btn.innerHTML = '<i class="fas fa-download"></i> Download QR Code';
-                            btn.style.pointerEvents = 'auto';
-                        }
-                    } else {
-                        throw new Error('Failed to generate QR code');
-                    }
-                } catch (error) {
-                    console.error('Error generating QR:', error);
-                    if (btn) {
-                        btn.innerHTML = '<i class="fas fa-download"></i> Download QR Code';
-                        btn.style.pointerEvents = 'auto';
-                    }
-                    alert('Failed to generate QR code. Please try again.');
-                }
-            }
-            
-            // Auto-generate if QR code not available
-            <% if (!user.qrCode) { %>
-            window.addEventListener('DOMContentLoaded', () => {
-                generateQRForDownload();
-            });
-            <% } %>
-        </script>
         
         <div class="footer">
             <div class="footer-content">
