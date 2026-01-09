@@ -218,10 +218,17 @@ router.get('/get', auth, async (req, res) => {
     let finalQrDataUrl = qrDataUrl;
     
     // Try to add business name below QR code if canvas is available
+    console.log('QR Get Debug:', {
+      canvasAvailable,
+      hasBusinessName: !!user.businessName,
+      businessName: user.businessName,
+      businessNameTrimmed: user.businessName ? user.businessName.trim() : ''
+    });
+    
     if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
       try {
         const businessName = user.businessName.trim();
-        console.log('Adding business name to QR:', businessName);
+        console.log('✅ Adding business name to QR:', businessName);
         
         const qrImage = await loadImage(qrDataUrl);
         
@@ -270,16 +277,16 @@ router.get('/get', auth, async (req, res) => {
         }
         
         finalQrDataUrl = canvas.toDataURL('image/png');
-        console.log('QR code with business name generated successfully');
+        console.log('✅ QR code with business name generated successfully');
       } catch (canvasError) {
-        console.error('Canvas error, using QR code without text:', canvasError.message);
+        console.error('❌ Canvas error, using QR code without text:', canvasError.message);
         finalQrDataUrl = qrDataUrl;
       }
     } else {
       if (!canvasAvailable) {
-        console.warn('Canvas not available - QR code generated without business name');
+        console.warn('⚠️ Canvas not available - QR code generated without business name');
       } else if (!user.businessName || user.businessName.trim() === '') {
-        console.warn('Business name not set - QR code generated without business name');
+        console.warn('⚠️ Business name not set - QR code generated without business name');
       }
     }
 
