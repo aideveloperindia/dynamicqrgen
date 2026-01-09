@@ -4,15 +4,32 @@ const auth = require('../middleware/auth');
 const connectDB = require('../config/database');
 const QRCode = require('qrcode');
 const User = require('../models/User');
+const path = require('path');
+const fs = require('fs');
 
 // Try to load canvas, but make it optional (may fail on Vercel)
 let canvasAvailable = false;
-let createCanvas, loadImage;
+let createCanvas, loadImage, registerFont;
 try {
   const canvasModule = require('canvas');
   createCanvas = canvasModule.createCanvas;
   loadImage = canvasModule.loadImage;
+  registerFont = canvasModule.registerFont;
   canvasAvailable = true;
+  
+  // Try to register a font if available (for better Vercel compatibility)
+  // If no font file exists, canvas will use default fonts
+  try {
+    // Check if we have a font file (optional - will fallback to system fonts if not)
+    const fontPath = path.join(__dirname, '../fonts', 'Roboto-Regular.ttf');
+    if (fs.existsSync(fontPath)) {
+      registerFont(fontPath, { family: 'Roboto' });
+      console.log('✅ Registered Roboto font');
+    }
+  } catch (fontError) {
+    // Font registration is optional - continue without it
+    console.log('ℹ️  No custom font file found, using system fonts');
+  }
 } catch (error) {
   console.warn('Canvas package not available, will use QR code without text overlay:', error.message);
   canvasAvailable = false;
@@ -29,6 +46,36 @@ router.use(async (req, res, next) => {
     next();
   }
 });
+
+// Helper function to render text with fallback fonts
+function renderTextWithFallback(ctx, text, x, y, maxWidth) {
+  // Try different font configurations that work better on Vercel
+  const fontConfigs = [
+    'bold 32px Roboto, sans-serif',  // If Roboto is registered
+    'bold 32px DejaVu Sans, sans-serif',  // Common Linux font
+    'bold 32px Liberation Sans, sans-serif',  // Common Linux font
+    'bold 32px Arial, sans-serif',  // Fallback
+    'bold 32px sans-serif'  // Ultimate fallback
+  ];
+  
+  for (const fontConfig of fontConfigs) {
+    try {
+      ctx.font = fontConfig;
+      const metrics = ctx.measureText(text);
+      
+      // If text renders without boxes (has reasonable width), use this font
+      if (metrics.width > 0 && metrics.width < maxWidth * 2) {
+        return { font: fontConfig, metrics };
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+  
+  // Last resort: use default sans-serif
+  ctx.font = 'bold 32px sans-serif';
+  return { font: ctx.font, metrics: ctx.measureText(text) };
+}
 
 // Generate QR code for user (returns base64 - works with Vercel)
 router.get('/generate', auth, async (req, res) => {
@@ -116,10 +163,8 @@ router.get('/generate', auth, async (req, res) => {
         // Draw QR code
         ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
         
-        // Draw business name below QR code
+        // Draw business name below QR code with font fallback
         ctx.fillStyle = '#000000';
-        // Use system fonts that are more likely to be available
-        ctx.font = 'bold 32px "Helvetica Neue", Helvetica, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
@@ -135,7 +180,10 @@ router.get('/generate', auth, async (req, res) => {
         
         for (let n = 0; n < words.length; n++) {
           const testLine = line + words[n] + ' ';
-          const metrics = ctx.measureText(testLine);
+          
+          // Use font fallback to find a working font
+          const { font, metrics } = renderTextWithFallback(ctx, testLine, textX, y, maxWidth);
+          ctx.font = font;
           const testWidth = metrics.width;
           
           if (testWidth > maxWidth && n > 0) {
@@ -148,22 +196,24 @@ router.get('/generate', auth, async (req, res) => {
         }
         // Draw the last line
         if (line.trim()) {
+          const { font } = renderTextWithFallback(ctx, line.trim(), textX, y, maxWidth);
+          ctx.font = font;
           ctx.fillText(line.trim(), textX, y);
         }
         
         // Convert canvas to base64 data URL
         finalQrDataUrl = canvas.toDataURL('image/png');
-        console.log('QR code with business name generated successfully');
+        console.log('✅ QR code with business name generated successfully');
       } catch (canvasError) {
-        console.error('Canvas error, using QR code without text:', canvasError.message);
+        console.error('❌ Canvas error, using QR code without text:', canvasError.message);
         // Use QR code without text overlay if canvas fails
         finalQrDataUrl = qrDataUrl;
       }
     } else {
       if (!canvasAvailable) {
-        console.warn('Canvas not available - QR code generated without business name');
+        console.warn('⚠️ Canvas not available - QR code generated without business name');
       } else if (!user.businessName || user.businessName.trim() === '') {
-        console.warn('Business name not set - QR code generated without business name');
+        console.warn('⚠️ Business name not set - QR code generated without business name');
       }
     }
 
@@ -253,8 +303,6 @@ router.get('/get', auth, async (req, res) => {
         ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
         
         ctx.fillStyle = '#000000';
-        // Use system fonts that are more likely to be available
-        ctx.font = 'bold 32px "Helvetica Neue", Helvetica, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
@@ -267,7 +315,10 @@ router.get('/get', auth, async (req, res) => {
         
         for (let n = 0; n < words.length; n++) {
           const testLine = line + words[n] + ' ';
-          const metrics = ctx.measureText(testLine);
+          
+          // Use font fallback to find a working font
+          const { font, metrics } = renderTextWithFallback(ctx, testLine, textX, y, maxWidth);
+          ctx.font = font;
           const testWidth = metrics.width;
           
           if (testWidth > maxWidth && n > 0) {
@@ -280,6 +331,8 @@ router.get('/get', auth, async (req, res) => {
         }
         // Draw the last line
         if (line.trim()) {
+          const { font } = renderTextWithFallback(ctx, line.trim(), textX, y, maxWidth);
+          ctx.font = font;
           ctx.fillText(line.trim(), textX, y);
         }
         
@@ -309,4 +362,3 @@ router.get('/get', auth, async (req, res) => {
 });
 
 module.exports = router;
-

@@ -3,6 +3,8 @@ const router = express.Router();
 const connectDB = require('../config/database');
 const User = require('../models/User');
 const Link = require('../models/Link');
+const path = require('path');
+const fs = require('fs');
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
@@ -196,16 +198,53 @@ router.get('/:slug/qr-code', async (req, res) => {
 
     // Try to add business name if canvas is available (exact same as client version)
     let canvasAvailable = false;
-    let createCanvas, loadImage;
+    let createCanvas, loadImage, registerFont;
     try {
       const canvasModule = require('canvas');
       createCanvas = canvasModule.createCanvas;
       loadImage = canvasModule.loadImage;
+      registerFont = canvasModule.registerFont;
       canvasAvailable = true;
-      console.log('Canvas is available for QR code generation');
+      
+      // Try to register a font if available (for better Vercel compatibility)
+      try {
+        const fontPath = path.join(__dirname, '../fonts', 'Roboto-Regular.ttf');
+        if (fs.existsSync(fontPath)) {
+          registerFont(fontPath, { family: 'Roboto' });
+          console.log('✅ Registered Roboto font');
+        }
+      } catch (fontError) {
+        console.log('ℹ️  No custom font file found, using system fonts');
+      }
     } catch (error) {
       console.warn('Canvas not available:', error.message);
       canvasAvailable = false;
+    }
+    
+    // Helper function to render text with fallback fonts
+    function renderTextWithFallback(ctx, text, x, y, maxWidth) {
+      const fontConfigs = [
+        'bold 32px Roboto, sans-serif',
+        'bold 32px DejaVu Sans, sans-serif',
+        'bold 32px Liberation Sans, sans-serif',
+        'bold 32px Arial, sans-serif',
+        'bold 32px sans-serif'
+      ];
+      
+      for (const fontConfig of fontConfigs) {
+        try {
+          ctx.font = fontConfig;
+          const metrics = ctx.measureText(text);
+          if (metrics.width > 0 && metrics.width < maxWidth * 2) {
+            return { font: fontConfig, metrics };
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      ctx.font = 'bold 32px sans-serif';
+      return { font: ctx.font, metrics: ctx.measureText(text) };
     }
 
     let finalQrDataUrl = qrDataUrl;
@@ -241,10 +280,8 @@ router.get('/:slug/qr-code', async (req, res) => {
         // Draw QR code
         ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
         
-        // Draw business name below QR code
+        // Draw business name below QR code with font fallback
         ctx.fillStyle = '#000000';
-        // Use system fonts that are more likely to be available
-        ctx.font = 'bold 32px "Helvetica Neue", Helvetica, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
@@ -259,7 +296,10 @@ router.get('/:slug/qr-code', async (req, res) => {
         
         for (let n = 0; n < words.length; n++) {
           const testLine = line + words[n] + ' ';
-          const metrics = ctx.measureText(testLine);
+          
+          // Use font fallback to find a working font
+          const { font, metrics } = renderTextWithFallback(ctx, testLine, textX, y, maxWidth);
+          ctx.font = font;
           const testWidth = metrics.width;
           
           if (testWidth > maxWidth && n > 0) {
@@ -272,6 +312,8 @@ router.get('/:slug/qr-code', async (req, res) => {
         }
         // Draw the last line
         if (line.trim()) {
+          const { font } = renderTextWithFallback(ctx, line.trim(), textX, y, maxWidth);
+          ctx.font = font;
           ctx.fillText(line.trim(), textX, y);
         }
         
