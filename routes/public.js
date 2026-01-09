@@ -211,10 +211,17 @@ router.get('/:slug/qr-code', async (req, res) => {
     let finalQrDataUrl = qrDataUrl;
     
     // Add business name below QR code (exact same logic as client dashboard)
+    console.log('Public QR Generation Debug:', {
+      canvasAvailable,
+      hasBusinessName: !!user.businessName,
+      businessName: user.businessName,
+      businessNameTrimmed: user.businessName ? user.businessName.trim() : ''
+    });
+    
     if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
       try {
         const businessName = user.businessName.trim();
-        console.log('Adding business name to QR:', businessName);
+        console.log('✅ Adding business name to QR:', businessName);
         
         const qrImage = await loadImage(qrDataUrl);
         
