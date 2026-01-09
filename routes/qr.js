@@ -85,10 +85,17 @@ router.get('/generate', auth, async (req, res) => {
     let finalQrDataUrl = qrDataUrl;
     
     // Try to add business name below QR code if canvas is available
+    console.log('QR Generation Debug:', {
+      canvasAvailable,
+      hasBusinessName: !!user.businessName,
+      businessName: user.businessName,
+      businessNameTrimmed: user.businessName ? user.businessName.trim() : ''
+    });
+    
     if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
       try {
         const businessName = user.businessName.trim();
-        console.log('Adding business name to QR:', businessName);
+        console.log('✅ Adding business name to QR:', businessName);
         
         const qrImage = await loadImage(qrDataUrl);
         
