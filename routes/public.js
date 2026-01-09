@@ -202,38 +202,49 @@ router.get('/:slug/qr-code', async (req, res) => {
       createCanvas = canvasModule.createCanvas;
       loadImage = canvasModule.loadImage;
       canvasAvailable = true;
+      console.log('Canvas is available for QR code generation');
     } catch (error) {
+      console.warn('Canvas not available:', error.message);
       canvasAvailable = false;
     }
 
     let finalQrDataUrl = qrDataUrl;
     
+    // Add business name below QR code (exact same logic as client dashboard)
     if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
       try {
-        const businessName = user.businessName || user.name || 'QR Code';
+        const businessName = user.businessName.trim();
+        console.log('Adding business name to QR:', businessName);
+        
         const qrImage = await loadImage(qrDataUrl);
         
         const qrSize = 500;
         const padding = 40;
-        const textHeight = 60;
+        const textHeight = 80; // Increased for better text visibility
         const canvasWidth = qrSize + (padding * 2);
         const canvasHeight = qrSize + (padding * 2) + textHeight;
         
         const canvas = createCanvas(canvasWidth, canvasHeight);
         const ctx = canvas.getContext('2d');
         
+        // White background
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        
+        // Draw QR code
         ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
         
+        // Draw business name below QR code
         ctx.fillStyle = '#000000';
         ctx.font = 'bold 32px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
         const textX = canvasWidth / 2;
-        const textY = qrSize + padding + 10;
-        const maxWidth = qrSize;
+        const textY = qrSize + padding + 15; // Slightly more spacing
+        const maxWidth = qrSize - 20; // Slight margin for text
+        
+        // Word wrapping for long business names
         const words = businessName.split(' ');
         let line = '';
         let y = textY;
@@ -244,18 +255,30 @@ router.get('/:slug/qr-code', async (req, res) => {
           const testWidth = metrics.width;
           
           if (testWidth > maxWidth && n > 0) {
-            ctx.fillText(line, textX, y);
+            ctx.fillText(line.trim(), textX, y);
             line = words[n] + ' ';
-            y += 40;
+            y += 40; // Line height
           } else {
             line = testLine;
           }
         }
-        ctx.fillText(line, textX, y);
+        // Draw the last line
+        if (line.trim()) {
+          ctx.fillText(line.trim(), textX, y);
+        }
         
         finalQrDataUrl = canvas.toDataURL('image/png');
+        console.log('QR code with business name generated successfully');
       } catch (canvasError) {
+        console.error('Canvas error while adding business name:', canvasError);
+        // Fallback to QR code without text
         finalQrDataUrl = qrDataUrl;
+      }
+    } else {
+      if (!canvasAvailable) {
+        console.warn('Canvas not available - QR code generated without business name');
+      } else if (!user.businessName || user.businessName.trim() === '') {
+        console.warn('Business name not set - QR code generated without business name');
       }
     }
 
