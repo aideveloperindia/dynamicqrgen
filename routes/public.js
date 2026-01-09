@@ -166,6 +166,73 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       return res.status(404).send('Link not found');
     }
 
+    // Check if this is a UPI payment link
+    const isUPILink = link.url && (
+      link.url.toLowerCase().startsWith('upi://') ||
+      link.url.toLowerCase().startsWith('upiqr://') ||
+      link.url.toLowerCase().includes('upi://') ||
+      link.url.toLowerCase().includes('pay?pa=') ||
+      link.url.toLowerCase().includes('pay?pn=')
+    );
+
+    // For UPI links, return the URL directly so client-side can handle it
+    // This allows mobile browsers to show the UPI app selector
+    if (isUPILink) {
+      // Extract UPI URL if it's embedded in a regular URL
+      let upiUrl = link.url;
+      
+      // If it's a regular URL containing UPI parameters, extract the UPI part
+      if (upiUrl.includes('upi://')) {
+        const upiMatch = upiUrl.match(/upi:\/\/[^\s"']+/i);
+        if (upiMatch) {
+          upiUrl = upiMatch[0];
+        }
+      }
+      
+      // Return HTML page that will trigger UPI app on mobile
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Opening Payment...</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: #f5f5f5;
+            }
+            .container {
+              text-align: center;
+              padding: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <p>Opening payment app...</p>
+            <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${upiUrl}" style="color: #4285F4;">click here</a></p>
+          </div>
+          <script>
+            // Try to open UPI link directly
+            window.location.href = "${upiUrl.replace(/"/g, '&quot;')}";
+            
+            // Fallback: try after a short delay
+            setTimeout(function() {
+              window.location.href = "${upiUrl.replace(/"/g, '&quot;')}";
+            }, 500);
+          </script>
+        </body>
+        </html>
+      `);
+    }
+
+    // For regular links, redirect normally
     res.redirect(link.url);
   } catch (error) {
     console.error('Redirect error:', error);
