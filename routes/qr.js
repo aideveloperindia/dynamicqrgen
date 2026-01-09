@@ -47,34 +47,27 @@ router.use(async (req, res, next) => {
   }
 });
 
-// Helper function to render text with fallback fonts
+// Helper function to render text - use canvas default font (works on Vercel)
 function renderTextWithFallback(ctx, text, x, y, maxWidth) {
-  // Try different font configurations that work better on Vercel
-  const fontConfigs = [
-    'bold 32px Roboto, sans-serif',  // If Roboto is registered
-    'bold 32px DejaVu Sans, sans-serif',  // Common Linux font
-    'bold 32px Liberation Sans, sans-serif',  // Common Linux font
-    'bold 32px Arial, sans-serif',  // Fallback
-    'bold 32px sans-serif'  // Ultimate fallback
-  ];
-  
-  for (const fontConfig of fontConfigs) {
-    try {
-      ctx.font = fontConfig;
-      const metrics = ctx.measureText(text);
-      
-      // If text renders without boxes (has reasonable width), use this font
-      if (metrics.width > 0 && metrics.width < maxWidth * 2) {
-        return { font: fontConfig, metrics };
-      }
-    } catch (e) {
-      continue;
+  // Use canvas's built-in default font which always works
+  // Don't specify font family - let canvas use its default
+  // This avoids font availability issues on Vercel
+  try {
+    // Try with just size and weight - no font family
+    ctx.font = 'bold 32px';
+    const metrics = ctx.measureText(text);
+    
+    // Check if text renders (width > 0 means font is working)
+    if (metrics.width > 0) {
+      return { font: 'bold 32px', metrics };
     }
+  } catch (e) {
+    // If that fails, try even simpler
   }
   
-  // Last resort: use default sans-serif
-  ctx.font = 'bold 32px sans-serif';
-  return { font: ctx.font, metrics: ctx.measureText(text) };
+  // Ultimate fallback - just size, no weight, no family
+  ctx.font = '32px';
+  return { font: '32px', metrics: ctx.measureText(text) };
 }
 
 // Generate QR code for user (returns base64 - works with Vercel)

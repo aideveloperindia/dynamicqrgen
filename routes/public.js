@@ -221,30 +221,22 @@ router.get('/:slug/qr-code', async (req, res) => {
       canvasAvailable = false;
     }
     
-    // Helper function to render text with fallback fonts
+    // Helper function to render text - use canvas default font (works on Vercel)
     function renderTextWithFallback(ctx, text, x, y, maxWidth) {
-      const fontConfigs = [
-        'bold 32px Roboto, sans-serif',
-        'bold 32px DejaVu Sans, sans-serif',
-        'bold 32px Liberation Sans, sans-serif',
-        'bold 32px Arial, sans-serif',
-        'bold 32px sans-serif'
-      ];
-      
-      for (const fontConfig of fontConfigs) {
-        try {
-          ctx.font = fontConfig;
-          const metrics = ctx.measureText(text);
-          if (metrics.width > 0 && metrics.width < maxWidth * 2) {
-            return { font: fontConfig, metrics };
-          }
-        } catch (e) {
-          continue;
+      // Use canvas's built-in default font which always works
+      // Don't specify font family - let canvas use its default
+      try {
+        ctx.font = 'bold 32px';
+        const metrics = ctx.measureText(text);
+        if (metrics.width > 0) {
+          return { font: 'bold 32px', metrics };
         }
+      } catch (e) {
+        // If that fails, try even simpler
       }
       
-      ctx.font = 'bold 32px sans-serif';
-      return { font: ctx.font, metrics: ctx.measureText(text) };
+      ctx.font = '32px';
+      return { font: '32px', metrics: ctx.measureText(text) };
     }
 
     let finalQrDataUrl = qrDataUrl;
