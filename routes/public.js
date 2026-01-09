@@ -236,7 +236,8 @@ router.get('/:slug/qr-code', async (req, res) => {
         
         // Draw business name below QR code
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 32px Arial';
+        // Use system fonts that are more likely to be available
+        ctx.font = 'bold 32px "Helvetica Neue", Helvetica, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         

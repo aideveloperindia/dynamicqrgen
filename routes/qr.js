@@ -111,7 +111,8 @@ router.get('/generate', auth, async (req, res) => {
         
         // Draw business name below QR code
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 32px Arial';
+        // Use system fonts that are more likely to be available
+        ctx.font = 'bold 32px "Helvetica Neue", Helvetica, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
@@ -238,7 +239,8 @@ router.get('/get', auth, async (req, res) => {
         ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
         
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 32px Arial';
+        // Use system fonts that are more likely to be available
+        ctx.font = 'bold 32px "Helvetica Neue", Helvetica, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
