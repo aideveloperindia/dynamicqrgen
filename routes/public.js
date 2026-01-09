@@ -206,33 +206,44 @@ router.get('/:slug/qr-code', async (req, res) => {
       registerFont = canvasModule.registerFont;
       canvasAvailable = true;
       
-      // Try to register a font if available (for better Vercel compatibility)
+      // Register font file for Vercel compatibility (required for text rendering)
       try {
         const fontPath = path.join(__dirname, '../fonts', 'Roboto-Regular.ttf');
         if (fs.existsSync(fontPath)) {
           registerFont(fontPath, { family: 'Roboto' });
-          console.log('✅ Registered Roboto font');
+          console.log('✅ Registered Roboto font from file');
+        } else {
+          console.warn('⚠️  Roboto font file not found at:', fontPath);
+          console.warn('⚠️  Text rendering may show boxes on Vercel without font file');
         }
       } catch (fontError) {
-        console.log('ℹ️  No custom font file found, using system fonts');
+        console.error('❌ Error registering font:', fontError.message);
+        console.warn('⚠️  Text rendering may show boxes on Vercel');
       }
     } catch (error) {
       console.warn('Canvas not available:', error.message);
       canvasAvailable = false;
     }
     
-    // Helper function to render text - use canvas default font (works on Vercel)
+    // Helper function to render text - use registered Roboto font or fallback
     function renderTextWithFallback(ctx, text, x, y, maxWidth) {
-      // Use canvas's built-in default font which always works
-      // Don't specify font family - let canvas use its default
-      try {
-        ctx.font = 'bold 32px';
-        const metrics = ctx.measureText(text);
-        if (metrics.width > 0) {
-          return { font: 'bold 32px', metrics };
+      const fontConfigs = [
+        'bold 32px Roboto',  // Registered font (if available)
+        'bold 32px',  // Canvas default (may show boxes on Vercel)
+        '32px Roboto',  // Without bold
+        '32px'  // Ultimate fallback
+      ];
+      
+      for (const fontConfig of fontConfigs) {
+        try {
+          ctx.font = fontConfig;
+          const metrics = ctx.measureText(text);
+          if (metrics.width > 0 && metrics.width < maxWidth * 3) {
+            return { font: fontConfig, metrics };
+          }
+        } catch (e) {
+          continue;
         }
-      } catch (e) {
-        // If that fails, try even simpler
       }
       
       ctx.font = '32px';

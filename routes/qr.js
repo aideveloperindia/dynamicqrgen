@@ -47,25 +47,31 @@ router.use(async (req, res, next) => {
   }
 });
 
-// Helper function to render text - use canvas default font (works on Vercel)
+// Helper function to render text - use registered Roboto font or fallback
 function renderTextWithFallback(ctx, text, x, y, maxWidth) {
-  // Use canvas's built-in default font which always works
-  // Don't specify font family - let canvas use its default
-  // This avoids font availability issues on Vercel
-  try {
-    // Try with just size and weight - no font family
-    ctx.font = 'bold 32px';
-    const metrics = ctx.measureText(text);
-    
-    // Check if text renders (width > 0 means font is working)
-    if (metrics.width > 0) {
-      return { font: 'bold 32px', metrics };
+  // Try registered Roboto font first (if font file is included)
+  const fontConfigs = [
+    'bold 32px Roboto',  // Registered font (if available)
+    'bold 32px',  // Canvas default (may show boxes on Vercel)
+    '32px Roboto',  // Without bold
+    '32px'  // Ultimate fallback
+  ];
+  
+  for (const fontConfig of fontConfigs) {
+    try {
+      ctx.font = fontConfig;
+      const metrics = ctx.measureText(text);
+      
+      // Check if text renders correctly (width > 0 and reasonable)
+      if (metrics.width > 0 && metrics.width < maxWidth * 3) {
+        return { font: fontConfig, metrics };
+      }
+    } catch (e) {
+      continue;
     }
-  } catch (e) {
-    // If that fails, try even simpler
   }
   
-  // Ultimate fallback - just size, no weight, no family
+  // Last resort
   ctx.font = '32px';
   return { font: '32px', metrics: ctx.measureText(text) };
 }
