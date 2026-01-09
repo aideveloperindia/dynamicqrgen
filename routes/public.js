@@ -179,17 +179,51 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
     // This allows mobile browsers to show the UPI app selector
     if (isUPILink) {
       // Extract UPI URL if it's embedded in a regular URL
+      // IMPORTANT: Preserve ALL parameters including 'aid' (App ID) for merchant payments
       let upiUrl = link.url;
       
       // If it's a regular URL containing UPI parameters, extract the UPI part
       if (upiUrl.includes('upi://')) {
+        // Extract complete UPI URL with all parameters (including aid, tn, tr, etc.)
         const upiMatch = upiUrl.match(/upi:\/\/[^\s"']+/i);
         if (upiMatch) {
-          upiUrl = upiMatch[0];
+          upiUrl = decodeURIComponent(upiMatch[0]);
+        }
+      } else {
+        // If it's an HTTP URL with UPI parameters, convert to upi:// format
+        // Preserve ALL parameters including 'aid' (critical for merchant payments - removes ₹2000 limit)
+        try {
+          const urlObj = new URL(upiUrl);
+          const params = new URLSearchParams(urlObj.search);
+          
+          const pa = params.get('pa') || params.get('upi');
+          if (pa) {
+            const pn = params.get('pn') || 'Merchant';
+            const am = params.get('am') || '';
+            const cu = params.get('cu') || 'INR';
+            const aid = params.get('aid') || ''; // App ID - removes ₹2000 limit for merchant payments
+            const tn = params.get('tn') || '';
+            const tr = params.get('tr') || '';
+            
+            // Build UPI URL preserving ALL parameters
+            let upiParams = `pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}`;
+            if (am) upiParams += `&am=${am}`;
+            if (cu) upiParams += `&cu=${cu}`;
+            if (aid) upiParams += `&aid=${encodeURIComponent(aid)}`; // Critical for merchant payments
+            if (tn) upiParams += `&tn=${encodeURIComponent(tn)}`;
+            if (tr) upiParams += `&tr=${encodeURIComponent(tr)}`;
+            
+            upiUrl = `upi://pay?${upiParams}`;
+          }
+        } catch (e) {
+          console.error('Error converting to UPI URL:', e);
         }
       }
       
-      // Return HTML page that will trigger UPI app on mobile
+      // Escape for HTML/JavaScript
+      const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      
+      // Return HTML page that will trigger UPI app on mobile with improved methods
       return res.send(`
         <!DOCTYPE html>
         <html>
@@ -216,16 +250,44 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
         <body>
           <div class="container">
             <p>Opening payment app...</p>
-            <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${upiUrl}" style="color: #4285F4;">click here</a></p>
+            <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${escapedUpiUrl}" style="color: #4285F4;">click here</a></p>
           </div>
           <script>
-            // Try to open UPI link directly
-            window.location.href = "${upiUrl.replace(/"/g, '&quot;')}";
-            
-            // Fallback: try after a short delay
-            setTimeout(function() {
-              window.location.href = "${upiUrl.replace(/"/g, '&quot;')}";
-            }, 500);
+            (function() {
+              const upiUrl = "${escapedUpiUrl}";
+              
+              // Method 1: Direct location change (works on most mobile browsers)
+              try {
+                window.location.href = upiUrl;
+              } catch (e) {
+                console.log('Method 1 failed');
+              }
+              
+              // Method 2: Create and click hidden link (better compatibility)
+              setTimeout(function() {
+                try {
+                  const link = document.createElement('a');
+                  link.href = upiUrl;
+                  link.style.display = 'none';
+                  document.body.appendChild(link);
+                  link.click();
+                  setTimeout(function() {
+                    document.body.removeChild(link);
+                  }, 100);
+                } catch (e) {
+                  console.log('Method 2 failed');
+                }
+              }, 100);
+              
+              // Method 3: window.open as fallback
+              setTimeout(function() {
+                try {
+                  window.open(upiUrl, '_blank');
+                } catch (e) {
+                  console.error('All methods failed');
+                }
+              }, 300);
+            })();
           </script>
         </body>
         </html>
