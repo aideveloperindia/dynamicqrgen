@@ -142,6 +142,157 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
+// Payment button handler - generates simple UPI link
+router.get('/:slug/pay', async (req, res) => {
+  try {
+    const user = await User.findOne({ uniqueSlug: req.params.slug });
+    
+    if (!user) {
+      return res.status(404).send('Page not found');
+    }
+
+    // Each client uses their own UPI ID - payments are independent
+    // Client must set their UPI ID in dashboard, or use default if not set
+    let upiId = user.upiId || process.env.UPI_ID || '';
+    const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
+    
+    // If no UPI ID is set, show error
+    if (!upiId || upiId.trim() === '') {
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Payment Not Configured</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: #f5f5f5;
+            }
+            .container {
+              text-align: center;
+              padding: 20px;
+              background: white;
+              border-radius: 12px;
+              max-width: 400px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>Payment Not Configured</h2>
+            <p>Please set your UPI ID in the dashboard to enable payments.</p>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+    
+    // Extract UPI ID if it's a full URL
+    if (upiId.includes('pa=')) {
+      const match = upiId.match(/pa=([^&]+)/i);
+      if (match) {
+        upiId = decodeURIComponent(match[1]);
+      }
+    }
+    
+    // Generate simple UPI link - no amount, user enters any amount
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
+    
+    // Log the exact URL being generated for debugging
+    console.log('=== PAYMENT BUTTON URL ===');
+    console.log('UPI ID:', upiId);
+    console.log('Payee Name:', payeeName);
+    console.log('Generated URL:', upiUrl);
+    console.log('URL decoded:', decodeURIComponent(upiUrl));
+    console.log('Has amount param:', upiUrl.includes('am='));
+    console.log('Has aid param:', upiUrl.includes('aid='));
+    console.log('==========================');
+    
+    // Escape for HTML/JavaScript
+    const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    
+    // Return HTML page that will trigger UPI app on mobile
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Opening Payment...</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+          }
+          .container {
+            text-align: center;
+            padding: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <p>Opening payment app...</p>
+          <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${escapedUpiUrl}" style="color: #4285F4;">click here</a></p>
+        </div>
+        <script>
+          (function() {
+            const upiUrl = "${escapedUpiUrl}";
+            
+            // Method 1: Direct location change (works on most mobile browsers)
+            try {
+              window.location.href = upiUrl;
+            } catch (e) {
+              console.log('Method 1 failed');
+            }
+            
+            // Method 2: Create and click hidden link (better compatibility)
+            setTimeout(function() {
+              try {
+                const link = document.createElement('a');
+                link.href = upiUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(function() {
+                  document.body.removeChild(link);
+                }, 100);
+              } catch (e) {
+                console.log('Method 2 failed');
+              }
+            }, 100);
+            
+            // Method 3: window.open as fallback
+            setTimeout(function() {
+              try {
+                window.open(upiUrl, '_blank');
+              } catch (e) {
+                console.error('All methods failed');
+              }
+            }, 300);
+          })();
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Payment button error:', error);
+    res.status(500).send('Error opening payment');
+  }
+});
+
 // Redirect handler for links
 router.get('/:slug/redirect/:linkId', async (req, res) => {
   try {
@@ -166,64 +317,14 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       return res.status(404).send('Link not found');
     }
 
-    // Check if this is a UPI payment link
-    const isUPILink = link.url && (
-      link.url.toLowerCase().startsWith('upi://') ||
-      link.url.toLowerCase().startsWith('upiqr://') ||
-      link.url.toLowerCase().includes('upi://') ||
-      link.url.toLowerCase().includes('pay?pa=') ||
-      link.url.toLowerCase().includes('pay?pn=')
-    );
+    // Check if this is a UPI payment link - simple check
+    const isUPILink = link.url && link.url.toLowerCase().startsWith('upi://');
 
-    // For UPI links, return the URL directly so client-side can handle it
-    // This allows mobile browsers to show the UPI app selector
+    // For UPI links, open UPI app directly
     if (isUPILink) {
-      // Extract UPI URL if it's embedded in a regular URL
-      // IMPORTANT: Preserve ALL parameters including 'aid' (App ID) for merchant payments
-      let upiUrl = link.url;
-      
-      // If it's a regular URL containing UPI parameters, extract the UPI part
-      if (upiUrl.includes('upi://')) {
-        // Extract complete UPI URL with all parameters (including aid, tn, tr, etc.)
-        const upiMatch = upiUrl.match(/upi:\/\/[^\s"']+/i);
-        if (upiMatch) {
-          upiUrl = decodeURIComponent(upiMatch[0]);
-        }
-      } else {
-        // If it's an HTTP URL with UPI parameters, convert to upi:// format
-        // Preserve ALL parameters including 'aid' (critical for merchant payments - removes ₹2000 limit)
-        try {
-          const urlObj = new URL(upiUrl);
-          const params = new URLSearchParams(urlObj.search);
-          
-          const pa = params.get('pa') || params.get('upi');
-          if (pa) {
-            const pn = params.get('pn') || 'Merchant';
-            const am = params.get('am') || '';
-            const cu = params.get('cu') || 'INR';
-            const aid = params.get('aid') || ''; // App ID - removes ₹2000 limit for merchant payments
-            const tn = params.get('tn') || '';
-            const tr = params.get('tr') || '';
-            
-            // Build UPI URL preserving ALL parameters
-            let upiParams = `pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}`;
-            if (am) upiParams += `&am=${am}`;
-            if (cu) upiParams += `&cu=${cu}`;
-            if (aid) upiParams += `&aid=${encodeURIComponent(aid)}`; // Critical for merchant payments
-            if (tn) upiParams += `&tn=${encodeURIComponent(tn)}`;
-            if (tr) upiParams += `&tr=${encodeURIComponent(tr)}`;
-            
-            upiUrl = `upi://pay?${upiParams}`;
-          }
-        } catch (e) {
-          console.error('Error converting to UPI URL:', e);
-        }
-      }
-      
-      // Escape for HTML/JavaScript
+      const upiUrl = link.url.trim();
       const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
       
-      // Return HTML page that will trigger UPI app on mobile with improved methods
       return res.send(`
         <!DOCTYPE html>
         <html>
@@ -255,38 +356,16 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
           <script>
             (function() {
               const upiUrl = "${escapedUpiUrl}";
-              
-              // Method 1: Direct location change (works on most mobile browsers)
               try {
                 window.location.href = upiUrl;
               } catch (e) {
-                console.log('Method 1 failed');
+                const link = document.createElement('a');
+                link.href = upiUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => document.body.removeChild(link), 100);
               }
-              
-              // Method 2: Create and click hidden link (better compatibility)
-              setTimeout(function() {
-                try {
-                  const link = document.createElement('a');
-                  link.href = upiUrl;
-                  link.style.display = 'none';
-                  document.body.appendChild(link);
-                  link.click();
-                  setTimeout(function() {
-                    document.body.removeChild(link);
-                  }, 100);
-                } catch (e) {
-                  console.log('Method 2 failed');
-                }
-              }, 100);
-              
-              // Method 3: window.open as fallback
-              setTimeout(function() {
-                try {
-                  window.open(upiUrl, '_blank');
-                } catch (e) {
-                  console.error('All methods failed');
-                }
-              }, 300);
             })();
           </script>
         </body>

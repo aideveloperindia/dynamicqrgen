@@ -360,6 +360,17 @@
             </div>
         </div>
         
+        <!-- Payment Button - Always visible, generates UPI link on-demand -->
+        <div class="payment-button-container" style="width: 100%; text-align: center; margin: 30px 0;">
+            <a href="/p/<%= user.uniqueSlug %>/pay" 
+               class="payment-button" 
+               style="display: inline-flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #4285F4, #25D366); color: white; padding: 18px 36px; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 18px; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3); transition: all 0.3s ease;">
+                <i class="fas fa-wallet" style="font-size: 24px;"></i>
+                <span>Pay Now</span>
+            </a>
+            <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-top: 10px;">Enter any amount and pay via UPI</p>
+        </div>
+        
         <div class="icons-container">
             <% 
             const linksArray = links || [];
@@ -371,7 +382,7 @@
             <div class="icons-row top-row">
                 <% topRow.forEach((link, index) => { %>
                     <% 
-                    // Check if this is a UPI payment link
+                    // Check if this is a UPI payment link - skip it, we have a dedicated payment button now
                     const isUPILink = link.url && (
                         link.url.toLowerCase().startsWith('upi://') ||
                         link.url.toLowerCase().startsWith('upiqr://') ||
@@ -379,11 +390,11 @@
                         link.url.toLowerCase().includes('pay?pa=') ||
                         link.url.toLowerCase().includes('pay?pn=')
                     );
+                    // Skip UPI payment links - we have a dedicated payment button
+                    if (isUPILink) return;
                     %>
                     <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" 
-                       class="icon-link <%= link.category %>" 
-                       <% if (isUPILink) { %>data-upi-link="true"<% } %>
-                       onclick="<% if (isUPILink) { %>return handleUPILink(event, '<%= link.url.replace(/'/g, "\\'") %>');<% } else { %>return true;<% } %>">
+                       class="icon-link <%= link.category %>">
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
@@ -398,7 +409,7 @@
             <div class="icons-row bottom-row">
                 <% bottomRow.forEach((link) => { %>
                     <% 
-                    // Check if this is a UPI payment link
+                    // Check if this is a UPI payment link - skip it, we have a dedicated payment button now
                     const isUPILink = link.url && (
                         link.url.toLowerCase().startsWith('upi://') ||
                         link.url.toLowerCase().startsWith('upiqr://') ||
@@ -406,11 +417,11 @@
                         link.url.toLowerCase().includes('pay?pa=') ||
                         link.url.toLowerCase().includes('pay?pn=')
                     );
+                    // Skip UPI payment links - we have a dedicated payment button
+                    if (isUPILink) return;
                     %>
                     <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" 
-                       class="icon-link <%= link.category %>" 
-                       <% if (isUPILink) { %>data-upi-link="true"<% } %>
-                       onclick="<% if (isUPILink) { %>return handleUPILink(event, '<%= link.url.replace(/'/g, "\\'") %>');<% } else { %>return true;<% } %>">
+                       class="icon-link <%= link.category %>">
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
@@ -444,128 +455,8 @@
         </div>
         
         <script>
-            // Handle UPI payment links - opens UPI app selector on mobile
-            function handleUPILink(event, url) {
-                event.preventDefault();
-                
-                // Extract UPI URL if it's embedded in a regular URL
-                let upiUrl = url;
-                
-                // If it's a regular URL containing UPI parameters, extract the UPI part
-                if (upiUrl.includes('upi://')) {
-                    // Extract complete UPI URL with all parameters
-                    const upiMatch = upiUrl.match(/upi:\/\/[^\s"']+/i);
-                    if (upiMatch) {
-                        upiUrl = decodeURIComponent(upiMatch[0]);
-                    }
-                } else if (upiUrl.includes('pay?pa=') || upiUrl.includes('pay?pn=') || upiUrl.includes('upi://pay')) {
-                    // Convert HTTP UPI link to upi:// protocol, preserving ALL parameters
-                    try {
-                        // Try to parse as URL first
-                        let urlObj;
-                        try {
-                            urlObj = new URL(upiUrl);
-                        } catch (e) {
-                            // If not a valid URL, try to extract from upi:// format
-                            if (upiUrl.includes('upi://')) {
-                                const match = upiUrl.match(/upi:\/\/([^'"\s]+)/i);
-                                if (match) {
-                                    upiUrl = 'upi://' + match[1];
-                                    // Already in correct format, use as-is
-                                    openUPIApp(upiUrl);
-                                    return false;
-                                }
-                            }
-                            throw new Error('Invalid URL format');
-                        }
-                        
-                        const params = new URLSearchParams(urlObj.search);
-                        
-                        // Extract all UPI parameters (preserve ALL including aid, tn, etc.)
-                        const pa = params.get('pa') || params.get('upi');
-                        const pn = params.get('pn') || 'Merchant';
-                        const am = params.get('am') || '';
-                        const cu = params.get('cu') || 'INR';
-                        const aid = params.get('aid') || ''; // App ID for merchant payments (removes ₹2000 limit)
-                        const tn = params.get('tn') || ''; // Transaction note
-                        const tr = params.get('tr') || ''; // Transaction reference
-                        
-                        if (pa) {
-                            // Build UPI URL preserving ALL parameters
-                            let upiParams = `pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}`;
-                            if (am) upiParams += `&am=${am}`;
-                            if (cu) upiParams += `&cu=${cu}`;
-                            if (aid) upiParams += `&aid=${encodeURIComponent(aid)}`; // Critical for merchant payments
-                            if (tn) upiParams += `&tn=${encodeURIComponent(tn)}`;
-                            if (tr) upiParams += `&tr=${encodeURIComponent(tr)}`;
-                            
-                            upiUrl = `upi://pay?${upiParams}`;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing UPI URL:', e);
-                        // If parsing fails, try to use URL as-is
-                    }
-                }
-                
-                // Open UPI app with improved method
-                openUPIApp(upiUrl);
-                
-                return false;
-            }
-            
-            // Improved function to open UPI app and show app selector
-            function openUPIApp(upiUrl) {
-                // Method 1: Direct location change (works on most mobile browsers)
-                try {
-                    window.location.href = upiUrl;
-                } catch (e) {
-                    console.log('Method 1 failed, trying method 2');
-                }
-                
-                // Method 2: Create a hidden link and click it (better compatibility)
-                setTimeout(function() {
-                    try {
-                        const link = document.createElement('a');
-                        link.href = upiUrl;
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    } catch (e) {
-                        console.log('Method 2 failed, trying method 3');
-                    }
-                }, 100);
-                
-                // Method 3: window.open as fallback
-                setTimeout(function() {
-                    try {
-                        window.open(upiUrl, '_blank');
-                    } catch (e) {
-                        console.error('All methods failed to open UPI link');
-                        // Show manual link
-                        if (confirm('Unable to open payment app automatically. Click OK to copy the payment link.')) {
-                            navigator.clipboard.writeText(upiUrl).then(() => {
-                                alert('Payment link copied! Paste it in your UPI app.');
-                            });
-                        }
-                    }
-                }, 300);
-            }
-            
-            // Also handle UPI links on page load (for direct navigation)
-            document.addEventListener('DOMContentLoaded', function() {
-                const upiLinks = document.querySelectorAll('[data-upi-link="true"]');
-                upiLinks.forEach(function(link) {
-                    link.addEventListener('click', function(e) {
-                        const url = this.getAttribute('href');
-                        // Extract URL from href if needed
-                        if (url.includes('/redirect/')) {
-                            // Let the server handle it, but we'll intercept on client side
-                            return true;
-                        }
-                    });
-                });
-            });
+            // Simple script for page functionality
+            // Payment is handled by the payment button route (/p/:slug/pay)
         </script>
         
         <div class="footer">

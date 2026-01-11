@@ -267,7 +267,7 @@ app.get('/', async (req, res) => {
           if (!isProfileComplete) {
             return res.redirect('/complete-profile');
           }
-          return res.redirect('/dashboard');
+      return res.redirect('/dashboard');
         }
       } catch (dbError) {
         console.error('Error checking user profile in home route:', dbError);
@@ -312,7 +312,7 @@ app.get('/login', async (req, res) => {
           if (!isProfileComplete) {
             return res.redirect('/complete-profile');
           }
-          return res.redirect('/dashboard');
+      return res.redirect('/dashboard');
         }
       } catch (dbError) {
         console.error('Error checking user profile in login route:', dbError);

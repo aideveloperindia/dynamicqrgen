@@ -258,7 +258,7 @@ router.get('/get', auth, async (req, res) => {
     }
 
     // Generate QR code on-demand (no storage needed)
-    const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
+      const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
     const pageUrl = `${baseUrl}/p/${user.uniqueSlug}`;
     
     // Generate QR as base64 data URL
@@ -346,7 +346,7 @@ router.get('/get', auth, async (req, res) => {
         console.warn('⚠️ Canvas not available - QR code generated without business name');
       } else if (!user.businessName || user.businessName.trim() === '') {
         console.warn('⚠️ Business name not set - QR code generated without business name');
-      }
+    }
     }
 
     res.json({

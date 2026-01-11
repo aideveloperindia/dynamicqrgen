@@ -457,6 +457,20 @@
                         Maximum file size: 100KB. Use an image compressor if needed.
                     </small>
                 </div>
+                <div class="form-group">
+                    <label>Your UPI ID (Required for Payment Button)</label>
+                    <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="yourname@paytm or yourname@okicici" required>
+                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
+                        Enter your UPI ID where you want to receive payments. Users will pay directly to this UPI ID.
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Payee Name (Optional - shown in payment app)</label>
+                    <input type="text" name="upiPayeeName" value="<%= user.upiPayeeName || '' %>" placeholder="Your business name">
+                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
+                        Name shown when users pay. Leave empty to use your business name.
+                    </small>
+                </div>
                 <button type="submit" class="btn btn-primary">Update Profile</button>
             </form>
         </div>
@@ -910,6 +924,8 @@
             selectedCategoryType = null;
             document.querySelectorAll('.category-option').forEach(opt => opt.classList.remove('selected'));
             document.getElementById('customIconGroup').style.display = 'none';
+            const upiInfoBox = document.getElementById('upiInfoBox');
+            if (upiInfoBox) upiInfoBox.style.display = 'none';
         }
 
         function editLink(id, category, type, url, displayName) {

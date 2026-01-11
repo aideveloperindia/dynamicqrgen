@@ -34,14 +34,13 @@ function getRazorpay() {
   return razorpayInstance;
 }
 
-// Get UPI payment URL
+// Get UPI payment URL - simple, no amount (user enters any amount)
 router.get('/upi-url', auth, async (req, res) => {
   try {
-    // UPI URL format: upi://pay?pa=UPI_ID&pn=PAYEE_NAME&am=AMOUNT&cu=CURRENCY
     const upiId = process.env.UPI_ID || 'nad.nandagiri-3@okicici';
     const payeeName = process.env.UPI_PAYEE_NAME || 'QR Connect';
-    const amount = 999; // ₹999
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+    // No amount - user enters any amount they want
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
     
     res.json({ 
       success: true, 

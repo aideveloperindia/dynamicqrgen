@@ -43,6 +43,14 @@ const userSchema = new mongoose.Schema({
     type: String, // Base64 data URL for logo
     default: ''
   },
+  upiId: {
+    type: String, // Client's UPI ID (optional - uses env var UPI_ID as fallback)
+    default: ''
+  },
+  upiPayeeName: {
+    type: String, // Payee name for UPI payments (optional - uses businessName or env var as fallback)
+    default: ''
+  },
   // QR code is no longer stored - generated on-demand to save storage costs
   // QR codes are deterministic (same input = same output), so we regenerate from uniqueSlug
   // This saves 100% of QR code storage costs for 10,000+ clients

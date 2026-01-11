@@ -140,115 +140,47 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
       return res.status(403).json({ success: false, message: 'Authentication required' });
     }
 
-    const { businessName, phoneNumber, address } = req.body;
+    const { businessName, phoneNumber, address, upiId, upiPayeeName } = req.body;
     const user = await User.findById(req.user._id);
     
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     
-    user.businessName = businessName || '';
-    user.phoneNumber = phoneNumber || user.phoneNumber || '';
-    user.address = address || '';
+    // Update profile fields - handle missing fields gracefully
+    if (businessName !== undefined) user.businessName = businessName || '';
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || user.phoneNumber || '';
+    if (address !== undefined) user.address = address || '';
+    if (upiId !== undefined) user.upiId = upiId || '';
+    if (upiPayeeName !== undefined) user.upiPayeeName = upiPayeeName || '';
     
     // Store logo as base64 data URL in MongoDB
     // Multer already enforces 100KB limit, so file is guaranteed to be small
     if (req.file) {
-      user.logo = await compressAndConvertToDataUrl(req.file.buffer, req.file.mimetype);
+      try {
+        user.logo = await compressAndConvertToDataUrl(req.file.buffer, req.file.mimetype);
+      } catch (logoError) {
+        console.error('Logo processing error:', logoError);
+        // Don't fail the whole request if logo processing fails
+      }
     }
     
-    await user.save();
-    res.json({ success: true, message: 'Profile updated successfully' });
+    try {
+      await user.save();
+      res.json({ success: true, message: 'Profile updated successfully' });
+    } catch (saveError) {
+      console.error('User save error:', saveError);
+      console.error('Save error stack:', saveError.stack);
+      // Always return JSON - this fixes the JSON parsing error
+      return res.status(500).json({ success: false, message: 'Error saving profile: ' + (saveError.message || 'Unknown error') });
+    }
   } catch (error) {
     console.error('Profile update error:', error);
-    res.status(500).json({ success: false, message: 'Error updating profile: ' + error.message });
+    console.error('Error stack:', error.stack);
+    // Always return JSON, never HTML - this fixes the JSON parsing error
+    return res.status(500).json({ success: false, message: 'Error updating profile: ' + (error.message || 'Unknown error') });
   }
 });
-
-// Helper function to format UPI links as merchant payments (removes ₹2000 limit)
-function formatUPILinkAsMerchant(upiUrl) {
-  try {
-    // Check if it's a UPI link
-    const isUPI = upiUrl && (
-      upiUrl.toLowerCase().includes('upi://') ||
-      upiUrl.toLowerCase().includes('pay?pa=') ||
-      upiUrl.toLowerCase().includes('upiqr://')
-    );
-    
-    if (!isUPI) {
-      return upiUrl; // Not a UPI link, return as-is
-    }
-    
-    // Extract UPI URL if embedded
-    let cleanUrl = upiUrl;
-    if (upiUrl.includes('upi://')) {
-      const match = upiUrl.match(/upi:\/\/[^\s"']+/i);
-      if (match) {
-        cleanUrl = decodeURIComponent(match[0]);
-      }
-    }
-    
-    // Parse UPI parameters
-    let urlObj;
-    try {
-      // Try to parse as URL
-      if (cleanUrl.startsWith('upi://')) {
-        // Convert upi:// to http:// for URL parsing, then convert back
-        const httpUrl = cleanUrl.replace('upi://', 'http://');
-        urlObj = new URL(httpUrl);
-      } else {
-        urlObj = new URL(cleanUrl);
-      }
-    } catch (e) {
-      // If parsing fails, try to extract parameters manually
-      const paramsMatch = cleanUrl.match(/[?&]([^=]+)=([^&]+)/g);
-      if (paramsMatch) {
-        const params = {};
-        paramsMatch.forEach(param => {
-          const [key, value] = param.substring(1).split('=');
-          params[key] = decodeURIComponent(value);
-        });
-        
-        // Build proper UPI URL preserving ALL parameters (including aid)
-        const pa = params.pa || params.upi;
-        if (pa) {
-          let upiParams = `pa=${encodeURIComponent(pa)}`;
-          if (params.pn) upiParams += `&pn=${encodeURIComponent(params.pn)}`;
-          if (params.am) upiParams += `&am=${params.am}`;
-          if (params.cu) upiParams += `&cu=${params.cu}`;
-          if (params.aid) upiParams += `&aid=${encodeURIComponent(params.aid)}`; // Preserve aid if present
-          if (params.tn) upiParams += `&tn=${encodeURIComponent(params.tn)}`;
-          if (params.tr) upiParams += `&tr=${encodeURIComponent(params.tr)}`;
-          
-          return `upi://pay?${upiParams}`;
-        }
-      }
-      return cleanUrl; // Return as-is if we can't parse
-    }
-    
-    const params = new URLSearchParams(urlObj.search);
-    const pa = params.get('pa') || params.get('upi');
-    
-    if (!pa) {
-      return cleanUrl; // No UPI ID found, return as-is
-    }
-    
-    // Build merchant UPI URL preserving ALL parameters
-    // CRITICAL: Preserve 'aid' parameter if present (removes ₹2000 limit)
-    let upiParams = `pa=${encodeURIComponent(pa)}`;
-    if (params.get('pn')) upiParams += `&pn=${encodeURIComponent(params.get('pn'))}`;
-    if (params.get('am')) upiParams += `&am=${params.get('am')}`;
-    if (params.get('cu')) upiParams += `&cu=${params.get('cu')}`;
-    if (params.get('aid')) upiParams += `&aid=${encodeURIComponent(params.get('aid'))}`; // Preserve aid!
-    if (params.get('tn')) upiParams += `&tn=${encodeURIComponent(params.get('tn'))}`;
-    if (params.get('tr')) upiParams += `&tr=${encodeURIComponent(params.get('tr'))}`;
-    
-    return `upi://pay?${upiParams}`;
-  } catch (error) {
-    console.error('Error formatting UPI link:', error);
-    return upiUrl; // Return original if formatting fails
-  }
-}
 
 // Add or update a link
 router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
@@ -259,8 +191,8 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'URL and display name are required' });
     }
     
-    // Automatically format UPI links as merchant payments (preserves aid parameter)
-    url = formatUPILinkAsMerchant(url);
+    // Save URL as-is - no complex formatting
+    url = url.trim();
 
     let icon = '';
     if (categoryType === 'custom') {
