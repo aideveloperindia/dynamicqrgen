@@ -129,7 +129,30 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Update business name and logo (logo is optional)
-router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'bankQrCode', maxCount: 1 }]), async (req, res) => {
+// Error handler for multer file size errors
+const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'File size too large. Maximum size is 100KB. Please compress your image.' 
+      });
+    }
+    return res.status(400).json({ 
+      success: false, 
+      message: 'File upload error: ' + err.message 
+    });
+  }
+  if (err) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'File upload error: ' + err.message 
+    });
+  }
+  next();
+};
+
+router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'bankQrCode', maxCount: 1 }]), handleMulterError, async (req, res) => {
   try {
     // Check authentication
     if (!req.user || !req.user._id) {
@@ -192,20 +215,42 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
     // Multer already enforces 100KB limit, so file is guaranteed to be small
     if (logoFile) {
       try {
+        // Check file size before processing
+        if (logoFile.size > 100 * 1024) {
+          console.warn('Logo file size exceeds limit:', logoFile.size);
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Logo file is too large. Maximum size is 100KB. Please compress your image.' 
+          });
+        }
         user.logo = await compressAndConvertToDataUrl(logoFile.buffer, logoFile.mimetype);
       } catch (logoError) {
         console.error('Logo processing error:', logoError);
-        // Don't fail the whole request if logo processing fails
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Error processing logo: ' + (logoError.message || 'Unknown error') 
+        });
       }
     }
     
     // Store bank QR code as base64 data URL in MongoDB
     if (bankQrCodeFile) {
       try {
+        // Check file size before processing
+        if (bankQrCodeFile.size > 100 * 1024) {
+          console.warn('Bank QR code file size exceeds limit:', bankQrCodeFile.size);
+          return res.status(400).json({ 
+            success: false, 
+            message: 'QR code file is too large. Maximum size is 100KB. Please compress your image.' 
+          });
+        }
         user.bankQrCode = await compressAndConvertToDataUrl(bankQrCodeFile.buffer, bankQrCodeFile.mimetype);
       } catch (qrError) {
         console.error('Bank QR code processing error:', qrError);
-        // Don't fail the whole request if QR code processing fails
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Error processing QR code: ' + (qrError.message || 'Unknown error') 
+        });
       }
     }
     
@@ -216,13 +261,34 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
       console.error('User save error:', saveError);
       console.error('Save error stack:', saveError.stack);
       // Always return JSON - this fixes the JSON parsing error
-      return res.status(500).json({ success: false, message: 'Error saving profile: ' + (saveError.message || 'Unknown error') });
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error saving profile: ' + (saveError.message || 'Unknown error') 
+      });
     }
   } catch (error) {
     console.error('Profile update error:', error);
     console.error('Error stack:', error.stack);
+    
+    // Handle specific error types
+    if (error.name === 'MulterError') {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'File size too large. Maximum size is 100KB. Please compress your images.' 
+        });
+      }
+      return res.status(400).json({ 
+        success: false, 
+        message: 'File upload error: ' + error.message 
+      });
+    }
+    
     // Always return JSON, never HTML - this fixes the JSON parsing error
-    return res.status(500).json({ success: false, message: 'Error updating profile: ' + (error.message || 'Unknown error') });
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error updating profile: ' + (error.message || 'Unknown error') 
+    });
   }
 });
 
