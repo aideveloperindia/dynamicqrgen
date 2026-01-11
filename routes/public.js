@@ -397,18 +397,76 @@ router.get('/:slug/pay', async (req, res) => {
         <script>
           function copyUpiId() {
             const upiId = document.getElementById('upiId').textContent;
-            navigator.clipboard.writeText(upiId).then(function() {
-              const btn = event.target;
-              const originalText = btn.textContent;
-              btn.textContent = 'Copied!';
-              btn.style.background = '#4CAF50';
-              setTimeout(function() {
-                btn.textContent = originalText;
-                btn.style.background = '#25D366';
-              }, 2000);
-            }).catch(function(err) {
-              alert('Failed to copy. Please copy manually: ' + upiId);
-            });
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            // Try modern clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(upiId).then(function() {
+                btn.textContent = 'Copied!';
+                btn.style.background = '#4CAF50';
+                setTimeout(function() {
+                  btn.textContent = originalText;
+                  btn.style.background = '#25D366';
+                }, 2000);
+              }).catch(function(err) {
+                // Fallback to old method
+                fallbackCopy(upiId, btn, originalText);
+              });
+            } else {
+              // Fallback for browsers without clipboard API
+              fallbackCopy(upiId, btn, originalText);
+            }
+          }
+          
+          function fallbackCopy(text, btn, originalText) {
+            // Create temporary textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-999999px';
+            textarea.style.top = '-999999px';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            
+            try {
+              const successful = document.execCommand('copy');
+              if (successful) {
+                btn.textContent = 'Copied!';
+                btn.style.background = '#4CAF50';
+                setTimeout(function() {
+                  btn.textContent = originalText;
+                  btn.style.background = '#25D366';
+                }, 2000);
+              } else {
+                // If execCommand fails, show manual copy option
+                showManualCopy(text, btn, originalText);
+              }
+            } catch (err) {
+              // If execCommand fails, show manual copy option
+              showManualCopy(text, btn, originalText);
+            } finally {
+              document.body.removeChild(textarea);
+            }
+          }
+          
+          function showManualCopy(text, btn, originalText) {
+            // Select the text in the UPI ID element
+            const upiIdElement = document.getElementById('upiId');
+            const range = document.createRange();
+            range.selectNodeContents(upiIdElement);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Show message
+            btn.textContent = 'Select & Copy';
+            btn.style.background = '#ff9800';
+            setTimeout(function() {
+              btn.textContent = originalText;
+              btn.style.background = '#25D366';
+            }, 3000);
           }
         </script>
       </body>
