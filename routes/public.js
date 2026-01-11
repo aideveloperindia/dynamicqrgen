@@ -143,7 +143,8 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// Payment button handler - uses Razorpay Payment Links API (standard approach)
+// Payment button handler - opens UPI app directly (like shop QR codes)
+// This is for client's customers to pay the client directly
 router.get('/:slug/pay', async (req, res) => {
   try {
     const user = await User.findOne({ uniqueSlug: req.params.slug });
@@ -152,76 +153,18 @@ router.get('/:slug/pay', async (req, res) => {
       return res.status(404).send('Page not found');
     }
 
-    // Check if Razorpay is configured
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      // Fallback to direct UPI link if Razorpay not configured
-      return handleDirectUPIPayment(user, res);
-    }
-
-    // Use Razorpay Payment Links API (standard approach used by all companies)
-    try {
-      const razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET
-      });
-
-      const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
-      
-      // Create payment link - user can enter any amount
-      // This is the standard approach - Razorpay handles merchant payments properly
-      const paymentLink = await razorpay.paymentLink.create({
-        amount: null, // null = user enters amount (no pre-filled amount)
-        currency: 'INR',
-        description: `Payment to ${payeeName}`,
-        customer: {
-          name: payeeName,
-          email: user.email || undefined,
-          contact: user.phoneNumber || undefined
-        },
-        notify: {
-          sms: false,
-          email: false
-        },
-        reminder_enable: false,
-        notes: {
-          userId: user._id.toString(),
-          uniqueSlug: user.uniqueSlug,
-          businessName: user.businessName || ''
-        },
-        // Enable UPI and all payment methods
-        options: {
-          checkout: {
-            method: {
-              upi: true,
-              card: true,
-              netbanking: true,
-              wallet: true
-            }
-          }
-        }
-      });
-
-      console.log('=== RAZORPAY PAYMENT LINK CREATED ===');
-      console.log('Payment Link ID:', paymentLink.id);
-      console.log('Payment Link URL:', paymentLink.short_url);
-      console.log('User:', payeeName);
-      console.log('====================================');
-
-      // Redirect to Razorpay payment page
-      return res.redirect(paymentLink.short_url);
-      
-    } catch (razorpayError) {
-      console.error('Razorpay Payment Link creation error:', razorpayError);
-      // Fallback to direct UPI if Razorpay fails
-      return handleDirectUPIPayment(user, res);
-    }
+    // This route is for client's customers to pay the client
+    // Use direct UPI link (like shop QR codes) - NOT Razorpay Payment Links
+    // Razorpay Payment Links are only for subscription payments (₹999 from client to us)
+    return handleDirectUPIPayment(user, res);
   } catch (error) {
     console.error('Payment button error:', error);
     res.status(500).send('Error opening payment');
   }
 });
 
-// Fallback function for direct UPI payment (when Razorpay not configured)
+// Direct UPI payment function - opens UPI app directly (like shop QR codes)
+// This is the correct approach for client's customers to pay the client
 function handleDirectUPIPayment(user, res) {
   let upiId = user.upiId || process.env.UPI_ID || '';
   const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
@@ -259,7 +202,7 @@ function handleDirectUPIPayment(user, res) {
           <h2>Payment Not Configured</h2>
           <p>Please set your UPI ID in the dashboard to enable payments.</p>
           <p style="color: #888; font-size: 12px; margin-top: 10px;">
-            For unlimited payments, configure Razorpay in environment variables.
+            Add your App ID (aid) in the dashboard to remove ₹2000 payment limit.
           </p>
         </div>
       </body>
@@ -274,10 +217,20 @@ function handleDirectUPIPayment(user, res) {
     }
   }
   
+  // Generate UPI payment link - include aid parameter if available (removes ₹2000 limit)
   let upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
   if (upiAid && upiAid.trim() !== '') {
     upiUrl += `&aid=${encodeURIComponent(upiAid.trim())}`;
   }
+  
+  // Log for debugging
+  console.log('=== DIRECT UPI PAYMENT LINK ===');
+  console.log('UPI ID:', upiId);
+  console.log('Payee Name:', payeeName);
+  console.log('AID Parameter:', upiAid || 'NONE (P2P - ₹2000 limit)');
+  console.log('Generated URL:', upiUrl);
+  console.log('Payment Type:', upiAid ? 'MERCHANT (No limit)' : 'P2P (₹2000 limit)');
+  console.log('================================');
   
   const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   
