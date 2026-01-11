@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Link = require('../models/Link');
 const path = require('path');
 const fs = require('fs');
+const Razorpay = require('razorpay');
 
 // Ensure DB connection for serverless
 router.use(async (req, res, next) => {
@@ -142,7 +143,7 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// Payment button handler - generates simple UPI link
+// Payment button handler - uses Razorpay Payment Links API (standard approach)
 router.get('/:slug/pay', async (req, res) => {
   try {
     const user = await User.findOne({ uniqueSlug: req.params.slug });
@@ -151,87 +152,89 @@ router.get('/:slug/pay', async (req, res) => {
       return res.status(404).send('Page not found');
     }
 
-    // Each client uses their own UPI ID - payments are independent
-    // Client must set their UPI ID in dashboard, or use default if not set
-    let upiId = user.upiId || process.env.UPI_ID || '';
-    const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
-    const upiAid = user.upiAid || process.env.UPI_AID || ''; // Get aid parameter if available
-    
-    // If no UPI ID is set, show error
-    if (!upiId || upiId.trim() === '') {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Payment Not Configured</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              margin: 0;
-              background: #f5f5f5;
+    // Check if Razorpay is configured
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      // Fallback to direct UPI link if Razorpay not configured
+      return handleDirectUPIPayment(user, res);
+    }
+
+    // Use Razorpay Payment Links API (standard approach used by all companies)
+    try {
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET
+      });
+
+      const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
+      
+      // Create payment link - user can enter any amount
+      // This is the standard approach - Razorpay handles merchant payments properly
+      const paymentLink = await razorpay.paymentLink.create({
+        amount: null, // null = user enters amount (no pre-filled amount)
+        currency: 'INR',
+        description: `Payment to ${payeeName}`,
+        customer: {
+          name: payeeName,
+          email: user.email || undefined,
+          contact: user.phoneNumber || undefined
+        },
+        notify: {
+          sms: false,
+          email: false
+        },
+        reminder_enable: false,
+        notes: {
+          userId: user._id.toString(),
+          uniqueSlug: user.uniqueSlug,
+          businessName: user.businessName || ''
+        },
+        // Enable UPI and all payment methods
+        options: {
+          checkout: {
+            method: {
+              upi: true,
+              card: true,
+              netbanking: true,
+              wallet: true
             }
-            .container {
-              text-align: center;
-              padding: 20px;
-              background: white;
-              border-radius: 12px;
-              max-width: 400px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h2>Payment Not Configured</h2>
-            <p>Please set your UPI ID in the dashboard to enable payments.</p>
-          </div>
-        </body>
-        </html>
-      `);
+          }
+        }
+      });
+
+      console.log('=== RAZORPAY PAYMENT LINK CREATED ===');
+      console.log('Payment Link ID:', paymentLink.id);
+      console.log('Payment Link URL:', paymentLink.short_url);
+      console.log('User:', payeeName);
+      console.log('====================================');
+
+      // Redirect to Razorpay payment page
+      return res.redirect(paymentLink.short_url);
+      
+    } catch (razorpayError) {
+      console.error('Razorpay Payment Link creation error:', razorpayError);
+      // Fallback to direct UPI if Razorpay fails
+      return handleDirectUPIPayment(user, res);
     }
-    
-    // Extract UPI ID if it's a full URL
-    if (upiId.includes('pa=')) {
-      const match = upiId.match(/pa=([^&]+)/i);
-      if (match) {
-        upiId = decodeURIComponent(match[1]);
-      }
-    }
-    
-    // Generate UPI link - include aid parameter if available (removes ₹2000 limit)
-    let upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
-    if (upiAid && upiAid.trim() !== '') {
-      upiUrl += `&aid=${encodeURIComponent(upiAid.trim())}`;
-    }
-    
-    // Log the exact URL being generated for debugging
-    console.log('=== PAYMENT BUTTON URL ===');
-    console.log('UPI ID:', upiId);
-    console.log('Payee Name:', payeeName);
-    console.log('AID Parameter:', upiAid || 'NONE (P2P - ₹2000 limit)');
-    console.log('Generated URL:', upiUrl);
-    console.log('URL decoded:', decodeURIComponent(upiUrl));
-    console.log('Has amount param:', upiUrl.includes('am='));
-    console.log('Has aid param:', upiUrl.includes('aid='));
-    console.log('Payment Type:', upiUrl.includes('aid=') ? 'MERCHANT (No limit)' : 'P2P (₹2000 limit)');
-    console.log('==========================');
-    
-    // Escape for HTML/JavaScript
-    const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    
-    // Return HTML page that will trigger UPI app on mobile
-    return res.send(`
+  } catch (error) {
+    console.error('Payment button error:', error);
+    res.status(500).send('Error opening payment');
+  }
+});
+
+// Fallback function for direct UPI payment (when Razorpay not configured)
+function handleDirectUPIPayment(user, res) {
+  let upiId = user.upiId || process.env.UPI_ID || '';
+  const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
+  const upiAid = user.upiAid || process.env.UPI_AID || '';
+  
+  if (!upiId || upiId.trim() === '') {
+    return res.status(400).send(`
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Opening Payment...</title>
+        <title>Payment Not Configured</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -245,59 +248,86 @@ router.get('/:slug/pay', async (req, res) => {
           .container {
             text-align: center;
             padding: 20px;
+            background: white;
+            border-radius: 12px;
+            max-width: 400px;
           }
         </style>
       </head>
       <body>
         <div class="container">
-          <p>Opening payment app...</p>
-          <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${escapedUpiUrl}" style="color: #4285F4;">click here</a></p>
+          <h2>Payment Not Configured</h2>
+          <p>Please set your UPI ID in the dashboard to enable payments.</p>
+          <p style="color: #888; font-size: 12px; margin-top: 10px;">
+            For unlimited payments, configure Razorpay in environment variables.
+          </p>
         </div>
-        <script>
-          (function() {
-            const upiUrl = "${escapedUpiUrl}";
-            
-            // Method 1: Direct location change (works on most mobile browsers)
-            try {
-              window.location.href = upiUrl;
-            } catch (e) {
-              console.log('Method 1 failed');
-            }
-            
-            // Method 2: Create and click hidden link (better compatibility)
-            setTimeout(function() {
-              try {
-                const link = document.createElement('a');
-                link.href = upiUrl;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(function() {
-                  document.body.removeChild(link);
-                }, 100);
-              } catch (e) {
-                console.log('Method 2 failed');
-              }
-            }, 100);
-            
-            // Method 3: window.open as fallback
-            setTimeout(function() {
-              try {
-                window.open(upiUrl, '_blank');
-              } catch (e) {
-                console.error('All methods failed');
-              }
-            }, 300);
-          })();
-        </script>
       </body>
       </html>
     `);
-  } catch (error) {
-    console.error('Payment button error:', error);
-    res.status(500).send('Error opening payment');
   }
-});
+  
+  if (upiId.includes('pa=')) {
+    const match = upiId.match(/pa=([^&]+)/i);
+    if (match) {
+      upiId = decodeURIComponent(match[1]);
+    }
+  }
+  
+  let upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
+  if (upiAid && upiAid.trim() !== '') {
+    upiUrl += `&aid=${encodeURIComponent(upiAid.trim())}`;
+  }
+  
+  const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  
+  return res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Opening Payment...</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          background: #f5f5f5;
+        }
+        .container {
+          text-align: center;
+          padding: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <p>Opening payment app...</p>
+        <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${escapedUpiUrl}" style="color: #4285F4;">click here</a></p>
+      </div>
+      <script>
+        (function() {
+          const upiUrl = "${escapedUpiUrl}";
+          try {
+            window.location.href = upiUrl;
+          } catch (e) {
+            const link = document.createElement('a');
+            link.href = upiUrl;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => document.body.removeChild(link), 100);
+          }
+        })();
+      </script>
+    </body>
+    </html>
+  `);
+}
 
 // Redirect handler for links
 router.get('/:slug/redirect/:linkId', async (req, res) => {
