@@ -129,7 +129,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Update business name and logo (logo is optional)
-router.post('/update-profile', auth, upload.single('logo'), async (req, res) => {
+router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'bankQrCode', maxCount: 1 }]), async (req, res) => {
   try {
     // Check authentication
     if (!req.user || !req.user._id) {
@@ -141,6 +141,8 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
     }
 
     const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid } = req.body;
+    const logoFile = req.files && req.files['logo'] ? req.files['logo'][0] : null;
+    const bankQrCodeFile = req.files && req.files['bankQrCode'] ? req.files['bankQrCode'][0] : null;
     const user = await User.findById(req.user._id);
     
     if (!user) {
@@ -188,12 +190,22 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
     
     // Store logo as base64 data URL in MongoDB
     // Multer already enforces 100KB limit, so file is guaranteed to be small
-    if (req.file) {
+    if (logoFile) {
       try {
-        user.logo = await compressAndConvertToDataUrl(req.file.buffer, req.file.mimetype);
+        user.logo = await compressAndConvertToDataUrl(logoFile.buffer, logoFile.mimetype);
       } catch (logoError) {
         console.error('Logo processing error:', logoError);
         // Don't fail the whole request if logo processing fails
+      }
+    }
+    
+    // Store bank QR code as base64 data URL in MongoDB
+    if (bankQrCodeFile) {
+      try {
+        user.bankQrCode = await compressAndConvertToDataUrl(bankQrCodeFile.buffer, bankQrCodeFile.mimetype);
+      } catch (qrError) {
+        console.error('Bank QR code processing error:', qrError);
+        // Don't fail the whole request if QR code processing fails
       }
     }
     

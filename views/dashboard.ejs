@@ -458,40 +458,26 @@
                     </small>
                 </div>
                 <div class="form-group">
-                    <label>Your UPI ID (Required for Payment Button)</label>
-                    <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="yourname@paytm or yourname@okicici" required>
-                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
-                        Enter your UPI ID where you want to receive payments. Users will pay directly to this UPI ID.<br>
-                        <strong>Tip:</strong> You can paste a full UPI URL here (e.g., <code style="background: #0a0a0a; padding: 2px 6px; border-radius: 4px;">upi://pay?pa=your.id@bank&aid=YOUR_AID</code>) and we'll extract the UPI ID and 'aid' automatically.
-                    </small>
-                    <% if (user.upiAid && user.upiAid.trim() !== '') { %>
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(76, 175, 80, 0.1); border-left: 3px solid #4CAF50; border-radius: 4px;">
-                            <strong style="color: #4CAF50;">✅ App ID (aid) configured</strong> - Users can pay any amount (no ₹2000 limit)
+                    <label>Bank's Payment QR Code (Required for Payment)</label>
+                    <input type="file" name="bankQrCode" accept="image/*">
+                    <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
+                        <div style="margin-top: 10px;">
+                            <p style="color: #4CAF50; font-size: 12px; margin-bottom: 5px;">✅ QR Code uploaded</p>
+                            <img src="<%= user.bankQrCode %>" alt="Bank QR Code" style="max-width: 200px; max-height: 200px; border: 1px solid #333; border-radius: 8px; padding: 5px;">
                         </div>
-                    <% } else { %>
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 152, 0, 0.1); border-left: 3px solid #ff9800; border-radius: 4px;">
-                            <strong style="color: #ff9800;">⚠️ No App ID (aid) configured</strong> - ₹2000 payment limit applies. Add 'aid' below to remove the limit.
-                        </div>
+                    <% else { %>
+                        <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
+                            Upload the QR code provided by your bank. This is the QR code that already works in your shop.<br>
+                            <strong>Maximum file size: 100KB</strong>
+                        </small>
                     <% } %>
                 </div>
                 <div class="form-group">
-                    <label>Payee Name (Optional - shown in payment app)</label>
-                    <input type="text" name="upiPayeeName" value="<%= user.upiPayeeName || '' %>" placeholder="Your business name">
+                    <label>Your UPI ID (Required for Payment)</label>
+                    <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="yourname@paytm or yourname@okicici" required>
                     <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
-                        Name shown when users pay. Leave empty to use your business name.
-                    </small>
-                </div>
-                <div class="form-group">
-                    <label>App ID (aid) - Optional - Removes ₹2000 Payment Limit</label>
-                    <input type="text" name="upiAid" value="<%= user.upiAid || '' %>" placeholder="e.g., uGICAgID13IaAGA">
-                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
-                        <strong style="color: #4CAF50;">✅ With 'aid':</strong> Users can pay <strong>any amount</strong> (no limit)<br>
-                        <strong style="color: #ff9800;">⚠️ Without 'aid':</strong> ₹2000 limit applies (P2P payment)<br><br>
-                        <strong>How to get 'aid':</strong><br>
-                        • Contact your bank's UPI merchant services<br>
-                        • If using Razorpay/Paytm, they provide the 'aid'<br>
-                        • Register as a merchant with NPCI<br><br>
-                        <strong>Tip:</strong> You can also paste a full UPI URL with 'aid' in the UPI ID field above, and we'll extract it automatically.
+                        Enter your UPI ID. Customers can copy this to pay manually if they prefer.<br>
+                        This should match the UPI ID in your bank's QR code.
                     </small>
                 </div>
                 <button type="submit" class="btn btn-primary">Update Profile</button>

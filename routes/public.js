@@ -143,7 +143,7 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// Payment button handler - opens UPI app directly (like shop QR codes)
+// Payment page - displays bank's QR code and UPI ID
 // This is for client's customers to pay the client directly
 router.get('/:slug/pay', async (req, res) => {
   try {
@@ -153,134 +153,272 @@ router.get('/:slug/pay', async (req, res) => {
       return res.status(404).send('Page not found');
     }
 
-    // This route is for client's customers to pay the client
-    // Use direct UPI link (like shop QR codes) - NOT Razorpay Payment Links
-    // Razorpay Payment Links are only for subscription payments (₹999 from client to us)
-    return handleDirectUPIPayment(user, res);
-  } catch (error) {
-    console.error('Payment button error:', error);
-    res.status(500).send('Error opening payment');
-  }
-});
-
-// Direct UPI payment function - opens UPI app directly (like shop QR codes)
-// This is the correct approach for client's customers to pay the client
-function handleDirectUPIPayment(user, res) {
-  let upiId = user.upiId || process.env.UPI_ID || '';
-  const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
-  const upiAid = user.upiAid || process.env.UPI_AID || '';
-  
-  if (!upiId || upiId.trim() === '') {
-    return res.status(400).send(`
+    // Check if payment is configured
+    const hasBankQrCode = user.bankQrCode && user.bankQrCode.trim() !== '';
+    const hasUpiId = user.upiId && user.upiId.trim() !== '';
+    
+    if (!hasBankQrCode && !hasUpiId) {
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Payment Not Configured</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: #f5f5f5;
+            }
+            .container {
+              text-align: center;
+              padding: 20px;
+              background: white;
+              border-radius: 12px;
+              max-width: 400px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>Payment Not Configured</h2>
+            <p>Please configure payment in the dashboard.</p>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+    
+    // Extract clean UPI ID if it's a full URL
+    let upiId = user.upiId || '';
+    if (upiId.includes('pa=')) {
+      const match = upiId.match(/pa=([^&]+)/i);
+      if (match) {
+        upiId = decodeURIComponent(match[1]);
+      }
+    }
+    
+    const businessName = user.businessName || user.name || 'Merchant';
+    
+    // Render payment page with bank QR code and UPI ID
+    return res.send(`
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Payment Not Configured</title>
+        <title>Pay ${businessName}</title>
         <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
           body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: #f5f5f5;
+            padding: 20px;
           }
           .container {
-            text-align: center;
-            padding: 20px;
             background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          }
+          h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+          }
+          .business-name {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+          }
+          .qr-section {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .qr-code {
+            max-width: 300px;
+            width: 100%;
+            height: auto;
+            border: 2px solid #e0e0e0;
             border-radius: 12px;
-            max-width: 400px;
+            padding: 10px;
+            background: white;
+            margin: 0 auto 15px;
+          }
+          .qr-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+          }
+          .download-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4285F4;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background 0.3s;
+          }
+          .download-btn:hover {
+            background: #3367d6;
+          }
+          .upi-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+          }
+          .upi-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            text-align: center;
+          }
+          .upi-id-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+          }
+          .upi-id {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            font-family: monospace;
+            flex: 1;
+            text-align: center;
+            word-break: break-all;
+          }
+          .copy-btn {
+            padding: 8px 16px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            white-space: nowrap;
+          }
+          .copy-btn:hover {
+            background: #1da851;
+          }
+          .copy-btn:active {
+            background: #1a8f45;
+          }
+          .instructions {
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+            margin-top: 20px;
+            line-height: 1.6;
+          }
+          .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #4285F4;
+            text-decoration: none;
+            font-size: 14px;
+          }
+          .back-link:hover {
+            text-decoration: underline;
+          }
+          .no-qr-message {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 20px;
           }
         </style>
       </head>
       <body>
         <div class="container">
-          <h2>Payment Not Configured</h2>
-          <p>Please set your UPI ID in the dashboard to enable payments.</p>
-          <p style="color: #888; font-size: 12px; margin-top: 10px;">
-            Add your App ID (aid) in the dashboard to remove ₹2000 payment limit.
-          </p>
+          <h1>Pay ${businessName}</h1>
+          <p class="business-name">Scan QR code or copy UPI ID to pay</p>
+          
+          ${hasBankQrCode ? `
+            <div class="qr-section">
+              <p class="qr-label">Scan this QR code to pay</p>
+              <img src="${user.bankQrCode}" alt="Payment QR Code" class="qr-code" id="qrCodeImage">
+              <a href="${user.bankQrCode}" download="payment-qr-code.png" class="download-btn">Download QR Code</a>
+            </div>
+          ` : `
+            <div class="no-qr-message">
+              <p>QR code not available. Please use UPI ID below to pay.</p>
+            </div>
+          `}
+          
+          ${hasUpiId ? `
+            <div class="upi-section">
+              <p class="upi-label">Or copy UPI ID to pay manually</p>
+              <div class="upi-id-container">
+                <span class="upi-id" id="upiId">${upiId}</span>
+                <button class="copy-btn" onclick="copyUpiId()">Copy</button>
+              </div>
+            </div>
+          ` : ''}
+          
+          <div class="instructions">
+            <p><strong>How to pay:</strong></p>
+            <p>1. Open any UPI app (Google Pay, PhonePe, Paytm, etc.)</p>
+            ${hasBankQrCode ? '<p>2. Scan the QR code above</p>' : ''}
+            ${hasUpiId ? '<p>2. Enter the UPI ID manually</p>' : ''}
+            <p>3. Enter amount and complete payment</p>
+          </div>
+          
+          <a href="/p/${user.uniqueSlug}" class="back-link">← Back to ${businessName}</a>
         </div>
+        
+        <script>
+          function copyUpiId() {
+            const upiId = document.getElementById('upiId').textContent;
+            navigator.clipboard.writeText(upiId).then(function() {
+              const btn = event.target;
+              const originalText = btn.textContent;
+              btn.textContent = 'Copied!';
+              btn.style.background = '#4CAF50';
+              setTimeout(function() {
+                btn.textContent = originalText;
+                btn.style.background = '#25D366';
+              }, 2000);
+            }).catch(function(err) {
+              alert('Failed to copy. Please copy manually: ' + upiId);
+            });
+          }
+        </script>
       </body>
       </html>
     `);
+  } catch (error) {
+    console.error('Payment page error:', error);
+    res.status(500).send('Error loading payment page');
   }
-  
-  if (upiId.includes('pa=')) {
-    const match = upiId.match(/pa=([^&]+)/i);
-    if (match) {
-      upiId = decodeURIComponent(match[1]);
-    }
-  }
-  
-  // Generate UPI payment link - include aid parameter if available (removes ₹2000 limit)
-  let upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
-  if (upiAid && upiAid.trim() !== '') {
-    upiUrl += `&aid=${encodeURIComponent(upiAid.trim())}`;
-  }
-  
-  // Log for debugging
-  console.log('=== DIRECT UPI PAYMENT LINK ===');
-  console.log('UPI ID:', upiId);
-  console.log('Payee Name:', payeeName);
-  console.log('AID Parameter:', upiAid || 'NONE (P2P - ₹2000 limit)');
-  console.log('Generated URL:', upiUrl);
-  console.log('Payment Type:', upiAid ? 'MERCHANT (No limit)' : 'P2P (₹2000 limit)');
-  console.log('================================');
-  
-  const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-  
-  return res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Opening Payment...</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          margin: 0;
-          background: #f5f5f5;
-        }
-        .container {
-          text-align: center;
-          padding: 20px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <p>Opening payment app...</p>
-        <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${escapedUpiUrl}" style="color: #4285F4;">click here</a></p>
-      </div>
-      <script>
-        (function() {
-          const upiUrl = "${escapedUpiUrl}";
-          try {
-            window.location.href = upiUrl;
-          } catch (e) {
-            const link = document.createElement('a');
-            link.href = upiUrl;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => document.body.removeChild(link), 100);
-          }
-        })();
-      </script>
-    </body>
-    </html>
-  `);
-}
+});
 
 // Redirect handler for links
 router.get('/:slug/redirect/:linkId', async (req, res) => {
