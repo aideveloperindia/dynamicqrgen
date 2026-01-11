@@ -451,34 +451,21 @@
                     <input type="text" name="address" value="<%= user.address || '' %>" placeholder="Enter your business address">
                 </div>
                 <div class="form-group">
-                    <label>Business Logo (Optional - Max 100KB)</label>
+                    <label>Business Logo</label>
                     <input type="file" name="logo" accept="image/*">
-                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
-                        Maximum file size: 100KB. Use an image compressor if needed.
-                    </small>
                 </div>
                 <div class="form-group">
-                    <label>Bank's Payment QR Code (Required for Payment)</label>
+                    <label>Bank's Payment QR Code</label>
                     <input type="file" name="bankQrCode" accept="image/*">
                     <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
                         <div style="margin-top: 10px;">
-                            <p style="color: #4CAF50; font-size: 12px; margin-bottom: 5px;">✅ QR Code uploaded</p>
                             <img src="<%= user.bankQrCode %>" alt="Bank QR Code" style="max-width: 200px; max-height: 200px; border: 1px solid #333; border-radius: 8px; padding: 5px;">
                         </div>
-                    <% else { %>
-                        <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
-                            Upload the QR code provided by your bank. This is the QR code that already works in your shop.<br>
-                            <strong>Maximum file size: 100KB</strong>
-                        </small>
                     <% } %>
                 </div>
                 <div class="form-group">
-                    <label>Your UPI ID (Required for Payment)</label>
-                    <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="yourname@paytm or yourname@okicici" required>
-                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
-                        Enter your UPI ID. Customers can copy this to pay manually if they prefer.<br>
-                        This should match the UPI ID in your bank's QR code.
-                    </small>
+                    <label>UPI ID</label>
+                    <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="yourname@paytm" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Update Profile</button>
             </form>
