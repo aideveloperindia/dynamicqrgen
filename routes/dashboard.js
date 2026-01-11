@@ -140,7 +140,7 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
       return res.status(403).json({ success: false, message: 'Authentication required' });
     }
 
-    const { businessName, phoneNumber, address, upiId, upiPayeeName } = req.body;
+    const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid } = req.body;
     const user = await User.findById(req.user._id);
     
     if (!user) {
@@ -151,8 +151,40 @@ router.post('/update-profile', auth, upload.single('logo'), async (req, res) => 
     if (businessName !== undefined) user.businessName = businessName || '';
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || user.phoneNumber || '';
     if (address !== undefined) user.address = address || '';
-    if (upiId !== undefined) user.upiId = upiId || '';
+    
+    // Handle UPI ID - extract aid parameter if present in full URL
+    if (upiId !== undefined) {
+      let extractedUpiId = upiId || '';
+      let extractedAid = '';
+      
+      // First, check if the original UPI ID contains an aid parameter
+      const aidMatch = upiId.match(/[&?]aid=([^&]+)/i);
+      if (aidMatch) {
+        extractedAid = decodeURIComponent(aidMatch[1]);
+      }
+      
+      // If UPI ID is a full URL, extract the UPI ID from pa= parameter
+      if (extractedUpiId.includes('pa=')) {
+        const paMatch = extractedUpiId.match(/pa=([^&]+)/i);
+        if (paMatch) {
+          extractedUpiId = decodeURIComponent(paMatch[1]);
+        }
+      } else if (extractedAid) {
+        // If we found aid but UPI ID is not a full URL, try to clean it up
+        // Remove aid and any other URL parameters from the UPI ID
+        extractedUpiId = extractedUpiId.replace(/[&?]aid=[^&]*/i, '').replace(/[&?].*/, '').trim();
+      }
+      
+      user.upiId = extractedUpiId;
+      
+      // If aid was extracted from UPI ID, save it (unless upiAid was explicitly provided)
+      if (extractedAid && (!upiAid || upiAid === '')) {
+        user.upiAid = extractedAid;
+      }
+    }
+    
     if (upiPayeeName !== undefined) user.upiPayeeName = upiPayeeName || '';
+    if (upiAid !== undefined) user.upiAid = upiAid || '';
     
     // Store logo as base64 data URL in MongoDB
     // Multer already enforces 100KB limit, so file is guaranteed to be small

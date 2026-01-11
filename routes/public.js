@@ -155,6 +155,7 @@ router.get('/:slug/pay', async (req, res) => {
     // Client must set their UPI ID in dashboard, or use default if not set
     let upiId = user.upiId || process.env.UPI_ID || '';
     const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
+    const upiAid = user.upiAid || process.env.UPI_AID || ''; // Get aid parameter if available
     
     // If no UPI ID is set, show error
     if (!upiId || upiId.trim() === '') {
@@ -202,17 +203,22 @@ router.get('/:slug/pay', async (req, res) => {
       }
     }
     
-    // Generate simple UPI link - no amount, user enters any amount
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
+    // Generate UPI link - include aid parameter if available (removes ₹2000 limit)
+    let upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
+    if (upiAid && upiAid.trim() !== '') {
+      upiUrl += `&aid=${encodeURIComponent(upiAid.trim())}`;
+    }
     
     // Log the exact URL being generated for debugging
     console.log('=== PAYMENT BUTTON URL ===');
     console.log('UPI ID:', upiId);
     console.log('Payee Name:', payeeName);
+    console.log('AID Parameter:', upiAid || 'NONE (P2P - ₹2000 limit)');
     console.log('Generated URL:', upiUrl);
     console.log('URL decoded:', decodeURIComponent(upiUrl));
     console.log('Has amount param:', upiUrl.includes('am='));
     console.log('Has aid param:', upiUrl.includes('aid='));
+    console.log('Payment Type:', upiUrl.includes('aid=') ? 'MERCHANT (No limit)' : 'P2P (₹2000 limit)');
     console.log('==========================');
     
     // Escape for HTML/JavaScript
