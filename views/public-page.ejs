@@ -382,16 +382,8 @@
             <div class="icons-row top-row">
                 <% topRow.forEach((link, index) => { %>
                     <% 
-                    // Check if this is a UPI payment link - skip it, we have a dedicated payment button now
-                    const isUPILink = link.url && (
-                        link.url.toLowerCase().startsWith('upi://') ||
-                        link.url.toLowerCase().startsWith('upiqr://') ||
-                        link.url.toLowerCase().includes('upi://') ||
-                        link.url.toLowerCase().includes('pay?pa=') ||
-                        link.url.toLowerCase().includes('pay?pn=')
-                    );
-                    // Skip UPI payment links - we have a dedicated payment button
-                    if (isUPILink) return;
+                    // Allow UPI payment links to show as regular icons
+                    // They will be handled by the redirect handler
                     %>
                     <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" 
                        class="icon-link <%= link.category %>">
@@ -409,16 +401,8 @@
             <div class="icons-row bottom-row">
                 <% bottomRow.forEach((link) => { %>
                     <% 
-                    // Check if this is a UPI payment link - skip it, we have a dedicated payment button now
-                    const isUPILink = link.url && (
-                        link.url.toLowerCase().startsWith('upi://') ||
-                        link.url.toLowerCase().startsWith('upiqr://') ||
-                        link.url.toLowerCase().includes('upi://') ||
-                        link.url.toLowerCase().includes('pay?pa=') ||
-                        link.url.toLowerCase().includes('pay?pn=')
-                    );
-                    // Skip UPI payment links - we have a dedicated payment button
-                    if (isUPILink) return;
+                    // Allow UPI payment links to show as regular icons
+                    // They will be handled by the redirect handler
                     %>
                     <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" 
                        class="icon-link <%= link.category %>">
