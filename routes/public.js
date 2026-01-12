@@ -644,7 +644,13 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
     // For UPI links, open UPI app directly
     if (isUPILink) {
       const upiUrl = link.url.trim();
-      const escapedUpiUrl = upiUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      // Encode URL for HTML attribute (safer than JavaScript string escaping)
+      const htmlEncodedUrl = upiUrl
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
       
       return res.send(`
         <!DOCTYPE html>
@@ -667,26 +673,78 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
               text-align: center;
               padding: 20px;
             }
+            .open-link {
+              display: inline-block;
+              margin-top: 15px;
+              padding: 12px 24px;
+              background: #4285F4;
+              color: white;
+              text-decoration: none;
+              border-radius: 8px;
+              font-size: 16px;
+            }
+            .open-link:hover {
+              background: #3367d6;
+            }
           </style>
         </head>
         <body>
           <div class="container">
             <p>Opening payment app...</p>
-            <p style="color: #888; font-size: 14px;">If the app doesn't open, <a href="${escapedUpiUrl}" style="color: #4285F4;">click here</a></p>
+            <a href="#" id="upiLink" data-upi-url="${htmlEncodedUrl}" class="open-link" style="display: none;">Click to Open Payment</a>
+            <p style="color: #888; font-size: 14px; margin-top: 15px;">If the app doesn't open automatically, <a href="#" id="manualLink" style="color: #4285F4;">click here</a></p>
           </div>
           <script>
             (function() {
-              const upiUrl = "${escapedUpiUrl}";
-              try {
-                window.location.href = upiUrl;
-              } catch (e) {
-                const link = document.createElement('a');
-                link.href = upiUrl;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(() => document.body.removeChild(link), 100);
+              const upiLinkElement = document.getElementById('upiLink');
+              const manualLink = document.getElementById('manualLink');
+              const upiUrl = upiLinkElement.getAttribute('data-upi-url');
+              
+              // Decode HTML entities
+              const decodedUrl = upiUrl
+                .replace(/&amp;/g, '&')
+                .replace(/&quot;/g, '"')
+                .replace(/&#x27;/g, "'")
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+              
+              console.log('Opening UPI link:', decodedUrl);
+              
+              // Function to open UPI link
+              function openUPI() {
+                try {
+                  // Method 1: Direct location change
+                  window.location.href = decodedUrl;
+                } catch (e) {
+                  console.error('Method 1 failed:', e);
+                  try {
+                    // Method 2: Create and click link
+                    const link = document.createElement('a');
+                    link.href = decodedUrl;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    setTimeout(function() {
+                      document.body.removeChild(link);
+                    }, 100);
+                  } catch (e2) {
+                    console.error('Method 2 failed:', e2);
+                    // Method 3: window.open
+                    window.open(decodedUrl, '_blank');
+                  }
+                }
               }
+              
+              // Set href for manual link
+              upiLinkElement.href = decodedUrl;
+              manualLink.href = decodedUrl;
+              manualLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                openUPI();
+              });
+              
+              // Try to open immediately
+              openUPI();
             })();
           </script>
         </body>
