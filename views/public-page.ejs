@@ -413,7 +413,8 @@
                     const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
                     %>
                     <a href="<%= linkHref %>" 
-                       class="icon-link <%= link.category %>">
+                       class="icon-link <%= link.category %>"
+                       <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
@@ -447,8 +448,43 @@
         </div>
         
         <script>
-            // Simple script for page functionality
-            // Payment is handled by the payment button route (/p/:slug/pay)
+            // Handle UPI link clicks
+            document.addEventListener('DOMContentLoaded', function() {
+                const upiLinks = document.querySelectorAll('a[data-upi-link]');
+                
+                upiLinks.forEach(function(link) {
+                    link.addEventListener('click', function(e) {
+                        const upiUrl = this.getAttribute('data-upi-link');
+                        
+                        if (!upiUrl) return;
+                        
+                        console.log('Opening UPI link:', upiUrl);
+                        
+                        // Try multiple methods to open UPI app
+                        try {
+                            // Method 1: Direct location change
+                            window.location.href = upiUrl;
+                        } catch (e) {
+                            console.error('Method 1 failed:', e);
+                            try {
+                                // Method 2: Create and click link
+                                const tempLink = document.createElement('a');
+                                tempLink.href = upiUrl;
+                                tempLink.style.display = 'none';
+                                document.body.appendChild(tempLink);
+                                tempLink.click();
+                                setTimeout(function() {
+                                    document.body.removeChild(tempLink);
+                                }, 100);
+                            } catch (e2) {
+                                console.error('Method 2 failed:', e2);
+                                // Method 3: window.open
+                                window.open(upiUrl, '_blank');
+                            }
+                        }
+                    });
+                });
+            });
         </script>
         
         <div class="footer">
