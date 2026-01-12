@@ -635,8 +635,11 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       return res.status(404).send('Link not found');
     }
 
-    // Check if this is a UPI payment link - simple check
-    const isUPILink = link.url && link.url.toLowerCase().startsWith('upi://');
+    // Check if this is a UPI payment link - supports both upi://pay and upi://collect
+    const isUPILink = link.url && (
+      link.url.toLowerCase().startsWith('upi://') ||
+      link.url.toLowerCase().startsWith('upiqr://')
+    );
 
     // For UPI links, open UPI app directly
     if (isUPILink) {
