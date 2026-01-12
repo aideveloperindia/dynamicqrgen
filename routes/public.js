@@ -426,6 +426,9 @@ router.get('/:slug/pay', async (req, res) => {
             <div class="payment-link-section">
               <p class="payment-link-label">Or click to open payment link</p>
               <button class="payment-link-btn" id="paymentLinkBtn" data-payment-link="${escapedPaymentLink}">Click to Pay</button>
+              <p style="font-size: 12px; color: #888; margin-top: 10px;">
+                <a href="#" id="manualPaymentLink" style="color: #4285F4; text-decoration: none;">Click here if payment app doesn't open</a>
+              </p>
             </div>
           ` : ''}
           
@@ -519,6 +522,8 @@ router.get('/:slug/pay', async (req, res) => {
           // Payment link button handler
           (function() {
             const paymentLinkBtn = document.getElementById('paymentLinkBtn');
+            const manualPaymentLink = document.getElementById('manualPaymentLink');
+            
             if (!paymentLinkBtn) {
               console.log('Payment link button not found');
               return;
@@ -531,50 +536,70 @@ router.get('/:slug/pay', async (req, res) => {
               console.log('Payment link is empty');
               paymentLinkBtn.disabled = true;
               paymentLinkBtn.textContent = 'Payment Link Not Configured';
+              if (manualPaymentLink) manualPaymentLink.style.display = 'none';
               return;
             }
             
+            // Decode HTML entities once
+            const decodedLink = paymentLink
+              .replace(/&amp;/g, '&')
+              .replace(/&quot;/g, '"')
+              .replace(/&#x27;/g, "'")
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>');
+            
+            console.log('Decoded payment link:', decodedLink);
+            
+            // Function to open payment link
+            function openPaymentLink() {
+              console.log('Attempting to open:', decodedLink);
+              
+              // Try multiple methods
+              try {
+                // Method 1: Direct location change
+                window.location.href = decodedLink;
+              } catch (e) {
+                console.error('Method 1 failed:', e);
+                try {
+                  // Method 2: Create and click link
+                  const link = document.createElement('a');
+                  link.href = decodedLink;
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  setTimeout(function() {
+                    document.body.removeChild(link);
+                  }, 100);
+                } catch (e2) {
+                  console.error('Method 2 failed:', e2);
+                  // Method 3: window.open
+                  window.open(decodedLink, '_blank');
+                }
+              }
+            }
+            
+            // Button click handler
             paymentLinkBtn.addEventListener('click', function(e) {
               e.preventDefault();
-              
-              // Decode HTML entities
-              const decodedLink = paymentLink
-                .replace(/&amp;/g, '&')
-                .replace(/&quot;/g, '"')
-                .replace(/&#x27;/g, "'")
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>');
-              
-              console.log('Opening payment link:', decodedLink);
+              e.stopPropagation();
               
               // Show feedback
-              const originalText = this.textContent;
               this.textContent = 'Opening...';
-              this.disabled = true;
               
-              // Use the same approach as redirect handler
-              try {
-                window.location.href = decodedLink;
-                // If we're still here after 1 second, restore button
-                setTimeout(function() {
-                  paymentLinkBtn.textContent = originalText;
-                  paymentLinkBtn.disabled = false;
-                }, 1000);
-              } catch (e) {
-                console.error('Error opening payment link:', e);
-                // Fallback: create a link and click it
-                const link = document.createElement('a');
-                link.href = decodedLink;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(function() {
-                  document.body.removeChild(link);
-                  paymentLinkBtn.textContent = originalText;
-                  paymentLinkBtn.disabled = false;
-                }, 100);
-              }
+              // Open immediately
+              openPaymentLink();
             });
+            
+            // Manual link click handler
+            if (manualPaymentLink) {
+              manualPaymentLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openPaymentLink();
+              });
+              // Set the href as well for right-click "Open in new tab"
+              manualPaymentLink.href = decodedLink;
+            }
           })();
         </script>
       </body>
