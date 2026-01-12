@@ -390,7 +390,8 @@
                     const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
                     %>
                     <a href="<%= linkHref %>" 
-                       class="icon-link <%= link.category %>">
+                       class="icon-link <%= link.category %>"
+                       <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
