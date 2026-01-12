@@ -382,10 +382,14 @@
             <div class="icons-row top-row">
                 <% topRow.forEach((link, index) => { %>
                     <% 
-                    // Allow UPI payment links to show as regular icons
-                    // They will be handled by the redirect handler
+                    // Check if this is a UPI link - link directly to it, don't go through redirect handler
+                    const isUPILink = link.url && (
+                        link.url.toLowerCase().startsWith('upi://') ||
+                        link.url.toLowerCase().startsWith('upiqr://')
+                    );
+                    const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
                     %>
-                    <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" 
+                    <a href="<%= linkHref %>" 
                        class="icon-link <%= link.category %>">
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
@@ -401,10 +405,14 @@
             <div class="icons-row bottom-row">
                 <% bottomRow.forEach((link) => { %>
                     <% 
-                    // Allow UPI payment links to show as regular icons
-                    // They will be handled by the redirect handler
+                    // Check if this is a UPI link - link directly to it, don't go through redirect handler
+                    const isUPILink = link.url && (
+                        link.url.toLowerCase().startsWith('upi://') ||
+                        link.url.toLowerCase().startsWith('upiqr://')
+                    );
+                    const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
                     %>
-                    <a href="/p/<%= user.uniqueSlug %>/redirect/<%= link._id %>" 
+                    <a href="<%= linkHref %>" 
                        class="icon-link <%= link.category %>">
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
