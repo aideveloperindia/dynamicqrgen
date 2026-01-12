@@ -158,8 +158,13 @@ router.get('/:slug/pay', async (req, res) => {
     const hasUpiId = user.upiId && user.upiId.trim() !== '';
     const hasPaymentLink = user.paymentLink && user.paymentLink.trim() !== '';
     
-    // Escape payment link for JavaScript
-    const escapedPaymentLink = (user.paymentLink || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    // Escape payment link for HTML data attribute (escape quotes and ampersands)
+    const escapedPaymentLink = (user.paymentLink || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
     
     if (!hasBankQrCode && !hasUpiId && !hasPaymentLink) {
       return res.status(400).send(`
@@ -420,7 +425,7 @@ router.get('/:slug/pay', async (req, res) => {
           ${hasPaymentLink ? `
             <div class="payment-link-section">
               <p class="payment-link-label">Or click to open payment link</p>
-              <button class="payment-link-btn" onclick="openPaymentLink()">Click to Pay</button>
+              <button class="payment-link-btn" data-payment-link="${escapedPaymentLink}" onclick="openPaymentLink(this)">Click to Pay</button>
             </div>
           ` : ''}
           
@@ -511,20 +516,31 @@ router.get('/:slug/pay', async (req, res) => {
             }, 3000);
           }
           
-          function openPaymentLink() {
-            const paymentLink = '${escapedPaymentLink}';
+          function openPaymentLink(button) {
+            const paymentLink = button.getAttribute('data-payment-link');
             if (!paymentLink || paymentLink.trim() === '') {
               alert('Payment link not configured');
               return;
             }
             
+            // Decode HTML entities
+            const decodedLink = paymentLink
+              .replace(/&amp;/g, '&')
+              .replace(/&quot;/g, '"')
+              .replace(/&#x27;/g, "'")
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>');
+            
+            console.log('Opening payment link:', decodedLink); // Debug log
+            
             try {
               // Try to open the UPI link directly
-              window.location.href = paymentLink;
+              window.location.href = decodedLink;
             } catch (e) {
+              console.error('Error opening payment link:', e);
               // Fallback: create a link and click it
               const link = document.createElement('a');
-              link.href = paymentLink;
+              link.href = decodedLink;
               link.style.display = 'none';
               document.body.appendChild(link);
               link.click();
