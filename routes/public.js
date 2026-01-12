@@ -644,13 +644,8 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
     // For UPI links, open UPI app directly
     if (isUPILink) {
       const upiUrl = link.url.trim();
-      // Encode URL for HTML attribute (safer than JavaScript string escaping)
-      const htmlEncodedUrl = upiUrl
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+      // Use encodeURIComponent for the href attribute, but keep original for JavaScript
+      const encodedForHref = encodeURI(upiUrl);
       
       return res.send(`
         <!DOCTYPE html>
@@ -691,60 +686,28 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
         <body>
           <div class="container">
             <p>Opening payment app...</p>
-            <a href="#" id="upiLink" data-upi-url="${htmlEncodedUrl}" class="open-link" style="display: none;">Click to Open Payment</a>
-            <p style="color: #888; font-size: 14px; margin-top: 15px;">If the app doesn't open automatically, <a href="#" id="manualLink" style="color: #4285F4;">click here</a></p>
+            <a href="${encodedForHref}" class="open-link">Click here if app doesn't open</a>
           </div>
           <script>
             (function() {
-              const upiLinkElement = document.getElementById('upiLink');
-              const manualLink = document.getElementById('manualLink');
-              const upiUrl = upiLinkElement.getAttribute('data-upi-url');
-              
-              // Decode HTML entities
-              const decodedUrl = upiUrl
-                .replace(/&amp;/g, '&')
-                .replace(/&quot;/g, '"')
-                .replace(/&#x27;/g, "'")
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>');
-              
-              console.log('Opening UPI link:', decodedUrl);
-              
-              // Function to open UPI link
-              function openUPI() {
-                try {
-                  // Method 1: Direct location change
-                  window.location.href = decodedUrl;
-                } catch (e) {
-                  console.error('Method 1 failed:', e);
-                  try {
-                    // Method 2: Create and click link
-                    const link = document.createElement('a');
-                    link.href = decodedUrl;
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    setTimeout(function() {
-                      document.body.removeChild(link);
-                    }, 100);
-                  } catch (e2) {
-                    console.error('Method 2 failed:', e2);
-                    // Method 3: window.open
-                    window.open(decodedUrl, '_blank');
-                  }
-                }
-              }
-              
-              // Set href for manual link
-              upiLinkElement.href = decodedUrl;
-              manualLink.href = decodedUrl;
-              manualLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                openUPI();
-              });
+              const upiUrl = ${JSON.stringify(upiUrl)};
+              console.log('Opening UPI link:', upiUrl);
               
               // Try to open immediately
-              openUPI();
+              try {
+                window.location.href = upiUrl;
+              } catch (e) {
+                console.error('Error:', e);
+                // Fallback: create and click link
+                const link = document.createElement('a');
+                link.href = upiUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(function() {
+                  document.body.removeChild(link);
+                }, 100);
+              }
             })();
           </script>
         </body>
