@@ -163,7 +163,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
       return res.status(403).json({ success: false, message: 'Authentication required' });
     }
 
-    const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid } = req.body;
+    const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid, paymentLink } = req.body;
     const logoFile = req.files && req.files['logo'] ? req.files['logo'][0] : null;
     const bankQrCodeFile = req.files && req.files['bankQrCode'] ? req.files['bankQrCode'][0] : null;
     const user = await User.findById(req.user._id);
@@ -210,6 +210,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
     
     if (upiPayeeName !== undefined) user.upiPayeeName = upiPayeeName || '';
     if (upiAid !== undefined) user.upiAid = upiAid || '';
+    if (paymentLink !== undefined) user.paymentLink = paymentLink || '';
     
     // Store logo as base64 data URL in MongoDB
     // Multer already enforces 100KB limit, so file is guaranteed to be small

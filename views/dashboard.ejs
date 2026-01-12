@@ -467,6 +467,11 @@
                     <label>UPI ID</label>
                     <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="yourname@paytm" required>
                 </div>
+                <div class="form-group">
+                    <label>Payment Link (Optional)</label>
+                    <input type="text" name="paymentLink" value="<%= user.paymentLink || '' %>" placeholder="upi://collect?pa=yourname@ybl&pn=YourName&tn=Payment&cu=INR">
+                    <small style="color: #888; font-size: 12px; margin-top: 5px; display: block;">Enter your UPI payment link (e.g., upi://collect?pa=...)</small>
+                </div>
                 <button type="submit" class="btn btn-primary">Update Profile</button>
             </form>
         </div>

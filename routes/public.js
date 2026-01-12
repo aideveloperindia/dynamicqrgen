@@ -156,8 +156,12 @@ router.get('/:slug/pay', async (req, res) => {
     // Check if payment is configured
     const hasBankQrCode = user.bankQrCode && user.bankQrCode.trim() !== '';
     const hasUpiId = user.upiId && user.upiId.trim() !== '';
+    const hasPaymentLink = user.paymentLink && user.paymentLink.trim() !== '';
     
-    if (!hasBankQrCode && !hasUpiId) {
+    // Escape payment link for JavaScript
+    const escapedPaymentLink = (user.paymentLink || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    
+    if (!hasBankQrCode && !hasUpiId && !hasPaymentLink) {
       return res.status(400).send(`
         <!DOCTYPE html>
         <html>
@@ -354,6 +358,36 @@ router.get('/:slug/pay', async (req, res) => {
             border-radius: 8px;
             margin-bottom: 20px;
           }
+          .payment-link-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+          }
+          .payment-link-btn {
+            padding: 15px 30px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            max-width: 300px;
+          }
+          .payment-link-btn:hover {
+            background: #3367d6;
+          }
+          .payment-link-btn:active {
+            background: #2a5bc4;
+          }
+          .payment-link-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+          }
         </style>
       </head>
       <body>
@@ -383,11 +417,19 @@ router.get('/:slug/pay', async (req, res) => {
             </div>
           ` : ''}
           
+          ${hasPaymentLink ? `
+            <div class="payment-link-section">
+              <p class="payment-link-label">Or click to open payment link</p>
+              <button class="payment-link-btn" onclick="openPaymentLink()">Click to Pay</button>
+            </div>
+          ` : ''}
+          
           <div class="instructions">
             <p><strong>How to pay:</strong></p>
             <p>1. Open any UPI app (Google Pay, PhonePe, Paytm, etc.)</p>
             ${hasBankQrCode ? '<p>2. Scan the QR code above</p>' : ''}
-            ${hasUpiId ? '<p>2. Enter the UPI ID manually</p>' : ''}
+            ${hasUpiId ? '<p>2. Or copy the UPI ID manually</p>' : ''}
+            ${hasPaymentLink ? '<p>2. Or click the payment link button above</p>' : ''}
             <p>3. Enter amount and complete payment</p>
           </div>
           
@@ -467,6 +509,27 @@ router.get('/:slug/pay', async (req, res) => {
               btn.textContent = originalText;
               btn.style.background = '#25D366';
             }, 3000);
+          }
+          
+          function openPaymentLink() {
+            const paymentLink = '${escapedPaymentLink}';
+            if (!paymentLink || paymentLink.trim() === '') {
+              alert('Payment link not configured');
+              return;
+            }
+            
+            try {
+              // Try to open the UPI link directly
+              window.location.href = paymentLink;
+            } catch (e) {
+              // Fallback: create a link and click it
+              const link = document.createElement('a');
+              link.href = paymentLink;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              setTimeout(() => document.body.removeChild(link), 100);
+            }
           }
         </script>
       </body>
