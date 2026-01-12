@@ -425,7 +425,7 @@ router.get('/:slug/pay', async (req, res) => {
           ${hasPaymentLink ? `
             <div class="payment-link-section">
               <p class="payment-link-label">Or click to open payment link</p>
-              <button class="payment-link-btn" data-payment-link="${escapedPaymentLink}" onclick="openPaymentLink(this)">Click to Pay</button>
+              <button class="payment-link-btn" id="paymentLinkBtn" data-payment-link="${escapedPaymentLink}">Click to Pay</button>
             </div>
           ` : ''}
           
@@ -516,37 +516,66 @@ router.get('/:slug/pay', async (req, res) => {
             }, 3000);
           }
           
-          function openPaymentLink(button) {
-            const paymentLink = button.getAttribute('data-payment-link');
-            if (!paymentLink || paymentLink.trim() === '') {
-              alert('Payment link not configured');
+          // Payment link button handler
+          (function() {
+            const paymentLinkBtn = document.getElementById('paymentLinkBtn');
+            if (!paymentLinkBtn) {
+              console.log('Payment link button not found');
               return;
             }
             
-            // Decode HTML entities
-            const decodedLink = paymentLink
-              .replace(/&amp;/g, '&')
-              .replace(/&quot;/g, '"')
-              .replace(/&#x27;/g, "'")
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>');
+            const paymentLink = paymentLinkBtn.getAttribute('data-payment-link');
+            console.log('Payment link from data attribute:', paymentLink);
             
-            console.log('Opening payment link:', decodedLink); // Debug log
-            
-            try {
-              // Try to open the UPI link directly
-              window.location.href = decodedLink;
-            } catch (e) {
-              console.error('Error opening payment link:', e);
-              // Fallback: create a link and click it
-              const link = document.createElement('a');
-              link.href = decodedLink;
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
-              setTimeout(() => document.body.removeChild(link), 100);
+            if (!paymentLink || paymentLink.trim() === '') {
+              console.log('Payment link is empty');
+              paymentLinkBtn.disabled = true;
+              paymentLinkBtn.textContent = 'Payment Link Not Configured';
+              return;
             }
-          }
+            
+            paymentLinkBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              
+              // Decode HTML entities
+              const decodedLink = paymentLink
+                .replace(/&amp;/g, '&')
+                .replace(/&quot;/g, '"')
+                .replace(/&#x27;/g, "'")
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+              
+              console.log('Opening payment link:', decodedLink);
+              
+              // Show feedback
+              const originalText = this.textContent;
+              this.textContent = 'Opening...';
+              this.disabled = true;
+              
+              // Use the same approach as redirect handler
+              try {
+                window.location.href = decodedLink;
+                // If we're still here after 1 second, restore button
+                setTimeout(function() {
+                  paymentLinkBtn.textContent = originalText;
+                  paymentLinkBtn.disabled = false;
+                }, 1000);
+              } catch (e) {
+                console.error('Error opening payment link:', e);
+                // Fallback: create a link and click it
+                const link = document.createElement('a');
+                link.href = decodedLink;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(function() {
+                  document.body.removeChild(link);
+                  paymentLinkBtn.textContent = originalText;
+                  paymentLinkBtn.disabled = false;
+                }, 100);
+              }
+            });
+          })();
         </script>
       </body>
       </html>
