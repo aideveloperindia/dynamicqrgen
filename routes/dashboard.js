@@ -152,7 +152,7 @@ const handleMulterError = (err, req, res, next) => {
   next();
 };
 
-router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'bankQrCode', maxCount: 1 }]), handleMulterError, async (req, res) => {
+router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'bankQrCode', maxCount: 1 }, { name: 'uploadedQrCode', maxCount: 1 }]), handleMulterError, async (req, res) => {
   try {
     // Check authentication
     if (!req.user || !req.user._id) {
@@ -166,6 +166,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
     const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid, paymentLink } = req.body;
     const logoFile = req.files && req.files['logo'] ? req.files['logo'][0] : null;
     const bankQrCodeFile = req.files && req.files['bankQrCode'] ? req.files['bankQrCode'][0] : null;
+    const uploadedQrCodeFile = req.files && req.files['uploadedQrCode'] ? req.files['uploadedQrCode'][0] : null;
     const user = await User.findById(req.user._id);
     
     if (!user) {
@@ -255,9 +256,30 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
       }
     }
     
+    // Store uploaded dynamic QR code as base64 data URL in MongoDB
+    if (uploadedQrCodeFile) {
+      try {
+        // Check file size before processing
+        if (uploadedQrCodeFile.size > 100 * 1024) {
+          console.warn('Dynamic QR code file size exceeds limit:', uploadedQrCodeFile.size);
+          return res.status(400).json({ 
+            success: false, 
+            message: 'QR code file is too large. Maximum size is 100KB. Please compress your image.' 
+          });
+        }
+        user.uploadedQrCode = await compressAndConvertToDataUrl(uploadedQrCodeFile.buffer, uploadedQrCodeFile.mimetype);
+      } catch (qrError) {
+        console.error('Dynamic QR code processing error:', qrError);
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Error processing QR code: ' + (qrError.message || 'Unknown error') 
+        });
+      }
+    }
+    
     try {
-      await user.save();
-      res.json({ success: true, message: 'Profile updated successfully' });
+    await user.save();
+    res.json({ success: true, message: 'Profile updated successfully' });
     } catch (saveError) {
       console.error('User save error:', saveError);
       console.error('Save error stack:', saveError.stack);

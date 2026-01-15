@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Dynamic QR Generator</title>
+    <title>Dashboard</title>
     <link rel="icon" type="image/png" href="/images/qrconnect logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -18,11 +18,11 @@
             background: #0a0a0a;
             color: #ffffff;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
@@ -30,24 +30,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
 
         .header h1 {
-            font-size: 28px;
+            font-size: 24px;
+            font-weight: 600;
         }
 
         .logout-btn {
             background: #ff4444;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
+            font-size: 14px;
             transition: background 0.3s;
         }
 
@@ -58,50 +60,70 @@
         .section {
             background: #1a1a1a;
             border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 25px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
 
         .section-title {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #ffffff;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
 
         .profile-form {
-            display: grid;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         label {
             color: #ccc;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 500;
         }
 
         input[type="text"],
+        input[type="tel"],
         input[type="file"] {
-            padding: 12px;
+            padding: 10px 12px;
             border: 1px solid #333;
             border-radius: 8px;
             background: #0a0a0a;
             color: #fff;
             font-size: 14px;
+            max-width: 100%;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+        }
+
+        .preview-img {
+            max-width: 120px;
+            max-height: 120px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 5px;
+            margin-top: 8px;
         }
 
         .btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
             transition: all 0.3s;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
         }
 
         .btn-primary {
@@ -134,165 +156,7 @@
         .payment-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             text-align: center;
-            padding: 30px;
-        }
-
-        .payment-section h2 {
-            margin-bottom: 15px;
-        }
-
-        .payment-section p {
-            margin-bottom: 20px;
-            color: #ddd;
-        }
-
-        .links-list {
-            display: grid;
-            gap: 15px;
-        }
-
-        .link-item {
-            background: linear-gradient(135deg, rgba(66, 133, 244, 0.1), rgba(37, 211, 102, 0.1));
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
             padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-        
-        .link-item:hover {
-            background: linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(37, 211, 102, 0.15));
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .link-info {
-            flex: 1;
-            min-width: 200px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .link-icon {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            flex-shrink: 0;
-        }
-        
-        .link-info strong {
-            display: block;
-            margin-bottom: 5px;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .link-info span {
-            color: #888;
-            font-size: 13px;
-            word-break: break-all;
-        }
-        
-        .link-actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 13px;
-        }
-        
-        .add-link-form {
-            background: #0a0a0a;
-            border: 2px solid #333;
-            border-radius: 12px;
-            padding: 25px;
-            margin-top: 20px;
-            display: none;
-        }
-        
-        .add-link-form.active {
-            display: block;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .category-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .category-option {
-            padding: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .category-option:hover {
-            border-color: #4285F4;
-            background: rgba(66, 133, 244, 0.1);
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-        }
-        
-        .category-option.selected {
-            border-color: #4285F4;
-            background: linear-gradient(135deg, #4285F4, #25D366);
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
-        }
-        
-        .category-option i {
-            font-size: 28px;
-            display: block;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-        
-        .category-option span {
-            font-size: 12px;
-            color: #fff;
-            font-weight: 500;
-        }
-
-        .qr-section {
-            text-align: center;
-            padding: 30px;
-        }
-
-        .qr-code {
-            max-width: 300px;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-        }
-
-        .qr-code img {
-            width: 100%;
-            height: auto;
         }
 
         .status-badge {
@@ -314,9 +178,10 @@
         }
 
         .alert {
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            font-size: 14px;
         }
 
         .alert-success {
@@ -333,18 +198,137 @@
             background: #4285F4;
             color: white;
         }
-        
-        .payment-options {
-            text-align: center;
+
+        .links-list {
+            display: grid;
+            gap: 12px;
         }
-        
+
+        .link-item {
+            background: rgba(66, 133, 244, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .link-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .link-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .link-info strong {
+            display: block;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .link-info span {
+            color: #888;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .link-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            max-width: none;
+            width: auto;
+        }
+
+        .add-link-form {
+            background: #0a0a0a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .add-link-form.active {
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .category-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .category-option {
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .category-option:hover {
+            border-color: #4285F4;
+            background: rgba(66, 133, 244, 0.1);
+        }
+
+        .category-option.selected {
+            border-color: #4285F4;
+            background: linear-gradient(135deg, #4285F4, #25D366);
+        }
+
+        .category-option i {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+
+        .category-option span {
+            font-size: 11px;
+            color: #fff;
+            font-weight: 500;
+        }
+
         .payment-apps {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
+            margin-top: 15px;
         }
-        
+
         .payment-app-btn {
             display: flex;
             flex-direction: column;
@@ -352,75 +336,55 @@
             justify-content: center;
             background: rgba(255, 255, 255, 0.08);
             border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 25px 30px;
+            border-radius: 12px;
+            padding: 15px 20px;
             cursor: pointer;
             transition: all 0.3s ease;
             color: #fff;
-            min-width: 110px;
-            text-align: center;
+            min-width: 90px;
         }
-        
+
         .payment-app-btn:hover {
             background: rgba(255, 255, 255, 0.15);
             border-color: rgba(255, 255, 255, 0.4);
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-        
-        .payment-app-btn:active {
-            transform: translateY(-2px) scale(1.02);
-        }
-        
-        .payment-icon {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .payment-icon svg {
-            filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4));
-        }
-        
-        .payment-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #fff;
-            margin-top: 5px;
-        }
-        
-        .payment-googlepay:hover {
-            border-color: #4285F4;
-            box-shadow: 0 10px 30px rgba(66, 133, 244, 0.5);
-        }
-        
-        .payment-phonepe:hover {
-            border-color: #5F259F;
-            box-shadow: 0 10px 30px rgba(95, 37, 159, 0.5);
-        }
-        
-        .payment-paytm:hover {
-            border-color: #00BAF2;
-            box-shadow: 0 10px 30px rgba(0, 186, 242, 0.5);
+            transform: translateY(-3px);
         }
 
-        @media (max-width: 768px) {
+        .payment-icon {
+            margin-bottom: 8px;
+        }
+
+        .payment-icon svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        .payment-label {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        @media (min-width: 480px) {
             .form-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 700px;
             }
 
             .link-item {
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row;
             }
 
             .link-actions {
-                width: 100%;
-            }
-
-            .btn {
-                width: 100%;
+                width: auto;
             }
         }
     </style>
@@ -440,7 +404,7 @@
             <form class="profile-form" id="profileForm">
                 <div class="form-group">
                     <label>Business Name</label>
-                    <input type="text" name="businessName" value="<%= user.businessName || '' %>" placeholder="Enter business name">
+                    <input type="text" name="businessName" value="<%= user.businessName || '' %>" placeholder="Business Name">
                 </div>
                 <div class="form-group">
                     <label>Phone Number</label>
@@ -448,37 +412,36 @@
                 </div>
                 <div class="form-group">
                     <label>Address</label>
-                    <input type="text" name="address" value="<%= user.address || '' %>" placeholder="Enter your business address">
+                    <input type="text" name="address" value="<%= user.address || '' %>" placeholder="Address">
                 </div>
                 <div class="form-group">
                     <label>Business Logo</label>
                     <input type="file" name="logo" accept="image/*">
-                </div>
-                <div class="form-group">
-                    <label>Bank's Payment QR Code</label>
-                    <input type="file" name="bankQrCode" accept="image/*">
-                    <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
-                        <div style="margin-top: 10px;">
-                            <img src="<%= user.bankQrCode %>" alt="Bank QR Code" style="max-width: 200px; max-height: 200px; border: 1px solid #333; border-radius: 8px; padding: 5px;">
-                        </div>
+                    <% if (user.logo && user.logo.trim() !== '') { %>
+                        <img src="<%= user.logo %>" alt="Logo" class="preview-img">
                     <% } %>
                 </div>
                 <div class="form-group">
-                    <label>UPI ID</label>
-                    <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="yourname@paytm" required>
+                    <label>Dynamic QR Code</label>
+                    <input type="file" name="uploadedQrCode" accept="image/*">
+                    <% if (user.uploadedQrCode && user.uploadedQrCode.trim() !== '') { %>
+                        <img src="<%= user.uploadedQrCode %>" alt="Dynamic QR" class="preview-img">
+                    <% } %>
                 </div>
                 <div class="form-group">
-                    <label>Payment Link (Optional)</label>
-                    <input type="text" name="paymentLink" value="<%= user.paymentLink || '' %>" placeholder="upi://collect?pa=yourname@ybl&pn=YourName&tn=Payment&cu=INR">
-                    <small style="color: #888; font-size: 12px; margin-top: 5px; display: block;">Enter your UPI payment link (e.g., upi://collect?pa=...)</small>
+                    <label>Payment QR Code</label>
+                    <input type="file" name="bankQrCode" accept="image/*">
+                    <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
+                        <img src="<%= user.bankQrCode %>" alt="Payment QR" class="preview-img">
+                    <% } %>
                 </div>
-                <button type="submit" class="btn btn-primary">Update Profile</button>
+                <button type="submit" class="btn btn-primary">Update</button>
             </form>
         </div>
 
         <!-- Payment/Subscription Section -->
         <div class="section payment-section">
-            <h2>Subscription Status</h2>
+            <h2 class="section-title" style="margin-bottom: 10px;">Subscription</h2>
             <% 
             const now = new Date();
             const isSubscriptionActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
@@ -486,210 +449,129 @@
             const hasLinks = links && links.length > 0;
             %>
             <% if (isSubscriptionActive) { %>
-                <p><span class="status-badge status-paid">✓ Subscription Active</span></p>
-                <p style="margin-top: 15px; color: #888;">Valid until: <strong><%= subscriptionEndDate %></strong></p>
-                <p style="margin-top: 10px;">Your QR code is active and ready to share!</p>
+                <p><span class="status-badge status-paid">Active</span></p>
+                <p style="margin-top: 10px; color: #ddd; font-size: 14px;">Until: <strong><%= subscriptionEndDate %></strong></p>
             <% } else { %>
-                <p><span class="status-badge status-pending">Subscription Inactive</span></p>
-                <div style="margin-top: 15px; text-align: center;">
-                    <div style="display: inline-flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                        <div style="text-align: center;">
-                            <p style="color: #888; font-size: 14px; margin-bottom: 5px;">Original Price</p>
-                            <p style="text-decoration: line-through; color: #999; font-size: 18px;">₹3600</p>
-                        </div>
-                        <div style="font-size: 24px; color: #888;">→</div>
-                        <div style="text-align: center;">
-                            <p style="color: #888; font-size: 14px; margin-bottom: 5px;">Special Price</p>
-                            <p style="color: #4CAF50; font-size: 28px; font-weight: bold;">₹999</p>
-                        </div>
-                        <div style="background: #ff4444; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 16px;">
-                            75% OFF
-                        </div>
-                    </div>
-                    <p style="margin-top: 15px; color: #888; font-size: 14px;">Subscribe for ₹999/year to activate your QR code</p>
+                <p><span class="status-badge status-pending">Inactive</span></p>
+                <div style="margin-top: 15px;">
+                    <p style="color: #fff; font-size: 20px; font-weight: bold;">₹999</p>
+                    <p style="color: #ddd; font-size: 14px; margin-top: 5px;">per year</p>
                 </div>
-                <div class="payment-options" style="margin-top: 20px;">
-                    <button class="btn btn-success" onclick="showPaymentApps()" style="margin-bottom: 15px; width: 100%;">
-                        <i class="fas fa-credit-card"></i> Pay ₹999
+                <button class="btn btn-success" onclick="showPaymentApps()" style="margin-top: 15px;">
+                    Pay ₹999
+                </button>
+                <div class="payment-apps" id="paymentApps" style="display: none; margin-top: 15px;">
+                    <button class="payment-app-btn payment-googlepay" onclick="openUPIPayment()">
+                        <div class="payment-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                        </div>
+                        <span class="payment-label">Google Pay</span>
                     </button>
-                    <div class="payment-apps" id="paymentApps" style="display: none; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-                        <button class="payment-app-btn payment-googlepay" onclick="openUPIPayment()" title="Google Pay">
-                            <div class="payment-icon">
-                                <svg viewBox="0 0 24 24" style="width: 50px; height: 50px;">
-                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                </svg>
-                            </div>
-                            <span class="payment-label">Google Pay</span>
-                        </button>
-                        <button class="payment-app-btn payment-phonepe" onclick="openUPIPayment()" title="PhonePe">
-                            <div class="payment-icon">
-                                <svg viewBox="0 0 24 24" style="width: 50px; height: 50px;">
-                                    <rect fill="#5F259F" x="2" y="2" width="20" height="20" rx="4"/>
-                                    <path fill="#FFFFFF" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
-                                    <path fill="#FFFFFF" d="M12 9.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5z"/>
-                                </svg>
-                            </div>
-                            <span class="payment-label">PhonePe</span>
-                        </button>
-                        <button class="payment-app-btn payment-paytm" onclick="openUPIPayment()" title="Paytm">
-                            <div class="payment-icon">
-                                <svg viewBox="0 0 24 24" style="width: 50px; height: 50px;">
-                                    <rect fill="#00BAF2" x="2" y="2" width="20" height="20" rx="4"/>
-                                    <path fill="#FFFFFF" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
-                                    <path fill="#FFFFFF" d="M12 9.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5z"/>
-                                </svg>
-                            </div>
-                            <span class="payment-label">Paytm</span>
-                        </button>
-                    </div>
-                    <p id="paymentInstruction" style="display: none; color: #888; font-size: 12px; margin-top: 15px; text-align: center;">Click on any payment app to pay ₹999</p>
+                    <button class="payment-app-btn payment-phonepe" onclick="openUPIPayment()">
+                        <div class="payment-icon">
+                            <svg viewBox="0 0 24 24">
+                                <rect fill="#5F259F" x="2" y="2" width="20" height="20" rx="4"/>
+                                <path fill="#FFFFFF" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+                            </svg>
+                        </div>
+                        <span class="payment-label">PhonePe</span>
+                    </button>
+                    <button class="payment-app-btn payment-paytm" onclick="openUPIPayment()">
+                        <div class="payment-icon">
+                            <svg viewBox="0 0 24 24">
+                                <rect fill="#00BAF2" x="2" y="2" width="20" height="20" rx="4"/>
+                                <path fill="#FFFFFF" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+                            </svg>
+                        </div>
+                        <span class="payment-label">Paytm</span>
+                    </button>
                 </div>
             <% } %>
         </div>
 
         <!-- QR Code Section -->
-        <div class="section qr-section">
-            <h2 class="section-title">Your QR Code</h2>
+        <div class="section">
+            <h2 class="section-title">QR Code</h2>
             <div id="qr-container">
-                <% 
-                const isActive = isSubscriptionActive;
-                %>
                 <% 
                 const accountActivated = user.accountActivated || false;
                 %>
                 <% if (!hasLinks) { %>
-                    <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
-                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #ffc107; margin-bottom: 10px;"></i>
-                        <p style="color: #ffc107; font-weight: 600; margin-bottom: 5px;">Add Links First</p>
-                        <p style="color: #888; font-size: 0.9rem;">Please add at least one link before generating your QR code.</p>
-                    </div>
-                <% } else if (!isActive) { %>
-                    <div style="text-align: center; padding: 20px; background: rgba(255, 87, 34, 0.1); border-radius: 8px; border: 1px solid rgba(255, 87, 34, 0.3);">
-                        <i class="fas fa-lock" style="font-size: 2rem; color: #ff5722; margin-bottom: 10px;"></i>
-                        <p style="color: #ff5722; font-weight: 600; margin-bottom: 5px;">Subscription Required</p>
-                        <p style="color: #888; font-size: 0.9rem;">Please subscribe to generate your QR code.</p>
-                    </div>
+                    <p style="color: #888; text-align: center; padding: 15px;">Add links to generate QR code</p>
+                <% } else if (!isSubscriptionActive) { %>
+                    <p style="color: #888; text-align: center; padding: 15px;">Subscribe to generate QR code</p>
                 <% } else if (!accountActivated) { %>
-                    <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
-                        <i class="fas fa-clock" style="font-size: 2rem; color: #ffc107; margin-bottom: 10px;"></i>
-                        <p style="color: #ffc107; font-weight: 600; margin-bottom: 5px;">Pending Approval</p>
-                        <p style="color: #888; font-size: 0.9rem;">You have paid and saved your URLs. Once admin approves, your account will be activated and you can download your QR code.</p>
-                    </div>
+                    <p style="color: #888; text-align: center; padding: 15px;">Pending approval</p>
                 <% } else { %>
                     <button class="btn btn-primary" onclick="generateQR()" id="generateQRBtn">
-                        <i class="fas fa-qrcode"></i> Generate QR Code
+                        <i class="fas fa-qrcode"></i> Generate
                     </button>
                 <% } %>
             </div>
-            <p style="margin-top: 15px; color: #888;">
-                Your page URL: <a href="/p/<%= user.uniqueSlug %>" target="_blank" style="color: #4285F4;">/p/<%= user.uniqueSlug %></a>
+            <p style="margin-top: 15px; color: #888; font-size: 12px; text-align: center;">
+                <a href="/p/<%= user.uniqueSlug %>" target="_blank" style="color: #4285F4; text-decoration: none;">/p/<%= user.uniqueSlug %></a>
             </p>
         </div>
 
         <!-- Links Section -->
         <div class="section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                <h2 class="section-title" style="margin: 0;">Your Links</h2>
-                <button class="btn btn-primary" onclick="toggleAddLinkForm()" style="margin: 0;">
-                    <i class="fas fa-plus"></i> Add New Link
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h2 class="section-title" style="margin: 0;">Links</h2>
+                <button class="btn btn-primary btn-small" onclick="toggleAddLinkForm()" style="margin: 0;">
+                    <i class="fas fa-plus"></i> Add
                 </button>
             </div>
             
-            <div class="add-link-form" id="addLinkForm" style="background: #0a0a0a; border: 2px solid #333; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 20px; color: #4CAF50;">Add/Edit Link</h3>
+            <div class="add-link-form" id="addLinkForm">
+                <h3 style="margin-bottom: 15px; font-size: 16px;">Add Link</h3>
                 <form id="linkForm">
                     <input type="hidden" id="linkId" name="linkId">
                     
                     <div class="form-group">
-                        <label style="font-weight: 600; margin-bottom: 12px;">Select Category</label>
-                        <div class="category-selector" id="categorySelector" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
+                        <label>Category</label>
+                        <div class="category-selector" id="categorySelector">
                             <% Object.keys(defaultCategories).forEach(cat => { %>
-                                <div class="category-option" data-category="<%= cat %>" data-type="default" style="padding: 15px; border-radius: 12px; transition: all 0.3s;">
-                                    <i class="<%= defaultCategories[cat].icon %>" style="font-size: 28px; margin-bottom: 8px;"></i>
-                                    <span style="font-size: 12px;"><%= defaultCategories[cat].name %></span>
-                                </div>
+                                <% if (cat !== 'payment') { %>
+                                    <div class="category-option" data-category="<%= cat %>" data-type="default">
+                                        <i class="<%= defaultCategories[cat].icon %>"></i>
+                                        <span><%= defaultCategories[cat].name %></span>
+                                    </div>
+                                <% } %>
                             <% }); %>
-                            <div class="category-option" data-category="custom" data-type="custom" style="padding: 15px; border-radius: 12px; transition: all 0.3s;">
-                                <i class="fas fa-plus" style="font-size: 28px; margin-bottom: 8px;"></i>
-                                <span style="font-size: 12px;">Custom</span>
+                            <div class="category-option" data-category="custom" data-type="custom">
+                                <i class="fas fa-plus"></i>
+                                <span>Custom</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-grid" style="margin-top: 20px;">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label style="font-weight: 600;">Display Name</label>
-                            <input type="text" id="displayName" name="displayName" required placeholder="e.g., My Instagram" style="padding: 14px; border-radius: 8px;">
+                            <label>Name</label>
+                            <input type="text" id="displayName" name="displayName" required placeholder="Display Name">
                         </div>
                         <div class="form-group">
-                            <label style="font-weight: 600;">URL</label>
-                            <input type="url" id="url" name="url" required placeholder="https://... or upi://pay?pa=..." style="padding: 14px; border-radius: 8px;" oninput="checkUPILink(this.value)">
+                            <label>URL</label>
+                            <input type="url" id="url" name="url" required placeholder="https://...">
                         </div>
                     </div>
                     
-                    <!-- UPI Payment Link Info Box -->
-                    <div id="upiInfoBox" style="display: none; background: #1a1a2e; border: 2px solid #4CAF50; border-radius: 12px; padding: 20px; margin-top: 20px;">
-                        <div style="display: flex; align-items: start; gap: 15px;">
-                            <div style="color: #4CAF50; font-size: 24px;">
-                                <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div style="flex: 1;">
-                                <h4 style="color: #4CAF50; margin: 0 0 10px 0; font-size: 16px;">
-                                    UPI Payment Link Detected
-                                </h4>
-                                <p style="color: #ccc; margin: 0 0 10px 0; font-size: 14px; line-height: 1.6;">
-                                    To allow users to pay <strong style="color: #fff;">any amount without ₹2000 limit</strong>, your UPI link needs the <code style="background: #0a0a0a; padding: 2px 6px; border-radius: 4px; color: #4CAF50;">aid</code> parameter.
-                                </p>
-                                <div style="background: #0a0a0a; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                                    <p style="color: #ff6b6b; margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">
-                                        ⚠️ Without 'aid': ₹2000 limit applies
-                                    </p>
-                                    <p style="color: #4CAF50; margin: 0; font-size: 13px; font-weight: 600;">
-                                        ✅ With 'aid': No limit, users can pay any amount
-                                    </p>
-                                </div>
-                                <div style="margin-top: 15px;">
-                                    <p style="color: #fff; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
-                                        How to get your 'aid' (App ID):
-                                    </p>
-                                    <ul style="color: #ccc; margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8;">
-                                        <li>Contact your bank's UPI merchant services</li>
-                                        <li>Register as a merchant with NPCI</li>
-                                        <li>If using Razorpay/Paytm, they provide the 'aid'</li>
-                                    </ul>
-                                </div>
-                                <div style="margin-top: 15px; padding: 12px; background: #0a0a0a; border-radius: 8px; border-left: 3px solid #4CAF50;">
-                                    <p style="color: #4CAF50; margin: 0 0 5px 0; font-size: 12px; font-weight: 600;">
-                                        Example Merchant UPI Link:
-                                    </p>
-                                    <code style="color: #ccc; font-size: 11px; word-break: break-all; display: block;">
-                                        upi://pay?pa=your.upi@okbank&pn=YourName&aid=YOUR_APP_ID&cu=INR
-                                    </code>
-                                </div>
-                                <p style="color: #888; margin: 15px 0 0 0; font-size: 12px; font-style: italic;">
-                                    💡 Tip: If your link already has 'aid', it will be preserved automatically.
-                                </p>
-                            </div>
-                        </div>
+                    <div class="form-group" id="customIconGroup" style="display: none;">
+                        <label>Icon</label>
+                        <input type="file" id="customIcon" name="customIcon" accept="image/*">
                     </div>
 
-                    <div class="form-group" id="customIconGroup" style="display: none; margin-top: 20px;">
-                        <label style="font-weight: 600;">Upload Custom Icon (Max 100KB)</label>
-                        <input type="file" id="customIcon" name="customIcon" accept="image/*" style="padding: 12px; border-radius: 8px;">
-                        <small style="color: #888; font-size: 12px; display: block; margin-top: 8px;">
-                            Maximum file size: 100KB
-                        </small>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 25px;">
-                        <button type="submit" class="btn btn-primary" style="flex: 1;">
-                            <i class="fas fa-check"></i> Save This Link
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1; max-width: none;">
+                            Save
                         </button>
-                        <button type="button" class="btn btn-danger" onclick="cancelAddLink()">
-                            <i class="fas fa-times"></i> Cancel
+                        <button type="button" class="btn btn-danger btn-small" onclick="cancelAddLink()">
+                            Cancel
                         </button>
                     </div>
                 </form>
@@ -698,26 +580,30 @@
             <div class="links-list" id="linksList">
                 <% if (links && links.length > 0) { %>
                     <% links.forEach(link => { %>
-                        <div class="link-item" data-link-id="<%= link._id %>">
-                            <div class="link-info">
-                                <strong>
-                                    <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
-                                        <img src="<%= link.icon %>" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
-                                    <% } else { %>
-                                        <i class="<%= link.icon %>"></i>
-                                    <% } %>
-                                    <%= link.displayName %>
-                                </strong>
-                                <span><%= link.url %></span>
+                        <% if (link.category !== 'payment') { %>
+                            <div class="link-item" data-link-id="<%= link._id %>">
+                                <div class="link-info">
+                                    <div class="link-icon">
+                                        <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                                            <img src="<%= link.icon %>" style="width: 20px; height: 20px;">
+                                        <% } else { %>
+                                            <i class="<%= link.icon %>"></i>
+                                        <% } %>
+                                    </div>
+                                    <div>
+                                        <strong><%= link.displayName %></strong>
+                                        <span><%= link.url %></span>
+                                    </div>
+                                </div>
+                                <div class="link-actions">
+                                    <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>')">Edit</button>
+                                    <button class="btn btn-danger btn-small" onclick="deleteLink('<%= link._id %>')">Delete</button>
+                                </div>
                             </div>
-                            <div class="link-actions">
-                                <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>')">Edit</button>
-                                <button class="btn btn-danger btn-small" onclick="deleteLink('<%= link._id %>')">Delete</button>
-                            </div>
-                        </div>
+                        <% } %>
                     <% }); %>
                 <% } else { %>
-                    <p style="color: #888; text-align: center; padding: 20px;">No links added yet. Click "Add New Link" to get started.</p>
+                    <p style="color: #888; text-align: center; padding: 15px;">No links added</p>
                 <% } %>
             </div>
         </div>
@@ -728,66 +614,6 @@
         let selectedCategory = null;
         let selectedCategoryType = null;
         
-        // Check if URL is a UPI payment link and show info box
-        function checkUPILink(url) {
-            const upiInfoBox = document.getElementById('upiInfoBox');
-            if (!upiInfoBox) return;
-            
-            if (!url || url.trim() === '') {
-                upiInfoBox.style.display = 'none';
-                return;
-            }
-            
-            // Check if it's a UPI link
-            const isUPI = url.toLowerCase().includes('upi://') || 
-                         url.toLowerCase().includes('pay?pa=') || 
-                         url.toLowerCase().includes('upiqr://') ||
-                         url.toLowerCase().includes('upi://pay');
-            
-            if (isUPI) {
-                upiInfoBox.style.display = 'block';
-                
-                // Check if 'aid' parameter is present
-                const hasAid = url.toLowerCase().includes('&aid=') || url.toLowerCase().includes('?aid=');
-                if (hasAid) {
-                    // Update info box to show that aid is present
-                    const infoContent = upiInfoBox.querySelector('div > div');
-                    if (infoContent) {
-                        const statusDiv = infoContent.querySelector('div[style*="background: #0a0a0a"]');
-                        if (statusDiv) {
-                            statusDiv.innerHTML = `
-                                <p style="color: #4CAF50; margin: 0; font-size: 13px; font-weight: 600;">
-                                    ✅ Your UPI link includes 'aid' parameter - No ₹2000 limit!
-                                </p>
-                                <p style="color: #888; margin: 8px 0 0 0; font-size: 12px;">
-                                    Users can pay any amount without restrictions.
-                                </p>
-                            `;
-                        }
-                    }
-                } else {
-                    // Reset to default warning if aid is not present
-                    const infoContent = upiInfoBox.querySelector('div > div');
-                    if (infoContent) {
-                        const statusDiv = infoContent.querySelector('div[style*="background: #0a0a0a"]');
-                        if (statusDiv) {
-                            statusDiv.innerHTML = `
-                                <p style="color: #ff6b6b; margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">
-                                    ⚠️ Without 'aid': ₹2000 limit applies
-                                </p>
-                                <p style="color: #4CAF50; margin: 0; font-size: 13px; font-weight: 600;">
-                                    ✅ With 'aid': No limit, users can pay any amount
-                                </p>
-                            `;
-                        }
-                    }
-                }
-            } else {
-                upiInfoBox.style.display = 'none';
-            }
-        }
-
-        // Category selection
         document.querySelectorAll('.category-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.category-option').forEach(opt => opt.classList.remove('selected'));
@@ -806,27 +632,27 @@
             });
         });
 
-        // Profile form
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Check file sizes before submitting (100KB max)
             const logoInput = e.target.querySelector('input[name="logo"]');
             const qrInput = e.target.querySelector('input[name="bankQrCode"]');
-            const maxSize = 100 * 1024; // 100KB
+            const dynamicQrInput = e.target.querySelector('input[name="uploadedQrCode"]');
+            const maxSize = 100 * 1024;
             
-            if (logoInput && logoInput.files[0]) {
-                if (logoInput.files[0].size > maxSize) {
-                    showAlert('Logo file is too large. Maximum size is 100KB. Please compress your image.', 'error');
-                    return;
-                }
+            if (logoInput && logoInput.files[0] && logoInput.files[0].size > maxSize) {
+                showAlert('Logo too large. Max 100KB', 'error');
+                return;
             }
             
-            if (qrInput && qrInput.files[0]) {
-                if (qrInput.files[0].size > maxSize) {
-                    showAlert('QR code file is too large. Maximum size is 100KB. Please compress your image.', 'error');
-                    return;
-                }
+            if (qrInput && qrInput.files[0] && qrInput.files[0].size > maxSize) {
+                showAlert('QR code too large. Max 100KB', 'error');
+                return;
+            }
+
+            if (dynamicQrInput && dynamicQrInput.files[0] && dynamicQrInput.files[0].size > maxSize) {
+                showAlert('QR code too large. Max 100KB', 'error');
+                return;
             }
             
             const formData = new FormData(e.target);
@@ -835,7 +661,7 @@
                 const response = await fetch('/dashboard/update-profile', {
                     method: 'POST',
                     body: formData,
-                    credentials: 'include' // Include cookies for session
+                    credentials: 'include'
                 });
                 
                 if (!response.ok) {
@@ -845,8 +671,8 @@
                 
                 const data = await response.json();
                 if (data.success) {
-                    showAlert('Profile updated successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
+                    showAlert('Profile updated', 'success');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert(data.message || 'Error updating profile', 'error');
                 }
@@ -856,20 +682,18 @@
             }
         });
 
-        // Link form - save individual link
         document.getElementById('linkForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             if (!selectedCategory) {
-                showAlert('Please select a category', 'error');
+                showAlert('Select a category', 'error');
                 return;
             }
             
-            // Validate custom icon file size (100KB max)
             if (selectedCategoryType === 'custom') {
                 const customIconFile = document.getElementById('customIcon').files[0];
                 if (customIconFile && customIconFile.size > 100 * 1024) {
-                    showAlert('Icon file is too large. Maximum size is 100KB. Please compress your image.', 'error');
+                    showAlert('Icon too large. Max 100KB', 'error');
                     return;
                 }
             }
@@ -893,7 +717,7 @@
             const submitBtn = e.target.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                submitBtn.innerHTML = 'Saving...';
             }
 
             try {
@@ -905,22 +729,21 @@
                 
                 const data = await response.json();
                 if (data.success) {
-                    showAlert('Link saved successfully!', 'success');
-                    // Close form and reload
+                    showAlert('Link saved', 'success');
                     cancelAddLink();
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert(data.message || 'Error saving link', 'error');
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="fas fa-check"></i> Save This Link';
+                        submitBtn.innerHTML = 'Save';
                     }
                 }
             } catch (error) {
                 showAlert('Error saving link', 'error');
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Save This Link';
+                    submitBtn.innerHTML = 'Save';
                 }
             }
         });
@@ -945,8 +768,6 @@
             selectedCategoryType = null;
             document.querySelectorAll('.category-option').forEach(opt => opt.classList.remove('selected'));
             document.getElementById('customIconGroup').style.display = 'none';
-            const upiInfoBox = document.getElementById('upiInfoBox');
-            if (upiInfoBox) upiInfoBox.style.display = 'none';
         }
 
         function editLink(id, category, type, url, displayName) {
@@ -955,18 +776,14 @@
             document.getElementById('url').value = url;
             document.getElementById('displayName').value = displayName;
             
-            // Select the category
             const categoryOption = document.querySelector(`[data-category="${category}"][data-type="${type}"]`);
             if (categoryOption) {
                 categoryOption.click();
             }
-            
-            // Check if it's a UPI link and show info box
-            setTimeout(() => checkUPILink(url), 100);
         }
 
         async function deleteLink(id) {
-            if (!confirm('Are you sure you want to delete this link?')) return;
+            if (!confirm('Delete this link?')) return;
             
             try {
                 const response = await fetch(`/dashboard/link/${id}`, {
@@ -981,8 +798,8 @@
                 
                 const data = await response.json();
                 if (data.success) {
-                    showAlert('Link deleted successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
+                    showAlert('Link deleted', 'success');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert(data.message || 'Error deleting link', 'error');
                 }
@@ -994,20 +811,11 @@
 
         function showPaymentApps() {
             const paymentApps = document.getElementById('paymentApps');
-            const instruction = document.getElementById('paymentInstruction');
-            
-            if (paymentApps.style.display === 'none') {
-                paymentApps.style.display = 'flex';
-                instruction.style.display = 'block';
-            } else {
-                paymentApps.style.display = 'none';
-                instruction.style.display = 'none';
-            }
+            paymentApps.style.display = paymentApps.style.display === 'none' ? 'flex' : 'none';
         }
         
         async function openUPIPayment() {
             try {
-                // Get UPI URL from server
                 const upiResponse = await fetch('/payment/upi-url', {
                     credentials: 'include'
                 });
@@ -1019,12 +827,10 @@
                 const upiData = await upiResponse.json();
                 
                 if (upiData.success && upiData.upiUrl) {
-                    // Open UPI URL - this will work on mobile devices
                     window.location.href = upiData.upiUrl;
                     
-                    // After a delay, show confirmation dialog
                     setTimeout(() => {
-                        if (confirm('Have you completed the payment of ₹999?')) {
+                        if (confirm('Payment completed?')) {
                             confirmPayment();
                         }
                     }, 2000);
@@ -1033,13 +839,13 @@
                 }
             } catch (error) {
                 console.error('Payment error:', error);
-                showAlert(error.message || 'Error opening payment. Please try again.', 'error');
+                showAlert(error.message || 'Error opening payment', 'error');
             }
         }
         
         async function confirmPayment() {
             try {
-                showAlert('Processing payment confirmation...', 'info');
+                showAlert('Processing...', 'info');
                 
                 const response = await fetch('/payment/pay', {
                     method: 'POST',
@@ -1058,14 +864,14 @@
                 
                 if (data.success) {
                     const endDate = data.subscriptionEndDate ? new Date(data.subscriptionEndDate).toLocaleDateString('en-IN') : '1 year from now';
-                    showAlert(`✅ Payment Successful! Your subscription is active until ${endDate}. Once admin approves, you can download your QR code!`, 'success');
-                    setTimeout(() => location.reload(), 3000);
+                    showAlert(`Payment successful! Active until ${endDate}`, 'success');
+                    setTimeout(() => location.reload(), 2000);
                 } else {
-                    showAlert(data.message || 'Payment confirmation failed. Please contact support.', 'error');
+                    showAlert(data.message || 'Payment confirmation failed', 'error');
                 }
             } catch (error) {
                 console.error('Payment confirmation error:', error);
-                showAlert(error.message || 'Error confirming payment. Please contact support.', 'error');
+                showAlert(error.message || 'Error confirming payment', 'error');
             }
         }
 
@@ -1073,7 +879,7 @@
             const btn = document.getElementById('generateQRBtn');
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                btn.innerHTML = 'Generating...';
             }
             
             try {
@@ -1092,23 +898,20 @@
                     const qrContainer = document.getElementById('qr-container');
                     qrContainer.innerHTML = `
                         <div style="text-align: center;">
-                            <div class="qr-code" style="margin-bottom: 20px;">
-                                <img src="${data.qrUrl}" alt="QR Code" style="max-width: 300px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            <div style="margin-bottom: 15px;">
+                                <img src="${data.qrUrl}" alt="QR Code" style="max-width: 250px; width: 100%; border-radius: 8px;">
                             </div>
                             <a href="${data.qrUrl}" download="qr-code.png" class="btn btn-primary">
-                                <i class="fas fa-download"></i> Download QR Code
+                                <i class="fas fa-download"></i> Download
                             </a>
-                            <p style="margin-top: 15px; color: #888; font-size: 0.9rem;">
-                                <i class="fas fa-check-circle" style="color: #4CAF50;"></i> QR Code ready! (Generated on-demand, no storage cost)
-                            </p>
                         </div>
                     `;
-                    showAlert('QR code generated successfully!', 'success');
+                    showAlert('QR code generated', 'success');
                 } else {
                     showAlert(data.message || 'Error generating QR code', 'error');
                     if (btn) {
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-qrcode"></i> Generate QR Code';
+                        btn.innerHTML = '<i class="fas fa-qrcode"></i> Generate';
                     }
                 }
             } catch (error) {
@@ -1116,7 +919,7 @@
                 showAlert(error.message || 'Error generating QR code', 'error');
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-qrcode"></i> Generate QR Code';
+                    btn.innerHTML = '<i class="fas fa-qrcode"></i> Generate';
                 }
             }
         }
@@ -1130,59 +933,8 @@
             
             setTimeout(() => {
                 alert.remove();
-            }, 5000);
+            }, 4000);
         }
-
-        // Update QR section when links are added/deleted
-        function updateQRSection() {
-            const linksList = document.getElementById('linksList');
-            const links = linksList.querySelectorAll('.link-item');
-            const qrContainer = document.getElementById('qr-container');
-            const hasLinks = links.length > 0;
-            
-            // Check subscription status from server-side rendered data
-            <% 
-            const currentDateCheck = new Date();
-            const isSubActive = user.subscriptionActive && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > currentDateCheck;
-            %>
-            const subscriptionActive = <%= isSubActive %>;
-            
-            if (!hasLinks) {
-                qrContainer.innerHTML = `
-                    <div style="text-align: center; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
-                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #ffc107; margin-bottom: 10px;"></i>
-                        <p style="color: #ffc107; font-weight: 600; margin-bottom: 5px;">Add Links First</p>
-                        <p style="color: #888; font-size: 0.9rem;">Please add at least one link before generating your QR code.</p>
-                    </div>
-                `;
-            } else if (!subscriptionActive) {
-                qrContainer.innerHTML = `
-                    <div style="text-align: center; padding: 20px; background: rgba(255, 87, 34, 0.1); border-radius: 8px; border: 1px solid rgba(255, 87, 34, 0.3);">
-                        <i class="fas fa-lock" style="font-size: 2rem; color: #ff5722; margin-bottom: 10px;"></i>
-                        <p style="color: #ff5722; font-weight: 600; margin-bottom: 5px;">Subscription Required</p>
-                        <p style="color: #888; font-size: 0.9rem;">Please subscribe to generate your QR code.</p>
-                    </div>
-                `;
-            } else {
-                qrContainer.innerHTML = `
-                    <button class="btn btn-primary" onclick="generateQR()" id="generateQRBtn">
-                        <i class="fas fa-qrcode"></i> Generate QR Code
-                    </button>
-                `;
-            }
-        }
-        
-        // Monitor link form submissions to update QR section
-        document.addEventListener('DOMContentLoaded', () => {
-            const linkForm = document.getElementById('linkForm');
-            if (linkForm) {
-                linkForm.addEventListener('submit', () => {
-                    // Update QR section after link is saved (page will reload anyway)
-                    setTimeout(updateQRSection, 100);
-                });
-            }
-        });
     </script>
 </body>
 </html>
-

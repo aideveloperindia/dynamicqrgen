@@ -56,7 +56,11 @@ const userSchema = new mongoose.Schema({
     default: ''
   },
   bankQrCode: {
-    type: String, // Bank's QR code image (base64 data URL) - uploaded by client
+    type: String, // Bank's payment QR code image (base64 data URL) - uploaded by client
+    default: ''
+  },
+  uploadedQrCode: {
+    type: String, // Dynamic QR code image (base64 data URL) - uploaded by client or generated
     default: ''
   },
   paymentLink: {

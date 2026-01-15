@@ -898,5 +898,65 @@ router.get('/:slug/qr-code', async (req, res) => {
   }
 });
 
+// Download uploaded dynamic QR code
+router.get('/:slug/download/dynamic-qr', async (req, res) => {
+  try {
+    const user = await User.findOne({ uniqueSlug: req.params.slug });
+    
+    if (!user) {
+      return res.status(404).send('Page not found');
+    }
+
+    if (!user.uploadedQrCode || user.uploadedQrCode.trim() === '') {
+      return res.status(404).send('Dynamic QR code not found');
+    }
+
+    // Extract base64 data from data URL
+    const base64Data = user.uploadedQrCode.split(',')[1];
+    if (!base64Data) {
+      return res.status(500).send('Invalid QR code format');
+    }
+
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `attachment; filename="dynamic-qr-${user.uniqueSlug}.png"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Dynamic QR download error:', error);
+    res.status(500).send('Error downloading QR code');
+  }
+});
+
+// Download payment QR code
+router.get('/:slug/download/payment-qr', async (req, res) => {
+  try {
+    const user = await User.findOne({ uniqueSlug: req.params.slug });
+    
+    if (!user) {
+      return res.status(404).send('Page not found');
+    }
+
+    if (!user.bankQrCode || user.bankQrCode.trim() === '') {
+      return res.status(404).send('Payment QR code not found');
+    }
+
+    // Extract base64 data from data URL
+    const base64Data = user.bankQrCode.split(',')[1];
+    if (!base64Data) {
+      return res.status(500).send('Invalid QR code format');
+    }
+
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `attachment; filename="payment-qr-${user.uniqueSlug}.png"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Payment QR download error:', error);
+    res.status(500).send('Error downloading QR code');
+  }
+});
+
 module.exports = router;
 
