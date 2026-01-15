@@ -6,51 +6,22 @@ const Link = require('../models/Link');
 const Admin = require('../models/Admin');
 const bcrypt = require('bcryptjs');
 
-// Admin authentication middleware - Auto-login if not authenticated
+// Admin authentication middleware - Requires password authentication
 const adminAuth = async (req, res, next) => {
   try {
     await connectDB();
     
     // Check if user is authenticated
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-      // Auto-login for admin
-      let admin = await Admin.findOne({ email: 'admin@qrconnect.com' });
-      if (!admin) {
-        admin = new Admin({
-          email: 'admin@qrconnect.com',
-          password: 'admin123',
-          name: 'Admin',
-          role: 'super_admin'
-        });
-        await admin.save();
+      if (req.accepts('html')) {
+        return res.redirect('/admin/login');
       }
-      
-      req.login(admin, (err) => {
-        if (err) {
-          return res.redirect('/admin/login');
-        }
-        req.admin = admin;
-        return next();
-      });
-      return;
+      return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
     // Check if user is admin
     let admin = await Admin.findById(req.user._id || req.user);
     if (!admin) {
-      // Try to auto-login
-      admin = await Admin.findOne({ email: 'admin@qrconnect.com' });
-      if (admin) {
-        req.login(admin, (err) => {
-          if (err) {
-            return res.redirect('/admin/login');
-          }
-          req.admin = admin;
-          return next();
-        });
-        return;
-      }
-      
       if (req.accepts('html')) {
         return res.redirect('/admin/login');
       }
@@ -80,7 +51,7 @@ router.use(async (req, res, next) => {
   }
 });
 
-// Admin login page - AUTO LOGIN (no password required)
+// Admin login page
 router.get('/login', async (req, res) => {
   try {
     await connectDB();
@@ -93,39 +64,89 @@ router.get('/login', async (req, res) => {
       }
     }
 
-    // Auto-create admin session (no password required)
-    // Find or create a default admin
+    // Ensure admin exists with password from environment variable
+    const adminPassword = process.env.ADMIN_PASSWORD || '0DynamicQR@#';
     let admin = await Admin.findOne({ email: 'admin@qrconnect.com' });
     
     if (!admin) {
-      // Create default admin if doesn't exist
+      // Create default admin with password from env
       admin = new Admin({
         email: 'admin@qrconnect.com',
-        password: 'admin123', // Will be hashed
+        password: adminPassword, // Will be hashed by pre-save hook
         name: 'Admin',
         role: 'super_admin'
       });
       await admin.save();
+    } else {
+      // Update password if env variable is set and different
+      if (process.env.ADMIN_PASSWORD) {
+        const isMatch = await admin.comparePassword(adminPassword);
+        if (!isMatch) {
+          // Password changed in env, update it
+          admin.password = adminPassword;
+          await admin.save();
+        }
+      }
     }
 
-    // Auto-login
-    req.login(admin, (err) => {
-      if (err) {
-        console.error('Auto login error:', err);
-        return res.redirect('/admin');
-      }
-      res.redirect('/admin');
-    });
+    res.render('admin-login');
   } catch (error) {
-    console.error('Admin auto-login error:', error);
-    res.redirect('/admin');
+    console.error('Admin login page error:', error);
+    res.status(500).send('Error loading login page');
   }
 });
 
-// Admin login (kept for compatibility, but auto-login is used)
+// Admin login POST - Password authentication
 router.post('/login', async (req, res) => {
-  // Redirect to auto-login
-  res.redirect('/admin/login');
+  try {
+    await connectDB();
+    
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.json({ success: false, message: 'Email and password required' });
+    }
+
+    // Get admin password from environment variable
+    const adminPassword = process.env.ADMIN_PASSWORD || '0DynamicQR@#';
+    
+    // Find admin
+    let admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+    
+    if (!admin) {
+      return res.json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Verify password - check against env variable or stored password
+    const isMatch = await admin.comparePassword(password);
+    const envPasswordMatch = password === adminPassword;
+    
+    if (!isMatch && !envPasswordMatch) {
+      return res.json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Update password if env variable is set and different
+    if (process.env.ADMIN_PASSWORD && !isMatch && envPasswordMatch) {
+      admin.password = adminPassword;
+      await admin.save();
+    }
+
+    // Update last login
+    admin.lastLogin = new Date();
+    await admin.save();
+
+    // Login admin
+    req.login(admin, (err) => {
+      if (err) {
+        console.error('Login error:', err);
+        return res.json({ success: false, message: 'Login failed' });
+      }
+      return res.json({ success: true, message: 'Login successful' });
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.json({ success: false, message: 'Login error' });
+  }
 });
 
 // Admin dashboard page
