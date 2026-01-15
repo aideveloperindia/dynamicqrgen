@@ -66,7 +66,8 @@ router.get('/login', async (req, res) => {
 
     // Ensure admin exists with password from environment variable
     const adminPassword = process.env.ADMIN_PASSWORD || '0DynamicQR@#';
-    let admin = await Admin.findOne({ email: 'admin@qrconnect.com' });
+    // Need to explicitly select password field (it's select: false by default)
+    let admin = await Admin.findOne({ email: 'admin@qrconnect.com' }).select('+password');
     
     if (!admin) {
       // Create default admin with password from env
@@ -80,9 +81,16 @@ router.get('/login', async (req, res) => {
     } else {
       // Update password if env variable is set and different
       if (process.env.ADMIN_PASSWORD) {
-        const isMatch = await admin.comparePassword(adminPassword);
-        if (!isMatch) {
-          // Password changed in env, update it
+        try {
+          const isMatch = await admin.comparePassword(adminPassword);
+          if (!isMatch) {
+            // Password changed in env, update it
+            admin.password = adminPassword;
+            await admin.save();
+          }
+        } catch (compareError) {
+          // If compare fails (e.g., password field missing), update password
+          console.warn('Password compare failed, updating password:', compareError.message);
           admin.password = adminPassword;
           await admin.save();
         }
@@ -110,15 +118,20 @@ router.post('/login', async (req, res) => {
     // Get admin password from environment variable
     const adminPassword = process.env.ADMIN_PASSWORD || '0DynamicQR@#';
     
-    // Find admin
-    let admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+    // Find admin - need to explicitly select password field
+    let admin = await Admin.findOne({ email: email.toLowerCase().trim() }).select('+password');
     
     if (!admin) {
       return res.json({ success: false, message: 'Invalid credentials' });
     }
 
     // Verify password - check against env variable or stored password
-    const isMatch = await admin.comparePassword(password);
+    let isMatch = false;
+    try {
+      isMatch = await admin.comparePassword(password);
+    } catch (compareError) {
+      console.warn('Password compare error:', compareError.message);
+    }
     const envPasswordMatch = password === adminPassword;
     
     if (!isMatch && !envPasswordMatch) {
