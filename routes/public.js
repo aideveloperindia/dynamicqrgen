@@ -777,6 +777,81 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       `);
     }
 
+    // For menu category, display menu card image
+    if (link.category === 'menu' && link.menuCardImage && link.menuCardImage.trim() !== '') {
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title><%= user.businessName || user.name %> - Menu</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+              background: #000000;
+              min-height: 100vh;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            }
+            .menu-container {
+              max-width: 800px;
+              width: 100%;
+              text-align: center;
+            }
+            .menu-title {
+              color: #fff;
+              font-size: 24px;
+              font-weight: 600;
+              margin-bottom: 20px;
+            }
+            .menu-image {
+              max-width: 100%;
+              height: auto;
+              border-radius: 12px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+              background: white;
+              padding: 10px;
+            }
+            .back-button {
+              display: inline-block;
+              margin-top: 20px;
+              padding: 12px 24px;
+              background: linear-gradient(135deg, #4285F4, #25D366);
+              color: white;
+              text-decoration: none;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 14px;
+              transition: all 0.3s ease;
+            }
+            .back-button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+            }
+          </style>
+        </head>
+        <body>
+          <div class="menu-container">
+            <h1 class="menu-title">${link.displayName || 'Menu'}</h1>
+            <img src="${link.menuCardImage}" alt="Menu Card" class="menu-image">
+            <a href="/p/${user.uniqueSlug}" class="back-button">
+              <i class="fas fa-arrow-left"></i> Back to Profile
+            </a>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+
     // For regular links, redirect normally
     res.redirect(link.url);
   } catch (error) {

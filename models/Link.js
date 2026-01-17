@@ -35,6 +35,10 @@ const linkSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  menuCardImage: {
+    type: String, // Menu card image (base64 data URL) - for menu category
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

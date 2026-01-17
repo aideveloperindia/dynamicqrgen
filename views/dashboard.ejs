@@ -578,10 +578,42 @@
                         </div>
                     </div>
                     
+                    <!-- Menu-specific fields (shown only when menu category selected) -->
+                    <div id="menuFields" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 107, 107, 0.1); border-radius: 8px; border: 1px solid rgba(255, 107, 107, 0.3);">
+                        <div class="form-group">
+                            <label style="font-size: 13px; color: #ccc;">Menu Card Photo</label>
+                            <input type="file" id="menuCardImage" name="menuCardImage" accept="image/*">
+                            <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Upload your menu card image (Max 100KB). This will be displayed when customers click the menu link.</small>
+                            <div id="menuCardPreview" style="margin-top: 10px; display: none;">
+                                <img id="menuCardPreviewImg" src="" alt="Menu Card Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #333;">
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="form-group" id="customIconGroup" style="display: none;">
                         <label>Icon</label>
                         <input type="file" id="customIcon" name="customIcon" accept="image/*">
                     </div>
+                    
+                    <script>
+                        // Preview menu card image
+                        document.getElementById('menuCardImage')?.addEventListener('change', function(e) {
+                            const file = e.target.files[0];
+                            const preview = document.getElementById('menuCardPreview');
+                            const previewImg = document.getElementById('menuCardPreviewImg');
+                            
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    previewImg.src = e.target.result;
+                                    preview.style.display = 'block';
+                                };
+                                reader.readAsDataURL(file);
+                            } else {
+                                preview.style.display = 'none';
+                            }
+                        });
+                    </script>
 
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
                         <button type="submit" class="btn btn-primary" style="flex: 1; max-width: none;">
@@ -641,10 +673,13 @@
                 const customIconGroup = document.getElementById('customIconGroup');
                 const paymentFields = document.getElementById('paymentFields');
                 
+                const menuFields = document.getElementById('menuFields');
+                
                 if (selectedCategoryType === 'custom') {
                     customIconGroup.style.display = 'block';
                     document.getElementById('customIcon').required = true;
                     if (paymentFields) paymentFields.style.display = 'none';
+                    if (menuFields) menuFields.style.display = 'none';
                 } else if (selectedCategory === 'payment') {
                     // Show payment fields when payment category selected
                     customIconGroup.style.display = 'none';
@@ -653,10 +688,18 @@
                         paymentFields.style.display = 'block';
                         // Don't auto-generate - let user choose
                     }
+                    if (menuFields) menuFields.style.display = 'none';
+                } else if (selectedCategory === 'menu') {
+                    // Show menu fields when menu category selected
+                    customIconGroup.style.display = 'none';
+                    document.getElementById('customIcon').required = false;
+                    if (paymentFields) paymentFields.style.display = 'none';
+                    if (menuFields) menuFields.style.display = 'block';
                 } else {
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
                     if (paymentFields) paymentFields.style.display = 'none';
+                    if (menuFields) menuFields.style.display = 'none';
                 }
             });
         });

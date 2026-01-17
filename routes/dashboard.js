@@ -295,7 +295,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
 });
 
 // Add or update a link
-router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
+router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, { name: 'menuCardImage', maxCount: 1 }]), handleMulterError, async (req, res) => {
   try {
     let { category, url, displayName, categoryType, linkId, order } = req.body;
     
@@ -348,10 +348,11 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
 
     let icon = '';
     if (categoryType === 'custom') {
-      if (req.file) {
+      const customIconFile = req.files && req.files['customIcon'] ? req.files['customIcon'][0] : null;
+      if (customIconFile) {
         // Store custom icon as base64 data URL
         // Multer already enforces 100KB limit, so just convert
-        icon = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+        icon = bufferToDataUrl(customIconFile.buffer, customIconFile.mimetype);
       } else if (linkId) {
         // If updating and no new file, keep existing icon
         const existingLink = await Link.findById(linkId);
@@ -374,6 +375,40 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid category or icon' });
     }
 
+    // Handle menu card image upload (for menu category)
+    let menuCardImage = '';
+    if (category === 'menu') {
+      const menuCardFile = req.files && req.files['menuCardImage'] ? req.files['menuCardImage'][0] : null;
+      if (menuCardFile) {
+        try {
+          // Check file size before processing
+          if (menuCardFile.size > 100 * 1024) {
+            console.warn('Menu card file size exceeds limit:', menuCardFile.size);
+            return res.status(400).json({ 
+              success: false, 
+              message: 'Menu card image is too large. Maximum size is 100KB. Please compress your image.' 
+            });
+          }
+          menuCardImage = await compressAndConvertToDataUrl(menuCardFile.buffer, menuCardFile.mimetype);
+        } catch (menuError) {
+          console.error('Menu card processing error:', menuError);
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Error processing menu card: ' + (menuError.message || 'Unknown error') 
+          });
+        }
+      } else if (linkId) {
+        // If updating and no new file, keep existing menu card
+        const existingLink = await Link.findById(linkId);
+        if (existingLink) {
+          menuCardImage = existingLink.menuCardImage || '';
+        }
+      } else {
+        // For new menu link, menu card is optional but recommended
+        // We'll allow creating without it, but it's better to have one
+      }
+    }
+
     if (linkId) {
       // Update existing link
       const link = await Link.findById(linkId);
@@ -382,6 +417,9 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
         link.displayName = displayName;
         link.icon = icon;
         link.order = parseInt(order) || 0;
+        if (menuCardImage) {
+          link.menuCardImage = menuCardImage;
+        }
         await link.save();
         return res.json({ success: true, message: 'Link updated successfully', link });
       }
@@ -395,7 +433,8 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
         url,
         icon,
         displayName,
-        order: parseInt(order) || 0
+        order: parseInt(order) || 0,
+        menuCardImage: menuCardImage || ''
       });
       await link.save();
       return res.json({ success: true, message: 'Link added successfully', link });
