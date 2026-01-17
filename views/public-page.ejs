@@ -388,10 +388,10 @@
                     <a href="<%= linkHref %>" 
                        class="icon-link <%= link.category %>"
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
-                        <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                        <% if (link.category === 'payment') { %>
+                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 38px; height: 38px; object-fit: contain;">
+                        <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
-                        <% } else if (link.category === 'payment' && (link.icon.startsWith('http://') || link.icon.startsWith('https://') || link.icon.startsWith('/'))) { %>
-                            <img src="<%= link.icon %>" alt="<%= link.displayName %>" style="width: 38px; height: 38px; object-fit: contain;">
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>
@@ -413,10 +413,10 @@
                     <a href="<%= linkHref %>" 
                        class="icon-link <%= link.category %>"
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
-                        <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                        <% if (link.category === 'payment') { %>
+                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 38px; height: 38px; object-fit: contain;">
+                        <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
-                        <% } else if (link.category === 'payment' && (link.icon.startsWith('http://') || link.icon.startsWith('https://') || link.icon.startsWith('/'))) { %>
-                            <img src="<%= link.icon %>" alt="<%= link.displayName %>" style="width: 38px; height: 38px; object-fit: contain;">
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>

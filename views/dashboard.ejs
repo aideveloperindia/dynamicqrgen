@@ -586,9 +586,9 @@
                         <div class="link-item" data-link-id="<%= link._id %>">
                             <div class="link-info">
                                 <div class="link-icon">
-                                    <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
-                                        <img src="<%= link.icon %>" style="width: 20px; height: 20px; object-fit: contain;">
-                                    <% } else if (link.category === 'payment' && (link.icon.startsWith('http://') || link.icon.startsWith('https://'))) { %>
+                                    <% if (link.category === 'payment') { %>
+                                        <img src="/cred-logo.png" alt="Payment" style="width: 20px; height: 20px; object-fit: contain;">
+                                    <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                                         <img src="<%= link.icon %>" style="width: 20px; height: 20px; object-fit: contain;">
                                     <% } else { %>
                                         <i class="<%= link.icon %>"></i>
