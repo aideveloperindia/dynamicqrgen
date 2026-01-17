@@ -491,11 +491,18 @@
                         }
                         
                         // Clean and set required parameters
-                        // pn (payee name) - REQUIRED
+                        // pn (payee name) - REQUIRED by Google Pay
+                        // IMPORTANT: Must match bank's registered name
                         if (!params.pn || params.pn.trim() === '') {
                             params.pn = payeeName;
                         } else {
-                            params.pn = params.pn.trim();
+                            // Clean - remove trailing spaces and multiple spaces
+                            params.pn = params.pn.trim().replace(/\s+/g, ' ');
+                        }
+                        
+                        // Ensure payee name is not empty
+                        if (!params.pn || params.pn.trim() === '') {
+                            params.pn = payeeName || 'Merchant';
                         }
                         
                         // cu (currency) - REQUIRED
@@ -508,8 +515,8 @@
                             params.tn = 'Payment';
                         }
                         
-                        // tr (transaction reference) - Generate new one
-                        params.tr = 'TXN' + Date.now();
+                        // tr (transaction reference) - Generate unique one for Google Pay
+                        params.tr = 'TXN' + Date.now() + Math.random().toString(36).substring(2, 8).toUpperCase();
                         
                         // aid (App ID) - Add if available
                         <% if (user.upiAid && user.upiAid.trim() !== '') { %>
@@ -521,11 +528,30 @@
                         // Remove am (amount) parameter
                         delete params.am;
                         
+                        // Validate UPI ID (pa parameter)
+                        if (params.pa) {
+                            params.pa = params.pa.trim();
+                            if (!params.pa.includes('@')) {
+                                console.warn('Invalid UPI ID format:', params.pa);
+                            }
+                        }
+                        
                         // Reconstruct URL with properly encoded parameters
+                        // Order: pa, pn, cu, tn, tr, aid (Google Pay prefers this order)
                         const paramPairs = [];
+                        const paramOrder = ['pa', 'pn', 'cu', 'tn', 'tr', 'aid'];
+                        
+                        // Add ordered parameters first
+                        paramOrder.forEach(function(key) {
+                            if (params[key] && params[key].toString().trim() !== '') {
+                                paramPairs.push(key + '=' + encodeURIComponent(params[key].toString().trim()));
+                            }
+                        });
+                        
+                        // Add any other parameters
                         for (const key in params) {
-                            if (params[key] && params[key].trim() !== '') {
-                                paramPairs.push(key + '=' + encodeURIComponent(params[key].trim()));
+                            if (paramOrder.indexOf(key) === -1 && params[key] && params[key].toString().trim() !== '') {
+                                paramPairs.push(key + '=' + encodeURIComponent(params[key].toString().trim()));
                             }
                         }
                         
