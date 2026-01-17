@@ -173,9 +173,9 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     
-    // Update profile fields - handle missing fields gracefully
+    // Update profile fields - allow all fields to be editable, including empty values
     if (businessName !== undefined) user.businessName = businessName || '';
-    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || user.phoneNumber || '';
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || '';
     if (address !== undefined) user.address = address || '';
     
     // Handle UPI ID - extract aid parameter if present in full URL
