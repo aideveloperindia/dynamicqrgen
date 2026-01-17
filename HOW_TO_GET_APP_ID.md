@@ -143,13 +143,15 @@ upi://pay?pa=your.id@bank&pn=YourName&aid=YOUR_APP_ID_HERE&cu=INR
 
 ## Quick Comparison
 
-| Method | Time to Get | Difficulty | Cost |
-|--------|-------------|------------|------|
-| **Payment Gateway** (Razorpay/Paytm) | 1-2 days | ⭐ Easy | Free (transaction fees apply) |
-| **Bank Direct** | 3-7 days | ⭐⭐ Moderate | Usually free |
-| **NPCI Direct** | 7-14 days | ⭐⭐⭐ Complex | Varies |
+| Method | Time to Get | Difficulty | Cost | Best For |
+|--------|-------------|------------|------|----------|
+| **Your Bank** | 3-7 days | ⭐⭐ Moderate | Usually free | Most users (Google Pay/PhonePe users) |
+| **PhonePe for Business** | 2-5 days | ⭐⭐ Moderate | Free | Businesses using PhonePe |
+| **NPCI Direct** | 7-14 days | ⭐⭐⭐ Complex | Varies | Large businesses only |
 
-**Recommendation**: Use **Razorpay** or **Paytm for Business** - fastest and easiest.
+**Recommendation**: 
+- **For Google Pay/PhonePe users**: Get App ID from **your bank** (the bank that issued your UPI ID)
+- **For businesses**: Consider **PhonePe for Business** if you use PhonePe
 
 ---
 
@@ -192,31 +194,39 @@ upi://pay?pa=your.id@bank&pn=YourName&aid=YOUR_APP_ID_HERE&cu=INR
 
 ---
 
-## Step-by-Step: Getting Started
+## Step-by-Step: Getting Started (For Google Pay/PhonePe Users)
 
-### Step 1: Choose Your Method
-- **Fastest**: Razorpay or Paytm for Business
-- **Traditional**: Your bank
-- **Advanced**: NPCI
+### Step 1: Identify Your Bank
+- Check your UPI ID: `yourname@bankcode`
+- Example: `9553267043-7@ybl` → Bank is **Yes Bank** (`@ybl`)
+- Example: `yourname@okicici` → Bank is **ICICI Bank**
 
-### Step 2: Register
-- Sign up as merchant
-- Complete KYC
-- Submit required documents
+### Step 2: Contact Your Bank
+- Call your bank's customer care (see numbers above)
+- Say: "I need UPI Merchant Registration" or "I need App ID for merchant UPI payments"
+- They'll explain the process
 
-### Step 3: Get App ID
-- Check dashboard/email
+### Step 3: Complete Registration
+- Submit required documents (PAN, Aadhaar, business docs if applicable)
+- Complete KYC process
+- Wait for approval (usually 3-7 days)
+
+### Step 4: Get App ID
+- Bank will send App ID via email/SMS
+- Or check bank's merchant portal (if available)
 - Note down your App ID
 
-### Step 4: Add to Dashboard
-- Go to Business Profile
+### Step 5: Add to Dashboard
+- Go to Business Profile in dashboard
 - Enter App ID in "App ID (aid)" field
 - Or paste full UPI URL with `aid` parameter
+- Save
 
-### Step 5: Test
+### Step 6: Test
 - Create a payment link
 - Test with small amount first
 - Verify no ₹2000 limit
+- Works with Google Pay, PhonePe, and all UPI apps
 
 ---
 
@@ -252,14 +262,23 @@ upi://pay?pa=your.id@bank&pn=YourName&aid=YOUR_APP_ID_HERE&cu=INR
 ## Summary
 
 **App ID (aid) is provided by:**
-1. ✅ Your bank (after merchant registration)
-2. ✅ Payment gateways (Razorpay, Paytm, PhonePe)
-3. ✅ NPCI (for large businesses)
+1. ✅ **Your Bank** (primary method for Google Pay/PhonePe users)
+   - The bank that issued your UPI ID
+   - Example: If UPI ID is `@ybl`, get App ID from Yes Bank
+2. ✅ **PhonePe for Business** (if using PhonePe as merchant)
+3. ✅ **NPCI** (for large businesses only)
 
-**Easiest way to get it:**
-- Register with **Razorpay** or **Paytm for Business**
-- Complete KYC (1-2 days)
-- Get App ID from dashboard
+**Important Clarification:**
+- ❌ **Google Pay/PhonePe apps** don't provide App ID directly
+- ✅ **Your Bank** provides App ID when you register as merchant
+- ✅ Google Pay/PhonePe are just apps you use - they work with App ID from your bank
+
+**How to get it (for Google Pay/PhonePe users):**
+1. Identify your bank from UPI ID (check the `@bankcode` part)
+2. Call your bank's customer care
+3. Request "UPI Merchant Registration"
+4. Complete KYC and registration (3-7 days)
+5. Get App ID from bank
 
 **Once you have it:**
 - Add it in Business Profile → App ID field
@@ -269,4 +288,5 @@ upi://pay?pa=your.id@bank&pn=YourName&aid=YOUR_APP_ID_HERE&cu=INR
 **Result:**
 - ✅ No ₹2000 limit
 - ✅ Unlimited payment amounts
-- ✅ Works like merchant QR codes
+- ✅ Works with Google Pay, PhonePe, and all UPI apps
+- ✅ Just like scanning QR code at any shop
