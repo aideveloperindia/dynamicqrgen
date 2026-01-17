@@ -461,78 +461,79 @@
                 const upiLinks = document.querySelectorAll('a[data-upi-link]');
                 
                 // Helper function to enhance UPI URL with required parameters
+                // Uses manual parsing to avoid issues with upi:// scheme
                 function enhanceUPIUrl(upiUrl) {
                     try {
-                        const url = new URL(upiUrl);
-                        const params = new URLSearchParams(url.search);
+                        // Clean the URL
+                        let enhanced = upiUrl.trim();
                         
                         // Get payee name from user data
-                        const payeeName = '<%= (user.upiPayeeName || user.businessName || user.name || "Merchant") %>';
-                        const encodedPayeeName = encodeURIComponent(payeeName);
+                        const payeeName = '<%= (user.upiPayeeName || user.businessName || user.name || "Merchant") %>'.trim();
                         
-                        // Add pn (payee name) if missing - REQUIRED by Google Pay/PhonePe
-                        if (!params.has('pn')) {
-                            params.set('pn', encodedPayeeName);
+                        // Parse parameters manually
+                        const parts = enhanced.split('?');
+                        const scheme = parts[0]; // upi://pay
+                        const queryString = parts[1] || '';
+                        
+                        // Parse existing parameters
+                        const params = {};
+                        if (queryString) {
+                            queryString.split('&').forEach(function(param) {
+                                const pair = param.split('=');
+                                if (pair[0] && pair[1]) {
+                                    try {
+                                        params[pair[0]] = decodeURIComponent(pair[1]);
+                                    } catch (e) {
+                                        params[pair[0]] = pair[1];
+                                    }
+                                }
+                            });
                         }
                         
-                        // Add cu (currency) if missing - REQUIRED
-                        if (!params.has('cu')) {
-                            params.set('cu', 'INR');
+                        // Clean and set required parameters
+                        // pn (payee name) - REQUIRED
+                        if (!params.pn || params.pn.trim() === '') {
+                            params.pn = payeeName;
+                        } else {
+                            params.pn = params.pn.trim();
                         }
                         
-                        // Add optional but recommended parameters
-                        if (!params.has('tn')) {
-                            params.set('tn', 'Payment');
+                        // cu (currency) - REQUIRED
+                        if (!params.cu) {
+                            params.cu = 'INR';
                         }
                         
-                        if (!params.has('tr')) {
-                            params.set('tr', 'TXN' + Date.now());
+                        // tn (transaction note)
+                        if (!params.tn) {
+                            params.tn = 'Payment';
                         }
                         
-                        // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
+                        // tr (transaction reference) - Generate new one
+                        params.tr = 'TXN' + Date.now();
+                        
+                        // aid (App ID) - Add if available
                         <% if (user.upiAid && user.upiAid.trim() !== '') { %>
-                            if (!params.has('aid')) {
-                                params.set('aid', '<%= user.upiAid %>');
+                            if (!params.aid) {
+                                params.aid = '<%= user.upiAid.trim() %>';
                             }
                         <% } %>
                         
-                        // IMPORTANT: Remove 'am' (amount) parameter if present - no amount limits
-                        if (params.has('am')) {
-                            params.delete('am');
+                        // Remove am (amount) parameter
+                        delete params.am;
+                        
+                        // Reconstruct URL with properly encoded parameters
+                        const paramPairs = [];
+                        for (const key in params) {
+                            if (params[key] && params[key].trim() !== '') {
+                                paramPairs.push(key + '=' + encodeURIComponent(params[key].trim()));
+                            }
                         }
                         
-                        url.search = params.toString();
-                        return url.toString();
+                        return scheme + '?' + paramPairs.join('&');
                     } catch (e) {
-                        // Fallback: manual enhancement
-                        let enhanced = upiUrl;
-                        const payeeName = '<%= (user.upiPayeeName || user.businessName || user.name || "Merchant") %>';
-                        const encodedPayeeName = encodeURIComponent(payeeName);
-                        
-                        if (!enhanced.includes('pn=')) {
-                            enhanced += (enhanced.includes('?') ? '&' : '?') + 'pn=' + encodedPayeeName;
-                        }
-                        if (!enhanced.includes('cu=')) {
-                            enhanced += '&cu=INR';
-                        }
-                        if (!enhanced.includes('tn=')) {
-                            enhanced += '&tn=Payment';
-                        }
-                        if (!enhanced.includes('tr=')) {
-                            enhanced += '&tr=TXN' + Date.now();
-                        }
-                        
-                        // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
-                        <% if (user.upiAid && user.upiAid.trim() !== '') { %>
-                            if (!enhanced.includes('aid=')) {
-                                enhanced += '&aid=' + encodeURIComponent('<%= user.upiAid %>');
-                            }
-                        <% } %>
-                        
-                        // IMPORTANT: Remove 'am' (amount) parameter - no amount limits
-                        enhanced = enhanced.replace(/[&?]am=[^&]*/gi, '');
-                        
-                        return enhanced;
+                        console.error('UPI enhancement error:', e);
+                        // Fallback: return original
+                        return upiUrl.trim();
                     }
                 }
                 

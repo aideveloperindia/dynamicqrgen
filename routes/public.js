@@ -612,88 +612,83 @@ router.get('/:slug/pay', async (req, res) => {
 });
 
 // Helper function to enhance UPI links with required parameters for Google Pay/PhonePe compatibility
+// Uses manual parsing to avoid issues with upi:// scheme and URL constructor
 function enhanceUPILink(upiUrl, user) {
   try {
-    // Parse the UPI URL
-    const url = new URL(upiUrl);
-    const params = new URLSearchParams(url.search);
+    // Clean the URL - remove any extra whitespace
+    let enhancedUrl = upiUrl.trim();
     
     // Get payee name from user data (required by Google Pay/PhonePe)
-    const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
-    const encodedPayeeName = encodeURIComponent(payeeName);
+    const payeeName = (user.upiPayeeName || user.businessName || user.name || 'Merchant').trim();
     
-    // Add pn (payee name) if missing - REQUIRED by Google Pay and PhonePe
-    if (!params.has('pn')) {
-      params.set('pn', encodedPayeeName);
+    // Parse parameters manually (upi:// scheme doesn't work well with URL constructor)
+    const parts = enhancedUrl.split('?');
+    const scheme = parts[0]; // upi://pay
+    const queryString = parts[1] || '';
+    
+    // Parse existing parameters
+    const params = {};
+    if (queryString) {
+      queryString.split('&').forEach(param => {
+        const [key, value] = param.split('=');
+        if (key && value) {
+          // Decode existing value to avoid double encoding
+          try {
+            params[key] = decodeURIComponent(value);
+          } catch (e) {
+            params[key] = value;
+          }
+        }
+      });
     }
     
-    // Add cu (currency) if missing - REQUIRED
-    if (!params.has('cu')) {
-      params.set('cu', 'INR');
+    // Clean and set required parameters
+    // pn (payee name) - REQUIRED by Google Pay/PhonePe
+    if (!params.pn || params.pn.trim() === '') {
+      params.pn = payeeName;
+    } else {
+      // Clean existing pn - remove trailing spaces
+      params.pn = params.pn.trim();
     }
     
-    // Add optional but recommended parameters for better compatibility
-    if (!params.has('tn')) {
-      params.set('tn', 'Payment');
+    // cu (currency) - REQUIRED
+    if (!params.cu) {
+      params.cu = 'INR';
     }
     
-    if (!params.has('tr')) {
-      // Generate a simple transaction reference
-      params.set('tr', `TXN${Date.now()}`);
+    // tn (transaction note) - Optional but recommended
+    if (!params.tn) {
+      params.tn = 'Payment';
     }
     
-    // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
-    if (user.upiAid && user.upiAid.trim() !== '' && !params.has('aid')) {
-      params.set('aid', user.upiAid);
+    // tr (transaction reference) - Generate new one for each payment
+    params.tr = `TXN${Date.now()}`;
+    
+    // aid (App ID) - Add if user has it and not already present
+    if (user.upiAid && user.upiAid.trim() !== '' && !params.aid) {
+      params.aid = user.upiAid.trim();
     }
     
-    // IMPORTANT: Do NOT add 'am' (amount) parameter - let users enter any amount
-    // Removing any existing 'am' parameter to ensure no amount limit
-    if (params.has('am')) {
-      params.delete('am');
+    // IMPORTANT: Remove 'am' (amount) parameter - no amount limits
+    delete params.am;
+    
+    // Reconstruct URL with properly encoded parameters
+    const paramPairs = [];
+    for (const [key, value] of Object.entries(params)) {
+      if (value && value.trim() !== '') {
+        // Encode each parameter value
+        paramPairs.push(`${key}=${encodeURIComponent(value.trim())}`);
+      }
     }
     
-    // Reconstruct the URL
-    url.search = params.toString();
-    return url.toString();
+    // Reconstruct the full URL
+    const newQueryString = paramPairs.join('&');
+    return `${scheme}?${newQueryString}`;
+    
   } catch (error) {
-    // If URL parsing fails, try manual enhancement
-    console.warn('URL parsing failed, using manual enhancement:', error.message);
-    
-    let enhancedUrl = upiUrl.trim();
-    const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
-    const encodedPayeeName = encodeURIComponent(payeeName);
-    
-    // Add pn if missing
-    if (!enhancedUrl.includes('pn=')) {
-      const separator = enhancedUrl.includes('?') ? '&' : '?';
-      enhancedUrl += `${separator}pn=${encodedPayeeName}`;
-    }
-    
-    // Add cu if missing
-    if (!enhancedUrl.includes('cu=')) {
-      enhancedUrl += `&cu=INR`;
-    }
-    
-    // Add tn if missing
-    if (!enhancedUrl.includes('tn=')) {
-      enhancedUrl += `&tn=Payment`;
-    }
-    
-    // Add tr if missing
-    if (!enhancedUrl.includes('tr=')) {
-      enhancedUrl += `&tr=TXN${Date.now()}`;
-    }
-    
-    // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
-    if (user.upiAid && user.upiAid.trim() !== '' && !enhancedUrl.includes('aid=')) {
-      enhancedUrl += `&aid=${encodeURIComponent(user.upiAid)}`;
-    }
-    
-    // IMPORTANT: Remove 'am' (amount) parameter if present - no amount limits
-    enhancedUrl = enhancedUrl.replace(/[&?]am=[^&]*/gi, '');
-    
-    return enhancedUrl;
+    // Fallback: return original URL if enhancement fails
+    console.error('UPI link enhancement error:', error);
+    return upiUrl.trim();
   }
 }
 
