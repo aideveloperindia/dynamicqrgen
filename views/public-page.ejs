@@ -56,7 +56,7 @@
             height: auto;
             max-height: 100px;
             object-fit: cover;
-            border-radius: 50%;
+            border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
@@ -65,7 +65,7 @@
             width: 50%;
             height: auto;
             max-height: 100px;
-            border-radius: 50%;
+            border-radius: 16px;
         }
 
         .business-name {
@@ -290,7 +290,7 @@
                 max-width: 120px;
                 width: 45%;
                 max-height: 80px;
-                border-radius: 50%;
+                border-radius: 12px;
             }
 
             .business-name {
@@ -370,10 +370,9 @@
         <div class="icons-container">
             <% 
             const linksArray = links || [];
-            // Filter out payment category links
-            const nonPaymentLinks = linksArray.filter(link => link.category !== 'payment');
-            const topRow = nonPaymentLinks.slice(0, 3);
-            const bottomRow = nonPaymentLinks.slice(3);
+            // Include all links including payment
+            const topRow = linksArray.slice(0, 3);
+            const bottomRow = linksArray.slice(3);
             %>
             
             <% if (topRow.length > 0) { %>
@@ -391,6 +390,8 @@
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
+                        <% } else if (link.category === 'payment' && (link.icon.startsWith('http://') || link.icon.startsWith('https://'))) { %>
+                            <img src="<%= link.icon %>" alt="<%= link.displayName %>" style="width: 38px; height: 38px; object-fit: contain;">
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>
@@ -414,6 +415,8 @@
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
+                        <% } else if (link.category === 'payment' && (link.icon.startsWith('http://') || link.icon.startsWith('https://'))) { %>
+                            <img src="<%= link.icon %>" alt="<%= link.displayName %>" style="width: 38px; height: 38px; object-fit: contain;">
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>

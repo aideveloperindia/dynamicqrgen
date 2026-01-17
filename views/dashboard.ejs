@@ -108,7 +108,7 @@
             max-width: 120px;
             max-height: 120px;
             border: 1px solid #333;
-            border-radius: 50%;
+            border-radius: 12px;
             padding: 5px;
             margin-top: 8px;
             object-fit: cover;
@@ -426,14 +426,14 @@
                     <label>Dynamic QR Code</label>
                     <input type="file" name="uploadedQrCode" accept="image/*">
                     <% if (user.uploadedQrCode && user.uploadedQrCode.trim() !== '') { %>
-                        <img src="<%= user.uploadedQrCode %>" alt="Dynamic QR" class="preview-img">
+                        <img src="<%= user.uploadedQrCode %>" alt="Dynamic QR" class="preview-img" style="aspect-ratio: 1; object-fit: contain; background: white; padding: 5px;">
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label>Payment QR Code</label>
                     <input type="file" name="bankQrCode" accept="image/*">
                     <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
-                        <img src="<%= user.bankQrCode %>" alt="Payment QR" class="preview-img">
+                        <img src="<%= user.bankQrCode %>" alt="Payment QR" class="preview-img" style="aspect-ratio: 1; object-fit: contain; background: white; padding: 5px;">
                     <% } %>
                 </div>
                 <button type="submit" class="btn btn-primary">Update</button>
@@ -537,12 +537,14 @@
                         <label>Category</label>
                         <div class="category-selector" id="categorySelector">
                             <% Object.keys(defaultCategories).forEach(cat => { %>
-                                <% if (cat !== 'payment') { %>
-                                    <div class="category-option" data-category="<%= cat %>" data-type="default">
+                                <div class="category-option" data-category="<%= cat %>" data-type="default">
+                                    <% if (defaultCategories[cat].isImage) { %>
+                                        <img src="<%= defaultCategories[cat].icon %>" alt="<%= defaultCategories[cat].name %>" style="width: 24px; height: 24px; object-fit: contain;">
+                                    <% } else { %>
                                         <i class="<%= defaultCategories[cat].icon %>"></i>
-                                        <span><%= defaultCategories[cat].name %></span>
-                                    </div>
-                                <% } %>
+                                    <% } %>
+                                    <span><%= defaultCategories[cat].name %></span>
+                                </div>
                             <% }); %>
                             <div class="category-option" data-category="custom" data-type="custom">
                                 <i class="fas fa-plus"></i>
@@ -581,27 +583,27 @@
             <div class="links-list" id="linksList">
                 <% if (links && links.length > 0) { %>
                     <% links.forEach(link => { %>
-                        <% if (link.category !== 'payment') { %>
-                            <div class="link-item" data-link-id="<%= link._id %>">
-                                <div class="link-info">
-                                    <div class="link-icon">
-                                        <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
-                                            <img src="<%= link.icon %>" style="width: 20px; height: 20px;">
-                                        <% } else { %>
-                                            <i class="<%= link.icon %>"></i>
-                                        <% } %>
-                                    </div>
-                                    <div>
-                                        <strong><%= link.displayName %></strong>
-                                        <span><%= link.url %></span>
-                                    </div>
+                        <div class="link-item" data-link-id="<%= link._id %>">
+                            <div class="link-info">
+                                <div class="link-icon">
+                                    <% if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                                        <img src="<%= link.icon %>" style="width: 20px; height: 20px; object-fit: contain;">
+                                    <% } else if (link.category === 'payment' && (link.icon.startsWith('http://') || link.icon.startsWith('https://'))) { %>
+                                        <img src="<%= link.icon %>" style="width: 20px; height: 20px; object-fit: contain;">
+                                    <% } else { %>
+                                        <i class="<%= link.icon %>"></i>
+                                    <% } %>
                                 </div>
-                                <div class="link-actions">
-                                    <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>')">Edit</button>
-                                    <button class="btn btn-danger btn-small" onclick="deleteLink('<%= link._id %>')">Delete</button>
+                                <div>
+                                    <strong><%= link.displayName %></strong>
+                                    <span><%= link.url %></span>
                                 </div>
                             </div>
-                        <% } %>
+                            <div class="link-actions">
+                                <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>')">Edit</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteLink('<%= link._id %>')">Delete</button>
+                            </div>
+                        </div>
                     <% }); %>
                 <% } else { %>
                     <p style="color: #888; text-align: center; padding: 15px;">No links added</p>
@@ -900,7 +902,7 @@
                     qrContainer.innerHTML = `
                         <div style="text-align: center;">
                             <div style="margin-bottom: 15px;">
-                                <img src="${data.qrUrl}" alt="QR Code" style="max-width: 250px; width: 100%; border-radius: 8px;">
+                                <img src="${data.qrUrl}" alt="QR Code" style="max-width: 250px; width: 100%; border-radius: 12px; aspect-ratio: 1; object-fit: contain; background: white; padding: 10px;">
                             </div>
                             <a href="${data.qrUrl}" download="qr-code.png" class="btn btn-primary">
                                 <i class="fas fa-download"></i> Download

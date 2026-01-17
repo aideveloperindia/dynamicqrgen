@@ -61,11 +61,12 @@ function bufferToDataUrl(buffer, mimetype) {
 }
 
 // Default categories with icons
+// Payment uses Cred logo image URL
 const DEFAULT_CATEGORIES = {
   instagram: { icon: 'fab fa-instagram', name: 'Instagram', color: 'gradient' },
   facebook: { icon: 'fab fa-facebook', name: 'Facebook', color: '#1877F2' },
   whatsapp: { icon: 'fab fa-whatsapp', name: 'WhatsApp', color: '#25D366' },
-  payment: { icon: 'fas fa-credit-card', name: 'Payment', color: '#25D366' },
+  payment: { icon: 'https://logos-world.net/wp-content/uploads/2021/08/CRED-Logo.png', name: 'Payment', color: '#25D366', isImage: true },
   website: { icon: 'fas fa-globe', name: 'Website', color: '#4285F4' },
   google: { icon: 'fab fa-google', name: 'Google Reviews', color: '#EA4335' },
   menu: { icon: 'fas fa-utensils', name: 'Menu Card', color: '#FF6B6B' },
@@ -345,7 +346,12 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
         return res.status(400).json({ success: false, message: 'Custom category requires icon upload' });
       }
     } else if (categoryType === 'default' && DEFAULT_CATEGORIES[category]) {
-      icon = DEFAULT_CATEGORIES[category].icon;
+      // For payment category, use Cred logo URL
+      if (category === 'payment' && DEFAULT_CATEGORIES[category].isImage) {
+        icon = DEFAULT_CATEGORIES[category].icon; // This is the Cred logo URL
+      } else {
+        icon = DEFAULT_CATEGORIES[category].icon;
+      }
     } else {
       return res.status(400).json({ success: false, message: 'Invalid category or icon' });
     }
