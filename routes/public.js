@@ -611,6 +611,73 @@ router.get('/:slug/pay', async (req, res) => {
   }
 });
 
+// Helper function to enhance UPI links with required parameters for Google Pay/PhonePe compatibility
+function enhanceUPILink(upiUrl, user) {
+  try {
+    // Parse the UPI URL
+    const url = new URL(upiUrl);
+    const params = new URLSearchParams(url.search);
+    
+    // Get payee name from user data (required by Google Pay/PhonePe)
+    const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
+    const encodedPayeeName = encodeURIComponent(payeeName);
+    
+    // Add pn (payee name) if missing - REQUIRED by Google Pay and PhonePe
+    if (!params.has('pn')) {
+      params.set('pn', encodedPayeeName);
+    }
+    
+    // Add cu (currency) if missing - REQUIRED
+    if (!params.has('cu')) {
+      params.set('cu', 'INR');
+    }
+    
+    // Add optional but recommended parameters for better compatibility
+    if (!params.has('tn')) {
+      params.set('tn', 'Payment');
+    }
+    
+    if (!params.has('tr')) {
+      // Generate a simple transaction reference
+      params.set('tr', `TXN${Date.now()}`);
+    }
+    
+    // Reconstruct the URL
+    url.search = params.toString();
+    return url.toString();
+  } catch (error) {
+    // If URL parsing fails, try manual enhancement
+    console.warn('URL parsing failed, using manual enhancement:', error.message);
+    
+    let enhancedUrl = upiUrl.trim();
+    const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
+    const encodedPayeeName = encodeURIComponent(payeeName);
+    
+    // Add pn if missing
+    if (!enhancedUrl.includes('pn=')) {
+      const separator = enhancedUrl.includes('?') ? '&' : '?';
+      enhancedUrl += `${separator}pn=${encodedPayeeName}`;
+    }
+    
+    // Add cu if missing
+    if (!enhancedUrl.includes('cu=')) {
+      enhancedUrl += `&cu=INR`;
+    }
+    
+    // Add tn if missing
+    if (!enhancedUrl.includes('tn=')) {
+      enhancedUrl += `&tn=Payment`;
+    }
+    
+    // Add tr if missing
+    if (!enhancedUrl.includes('tr=')) {
+      enhancedUrl += `&tr=TXN${Date.now()}`;
+    }
+    
+    return enhancedUrl;
+  }
+}
+
 // Redirect handler for links
 router.get('/:slug/redirect/:linkId', async (req, res) => {
   try {
@@ -641,9 +708,10 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       link.url.toLowerCase().startsWith('upiqr://')
     );
 
-    // For UPI links, open UPI app directly
+    // For UPI links, enhance with required parameters and open UPI app directly
     if (isUPILink) {
-      const upiUrl = link.url.trim();
+      // Enhance UPI link with required parameters (pn, cu, tn, tr) for Google Pay/PhonePe compatibility
+      const enhancedUPIUrl = enhanceUPILink(link.url.trim(), user);
       // Use encodeURIComponent for the href attribute, but keep original for JavaScript
       const encodedForHref = encodeURI(upiUrl);
       
@@ -690,8 +758,8 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
           </div>
           <script>
             (function() {
-              const upiUrl = ${JSON.stringify(upiUrl)};
-              console.log('Opening UPI link:', upiUrl);
+              const upiUrl = ${JSON.stringify(enhancedUPIUrl)};
+              console.log('Opening enhanced UPI link:', upiUrl);
               
               // Try to open immediately
               try {

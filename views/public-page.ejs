@@ -460,18 +460,77 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const upiLinks = document.querySelectorAll('a[data-upi-link]');
                 
+                // Helper function to enhance UPI URL with required parameters
+                function enhanceUPIUrl(upiUrl) {
+                    try {
+                        const url = new URL(upiUrl);
+                        const params = new URLSearchParams(url.search);
+                        
+                        // Get payee name from user data
+                        const payeeName = '<%= (user.upiPayeeName || user.businessName || user.name || "Merchant") %>';
+                        const encodedPayeeName = encodeURIComponent(payeeName);
+                        
+                        // Add pn (payee name) if missing - REQUIRED by Google Pay/PhonePe
+                        if (!params.has('pn')) {
+                            params.set('pn', encodedPayeeName);
+                        }
+                        
+                        // Add cu (currency) if missing - REQUIRED
+                        if (!params.has('cu')) {
+                            params.set('cu', 'INR');
+                        }
+                        
+                        // Add optional but recommended parameters
+                        if (!params.has('tn')) {
+                            params.set('tn', 'Payment');
+                        }
+                        
+                        if (!params.has('tr')) {
+                            params.set('tr', 'TXN' + Date.now());
+                        }
+                        
+                        url.search = params.toString();
+                        return url.toString();
+                    } catch (e) {
+                        // Fallback: manual enhancement
+                        let enhanced = upiUrl;
+                        const payeeName = '<%= (user.upiPayeeName || user.businessName || user.name || "Merchant") %>';
+                        const encodedPayeeName = encodeURIComponent(payeeName);
+                        
+                        if (!enhanced.includes('pn=')) {
+                            enhanced += (enhanced.includes('?') ? '&' : '?') + 'pn=' + encodedPayeeName;
+                        }
+                        if (!enhanced.includes('cu=')) {
+                            enhanced += '&cu=INR';
+                        }
+                        if (!enhanced.includes('tn=')) {
+                            enhanced += '&tn=Payment';
+                        }
+                        if (!enhanced.includes('tr=')) {
+                            enhanced += '&tr=TXN' + Date.now();
+                        }
+                        return enhanced;
+                    }
+                }
+                
                 upiLinks.forEach(function(link) {
                     link.addEventListener('click', function(e) {
-                        const upiUrl = this.getAttribute('data-upi-link');
+                        e.preventDefault();
+                        let upiUrl = this.getAttribute('data-upi-link');
                         
                         if (!upiUrl) return;
                         
+                        // Enhance UPI URL with required parameters for Google Pay/PhonePe
+                        const enhancedUrl = enhanceUPIUrl(upiUrl);
+                        console.log('Original:', upiUrl);
+                        console.log('Enhanced:', enhancedUrl);
+                        
                         try {
-                            window.location.href = upiUrl;
+                            window.location.href = enhancedUrl;
                         } catch (e) {
                             try {
                                 const tempLink = document.createElement('a');
-                                tempLink.href = upiUrl;
+                                tempLink.href = enhancedUrl;
                                 tempLink.style.display = 'none';
                                 document.body.appendChild(tempLink);
                                 tempLink.click();
@@ -479,7 +538,7 @@
                                     document.body.removeChild(tempLink);
                                 }, 100);
                             } catch (e2) {
-                                window.open(upiUrl, '_blank');
+                                window.open(enhancedUrl, '_blank');
                             }
                         }
                     });
