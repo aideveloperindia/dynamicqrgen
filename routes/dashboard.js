@@ -256,27 +256,6 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
       }
     }
     
-    // Store uploaded dynamic QR code as base64 data URL in MongoDB
-    if (uploadedQrCodeFile) {
-      try {
-        // Check file size before processing
-        if (uploadedQrCodeFile.size > 100 * 1024) {
-          console.warn('Dynamic QR code file size exceeds limit:', uploadedQrCodeFile.size);
-          return res.status(400).json({ 
-            success: false, 
-            message: 'QR code file is too large. Maximum size is 100KB. Please compress your image.' 
-          });
-        }
-        user.uploadedQrCode = await compressAndConvertToDataUrl(uploadedQrCodeFile.buffer, uploadedQrCodeFile.mimetype);
-      } catch (qrError) {
-        console.error('Dynamic QR code processing error:', qrError);
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Error processing QR code: ' + (qrError.message || 'Unknown error') 
-        });
-      }
-    }
-    
     try {
     await user.save();
     res.json({ success: true, message: 'Profile updated successfully' });

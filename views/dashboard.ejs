@@ -711,12 +711,7 @@
             }
             
             if (qrInput && qrInput.files[0] && qrInput.files[0].size > maxSize) {
-                showAlert('QR code too large. Max 100KB', 'error');
-                return;
-            }
-
-            if (dynamicQrInput && dynamicQrInput.files[0] && dynamicQrInput.files[0].size > maxSize) {
-                showAlert('QR code too large. Max 100KB', 'error');
+                showAlert('Payment QR too large. Max 100KB', 'error');
                 return;
             }
             
