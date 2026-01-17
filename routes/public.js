@@ -960,7 +960,7 @@ router.get('/:slug/qr-code', async (req, res) => {
   }
 });
 
-// Download uploaded dynamic QR code
+// Download generated dynamic QR code (the one generated from links, points to /p/:slug)
 router.get('/:slug/download/dynamic-qr', async (req, res) => {
   try {
     const user = await User.findOne({ uniqueSlug: req.params.slug });
@@ -969,16 +969,112 @@ router.get('/:slug/download/dynamic-qr', async (req, res) => {
       return res.status(404).send('Page not found');
     }
 
-    if (!user.uploadedQrCode || user.uploadedQrCode.trim() === '') {
-      return res.status(404).send('Dynamic QR code not found');
+    const QRCode = require('qrcode');
+    const baseUrl = process.env.BASE_URL || 'https://dynamicqrgen.vercel.app';
+    const pageUrl = `${baseUrl}/p/${user.uniqueSlug}`;
+    
+    // Generate QR code (exact same as client generated)
+    let qrDataUrl = await QRCode.toDataURL(pageUrl, {
+      width: 500,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    // Try to add business name if canvas is available
+    let canvasAvailable = false;
+    let createCanvas, loadImage, registerFont;
+    try {
+      const canvasModule = require('canvas');
+      createCanvas = canvasModule.createCanvas;
+      loadImage = canvasModule.loadImage;
+      registerFont = canvasModule.registerFont;
+      canvasAvailable = true;
+      
+      // Register font file for Vercel compatibility
+      try {
+        const fontPath = path.join(__dirname, '../fonts', 'Roboto-Regular.ttf');
+        if (fs.existsSync(fontPath)) {
+          registerFont(fontPath, { family: 'Roboto' });
+        }
+      } catch (fontError) {
+        console.warn('Font registration error:', fontError.message);
+      }
+    } catch (error) {
+      canvasAvailable = false;
+    }
+    
+    // Helper function to render text
+    function renderTextWithFallback(ctx, text, x, y, maxWidth) {
+      try {
+        ctx.font = 'bold 32px Roboto';
+        ctx.fillText(text, x, y);
+      } catch (e) {
+        try {
+          ctx.font = 'bold 32px Arial';
+          ctx.fillText(text, x, y);
+        } catch (e2) {
+          ctx.font = '32px sans-serif';
+          ctx.fillText(text, x, y);
+        }
+      }
+    }
+    
+    if (canvasAvailable && user.businessName && user.businessName.trim() !== '') {
+      try {
+        const businessName = user.businessName || user.name || 'QR Code';
+        const qrImage = await loadImage(qrDataUrl);
+        
+        const qrSize = 500;
+        const padding = 40;
+        const textHeight = 60;
+        const canvasWidth = qrSize + (padding * 2);
+        const canvasHeight = qrSize + (padding * 2) + textHeight;
+        
+        const canvas = createCanvas(canvasWidth, canvasHeight);
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
+        
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        const textX = canvasWidth / 2;
+        const textY = qrSize + padding + 10;
+        const maxWidth = qrSize;
+        
+        // Word wrap if needed
+        const words = businessName.split(' ');
+        let line = '';
+        let y = textY;
+        const lineHeight = 40;
+        
+        for (let i = 0; i < words.length; i++) {
+          const testLine = line + words[i] + ' ';
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && i > 0) {
+            renderTextWithFallback(ctx, line, textX, y, maxWidth);
+            line = words[i] + ' ';
+            y += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        renderTextWithFallback(ctx, line, textX, y, maxWidth);
+        
+        qrDataUrl = canvas.toDataURL('image/png');
+      } catch (canvasError) {
+        console.warn('Canvas error, using QR without text:', canvasError.message);
+      }
     }
 
-    // Extract base64 data from data URL
-    const base64Data = user.uploadedQrCode.split(',')[1];
-    if (!base64Data) {
-      return res.status(500).send('Invalid QR code format');
-    }
-
+    // Convert data URL to buffer for download
+    const base64Data = qrDataUrl.split(',')[1];
     const buffer = Buffer.from(base64Data, 'base64');
     
     res.setHeader('Content-Type', 'image/png');

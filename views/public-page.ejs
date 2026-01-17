@@ -443,14 +443,12 @@
         
         <div class="qr-download-section">
             <div class="qr-buttons">
-                <% if (user.uploadedQrCode && user.uploadedQrCode.trim() !== '') { %>
-                    <a href="/p/<%= user.uniqueSlug %>/download/dynamic-qr" download="dynamic-qr.png" class="download-btn">
-                        <i class="fas fa-download"></i> Dynamic QR
-                    </a>
-                <% } %>
+                <a href="/p/<%= user.uniqueSlug %>/download/dynamic-qr" download="dynamic-qr.png" class="download-btn">
+                    <i class="fas fa-download"></i> Download Dynamic QR
+                </a>
                 <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
                     <a href="/p/<%= user.uniqueSlug %>/download/payment-qr" download="payment-qr.png" class="download-btn">
-                        <i class="fas fa-download"></i> Payment QR
+                        <i class="fas fa-download"></i> Download Payment QR
                     </a>
                 <% } %>
             </div>
