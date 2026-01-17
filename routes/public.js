@@ -713,7 +713,7 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       // Enhance UPI link with required parameters (pn, cu, tn, tr) for Google Pay/PhonePe compatibility
       const enhancedUPIUrl = enhanceUPILink(link.url.trim(), user);
       // Use encodeURIComponent for the href attribute, but keep original for JavaScript
-      const encodedForHref = encodeURI(upiUrl);
+      const encodedForHref = encodeURI(enhancedUPIUrl);
       
       return res.send(`
         <!DOCTYPE html>
