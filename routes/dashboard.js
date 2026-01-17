@@ -432,8 +432,8 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         link.displayName = displayName;
         link.icon = icon;
         link.order = parseInt(order) || 0;
-        if (menuCardImage) {
-          link.menuCardImage = menuCardImage;
+        if (menuCardImages.length > 0) {
+          link.menuCardImages = menuCardImages;
         }
         await link.save();
         return res.json({ success: true, message: 'Link updated successfully', link });
