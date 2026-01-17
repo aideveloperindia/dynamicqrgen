@@ -440,16 +440,6 @@
                     <label>UPI ID</label>
                     <input type="text" name="upiId" value="<%= user.upiId || '' %>" placeholder="9912941214@okbizaxis">
                 </div>
-                <div class="form-group">
-                    <label>App ID (aid)</label>
-                    <input type="text" name="upiAid" value="<%= user.upiAid || '' %>" placeholder="uGICAgMDYtL2rWQ">
-                    <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Removes ₹2000 transaction limit. Get from your bank.</small>
-                </div>
-                <div class="form-group">
-                    <label>Payee Name</label>
-                    <input type="text" name="upiPayeeName" value="<%= user.upiPayeeName || '' %>" placeholder="GENIPAPPA TECHNOLOGIES PRIVATE LIMITED">
-                    <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Name shown in payment app. If empty, uses Business Name.</small>
-                </div>
                 <button type="submit" class="btn btn-primary">Update</button>
             </form>
         </div>
@@ -580,19 +570,10 @@
                     
                     <!-- Payment-specific fields (shown only when payment category selected) -->
                     <div id="paymentFields" style="display: none; margin-top: 15px; padding: 15px; background: rgba(66, 133, 244, 0.1); border-radius: 8px; border: 1px solid rgba(66, 133, 244, 0.3);">
-                        <p style="font-size: 12px; color: #888; margin-bottom: 15px;">Enter payment details below OR paste complete UPI URL above. You can also use "Generate from Profile" to auto-fill.</p>
+                        <p style="font-size: 12px; color: #888; margin-bottom: 15px;">Enter UPI ID below OR paste complete UPI URL above. You can also use "Generate from Profile" to auto-fill.</p>
                         <div class="form-group">
                             <label style="font-size: 13px; color: #ccc;">UPI ID</label>
                             <input type="text" id="paymentUpiId" style="background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; font-size: 13px;" placeholder="9912941214@okbizaxis" value="<%= user.upiId || '' %>">
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size: 13px; color: #ccc;">App ID (aid) - Optional</label>
-                            <input type="text" id="paymentAid" style="background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; font-size: 13px;" placeholder="uGICAgMDYtL2rWQ" value="<%= user.upiAid || '' %>">
-                            <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Removes ₹2000 limit. Get from your bank.</small>
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size: 13px; color: #ccc;">Payee Name</label>
-                            <input type="text" id="paymentPayeeName" style="background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; font-size: 13px;" placeholder="GENIPAPPA TECHNOLOGIES PRIVATE LIMITED" value="<%= (user.upiPayeeName || user.businessName || '') %>">
                         </div>
                         <div style="display: flex; gap: 10px; margin-top: 10px;">
                             <button type="button" class="btn btn-primary btn-small" onclick="generatePaymentLink()" style="flex: 1; max-width: none;">
@@ -690,8 +671,6 @@
         function generatePaymentLink() {
             // Generate from profile values (server-side)
             const upiId = '<%= user.upiId || '' %>';
-            const payeeName = '<%= (user.upiPayeeName || user.businessName || user.name || '') %>';
-            const aid = '<%= user.upiAid || '' %>';
             
             if (!upiId || upiId.trim() === '') {
                 showAlert('Please set your UPI ID in Business Profile first', 'error');
@@ -700,8 +679,6 @@
             
             // Fill the payment fields with profile values
             document.getElementById('paymentUpiId').value = upiId;
-            document.getElementById('paymentAid').value = aid;
-            document.getElementById('paymentPayeeName').value = payeeName;
             
             // Generate link
             generatePaymentLinkFromFields();
@@ -709,22 +686,14 @@
         
         function generatePaymentLinkFromFields() {
             const upiId = document.getElementById('paymentUpiId').value.trim();
-            const aid = document.getElementById('paymentAid').value.trim();
-            const payeeName = document.getElementById('paymentPayeeName').value.trim();
             
             if (!upiId) {
                 showAlert('Please enter UPI ID', 'error');
                 return;
             }
             
-            // Generate UPI link - NO amount parameter (am) to allow any amount
-            const encodedPayeeName = encodeURIComponent(payeeName || 'Merchant');
-            let upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodedPayeeName}&cu=INR`;
-            
-            // Add aid (App ID) if provided - REMOVES ₹2000 LIMIT
-            if (aid && aid.trim() !== '') {
-                upiLink += `&aid=${encodeURIComponent(aid)}`;
-            }
+            // Generate UPI link - simple format
+            let upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&cu=INR`;
             
             // Auto-fill URL and display name
             document.getElementById('url').value = upiLink;
@@ -732,7 +701,7 @@
                 document.getElementById('displayName').value = 'Payment';
             }
             
-            showAlert('Payment link generated! No amount limits.', 'success');
+            showAlert('Payment link generated!', 'success');
         }
 
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
