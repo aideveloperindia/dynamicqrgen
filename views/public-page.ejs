@@ -460,100 +460,57 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const upiLinks = document.querySelectorAll('a[data-upi-link]');
                 
-                // Helper function to enhance UPI URL with required parameters
-                // Uses manual parsing to avoid issues with upi:// scheme
+                // Helper function to enhance UPI URL - MINIMAL changes, keep it simple
+                // Only adds missing essential parameters, preserves original format
                 function enhanceUPIUrl(upiUrl) {
                     try {
                         // Clean the URL
                         let enhanced = upiUrl.trim();
-                        
-                        // Get payee name from user data
-                        const payeeName = '<%= (user.upiPayeeName || user.businessName || user.name || "Merchant") %>'.trim();
                         
                         // Parse parameters manually
                         const parts = enhanced.split('?');
                         const scheme = parts[0]; // upi://pay
                         const queryString = parts[1] || '';
                         
-                        // Parse existing parameters
+                        // Parse existing parameters - keep original encoding
                         const params = {};
+                        const paramOrder = []; // Preserve original order
+                        
                         if (queryString) {
                             queryString.split('&').forEach(function(param) {
                                 const pair = param.split('=');
                                 if (pair[0] && pair[1]) {
-                                    try {
-                                        params[pair[0]] = decodeURIComponent(pair[1]);
-                                    } catch (e) {
-                                        params[pair[0]] = pair[1];
-                                    }
+                                    const key = pair[0];
+                                    const value = pair[1] || '';
+                                    // Keep original encoded value - don't decode/re-encode
+                                    params[key] = value; // Keep as-is (already encoded)
+                                    paramOrder.push(key);
                                 }
                             });
                         }
                         
-                        // Clean and set required parameters
-                        // pn (payee name) - REQUIRED by Google Pay
-                        // IMPORTANT: Must match bank's registered name
-                        if (!params.pn || params.pn.trim() === '') {
-                            params.pn = payeeName;
-                        } else {
-                            // Clean - remove trailing spaces and multiple spaces
-                            params.pn = params.pn.trim().replace(/\s+/g, ' ');
-                        }
-                        
-                        // Ensure payee name is not empty
-                        if (!params.pn || params.pn.trim() === '') {
-                            params.pn = payeeName || 'Merchant';
-                        }
-                        
-                        // cu (currency) - REQUIRED
+                        // Only add cu if missing (minimal change)
                         if (!params.cu) {
                             params.cu = 'INR';
+                            paramOrder.push('cu');
                         }
                         
-                        // tn (transaction note)
-                        if (!params.tn) {
-                            params.tn = 'Payment';
+                        // IMPORTANT: Remove 'am' (amount) parameter - no amount limits
+                        if (params.am) {
+                            delete params.am;
+                            const index = paramOrder.indexOf('am');
+                            if (index > -1) paramOrder.splice(index, 1);
                         }
                         
-                        // tr (transaction reference) - Generate unique one for Google Pay
-                        params.tr = 'TXN' + Date.now() + Math.random().toString(36).substring(2, 8).toUpperCase();
-                        
-                        // aid (App ID) - Add if available
-                        <% if (user.upiAid && user.upiAid.trim() !== '') { %>
-                            if (!params.aid) {
-                                params.aid = '<%= user.upiAid.trim() %>';
-                            }
-                        <% } %>
-                        
-                        // Remove am (amount) parameter
-                        delete params.am;
-                        
-                        // Validate UPI ID (pa parameter)
-                        if (params.pa) {
-                            params.pa = params.pa.trim();
-                            if (!params.pa.includes('@')) {
-                                console.warn('Invalid UPI ID format:', params.pa);
-                            }
-                        }
-                        
-                        // Reconstruct URL with properly encoded parameters
-                        // Order: pa, pn, cu, tn, tr, aid (Google Pay prefers this order)
+                        // Reconstruct URL preserving original order + any new params
                         const paramPairs = [];
-                        const paramOrder = ['pa', 'pn', 'cu', 'tn', 'tr', 'aid'];
                         
-                        // Add ordered parameters first
+                        // Add params in original order
                         paramOrder.forEach(function(key) {
-                            if (params[key] && params[key].toString().trim() !== '') {
-                                paramPairs.push(key + '=' + encodeURIComponent(params[key].toString().trim()));
+                            if (params[key]) {
+                                paramPairs.push(key + '=' + params[key]); // Already encoded
                             }
                         });
-                        
-                        // Add any other parameters
-                        for (const key in params) {
-                            if (paramOrder.indexOf(key) === -1 && params[key] && params[key].toString().trim() !== '') {
-                                paramPairs.push(key + '=' + encodeURIComponent(params[key].toString().trim()));
-                            }
-                        }
                         
                         return scheme + '?' + paramPairs.join('&');
                     } catch (e) {
