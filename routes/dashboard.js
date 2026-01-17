@@ -325,8 +325,37 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'URL and display name are required' });
     }
     
-    // Save URL as-is - no complex formatting
-    url = url.trim();
+    // For payment category, if URL is incomplete, auto-generate from user profile
+    if (category === 'payment' && categoryType === 'default') {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        // Check if URL is just UPI ID or incomplete
+        const upiId = user.upiId || '';
+        const payeeName = user.upiPayeeName || user.businessName || user.name || 'Merchant';
+        
+        // If URL doesn't start with upi://, assume it's just UPI ID or needs generation
+        if (!url.toLowerCase().startsWith('upi://') && !url.toLowerCase().startsWith('upiqr://')) {
+          if (upiId) {
+            // Generate full UPI link from profile
+            const encodedPayeeName = encodeURIComponent(payeeName);
+            url = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodedPayeeName}&cu=INR`;
+          } else {
+            return res.status(400).json({ 
+              success: false, 
+              message: 'Please set your UPI ID in Business Profile first, or enter a complete UPI payment URL' 
+            });
+          }
+        } else if (url.toLowerCase().startsWith('upi://') || url.toLowerCase().startsWith('upiqr://')) {
+          // URL is already a UPI link, but ensure it has required parameters
+          // The enhancement will happen when link is clicked (in public.js)
+          // Just save as-is for now
+          url = url.trim();
+        }
+      }
+    } else {
+      // Save URL as-is for non-payment links
+      url = url.trim();
+    }
 
     let icon = '';
     if (categoryType === 'custom') {

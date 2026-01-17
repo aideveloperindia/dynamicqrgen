@@ -560,8 +560,24 @@
                         </div>
                         <div class="form-group">
                             <label>URL</label>
-                            <input type="url" id="url" name="url" required placeholder="https://...">
+                            <input type="url" id="url" name="url" required placeholder="https://... or upi://...">
                         </div>
+                    </div>
+                    
+                    <!-- Payment-specific fields (shown only when payment category selected) -->
+                    <div id="paymentFields" style="display: none; margin-top: 15px; padding: 15px; background: rgba(66, 133, 244, 0.1); border-radius: 8px; border: 1px solid rgba(66, 133, 244, 0.3);">
+                        <p style="font-size: 12px; color: #888; margin-bottom: 10px;">We'll auto-generate the UPI link from your profile. You can override by entering a custom URL above.</p>
+                        <div class="form-group">
+                            <label style="font-size: 12px; color: #ccc;">UPI ID (from profile)</label>
+                            <input type="text" id="profileUpiId" readonly style="background: #1a1a1a; color: #888; cursor: not-allowed;" value="<%= user.upiId || 'Not set in profile' %>">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 12px; color: #ccc;">Payee Name (from profile)</label>
+                            <input type="text" id="profilePayeeName" readonly style="background: #1a1a1a; color: #888; cursor: not-allowed;" value="<%= (user.upiPayeeName || user.businessName || user.name || 'Not set') %>">
+                        </div>
+                        <button type="button" class="btn btn-primary btn-small" onclick="generatePaymentLink()" style="margin-top: 10px; max-width: none;">
+                            <i class="fas fa-magic"></i> Generate Link from Profile
+                        </button>
                     </div>
                     
                     <div class="form-group" id="customIconGroup" style="display: none;">
