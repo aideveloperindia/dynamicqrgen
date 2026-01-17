@@ -624,6 +624,13 @@
             <% } %>
         </div>
         
+        <% if (user.qrCode && user.qrCode.trim() !== '') { %>
+        <div class="qr-display-section">
+            <div class="qr-display-title">Scan to Share</div>
+            <img src="<%= user.qrCode %>" alt="Dynamic QR Code" class="qr-code-image">
+        </div>
+        <% } %>
+        
         <div class="qr-download-section">
             <div class="qr-buttons">
                 <a href="/p/<%= user.uniqueSlug %>/download/dynamic-qr" download="dynamic-qr.png" class="download-btn">
