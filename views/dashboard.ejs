@@ -423,13 +423,6 @@
                     <% } %>
                 </div>
                 <div class="form-group">
-                    <label>Dynamic QR Code</label>
-                    <input type="file" name="uploadedQrCode" accept="image/*">
-                    <% if (user.uploadedQrCode && user.uploadedQrCode.trim() !== '') { %>
-                        <img src="<%= user.uploadedQrCode %>" alt="Dynamic QR" class="preview-img" style="aspect-ratio: 1; object-fit: contain; background: white; padding: 5px;">
-                    <% } %>
-                </div>
-                <div class="form-group">
                     <label>Payment QR Code</label>
                     <input type="file" name="bankQrCode" accept="image/*">
                     <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>

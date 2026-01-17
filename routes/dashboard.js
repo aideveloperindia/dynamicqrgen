@@ -153,7 +153,7 @@ const handleMulterError = (err, req, res, next) => {
   next();
 };
 
-router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'bankQrCode', maxCount: 1 }, { name: 'uploadedQrCode', maxCount: 1 }]), handleMulterError, async (req, res) => {
+router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'bankQrCode', maxCount: 1 }]), handleMulterError, async (req, res) => {
   try {
     // Check authentication
     if (!req.user || !req.user._id) {
@@ -167,7 +167,6 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
     const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid, paymentLink } = req.body;
     const logoFile = req.files && req.files['logo'] ? req.files['logo'][0] : null;
     const bankQrCodeFile = req.files && req.files['bankQrCode'] ? req.files['bankQrCode'][0] : null;
-    const uploadedQrCodeFile = req.files && req.files['uploadedQrCode'] ? req.files['uploadedQrCode'][0] : null;
     const user = await User.findById(req.user._id);
     
     if (!user) {
