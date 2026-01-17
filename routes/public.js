@@ -611,107 +611,55 @@ router.get('/:slug/pay', async (req, res) => {
   }
 });
 
-// Helper function to enhance UPI links with required parameters for Google Pay/PhonePe compatibility
-// Uses manual parsing to avoid issues with upi:// scheme and URL constructor
+// Helper function to enhance UPI links - MINIMAL changes, keep it simple
+// Only adds missing essential parameters, preserves original format
 function enhanceUPILink(upiUrl, user) {
   try {
     // Clean the URL - remove any extra whitespace
     let enhancedUrl = upiUrl.trim();
-    
-    // Get payee name from user data (required by Google Pay/PhonePe)
-    const payeeName = (user.upiPayeeName || user.businessName || user.name || 'Merchant').trim();
     
     // Parse parameters manually (upi:// scheme doesn't work well with URL constructor)
     const parts = enhancedUrl.split('?');
     const scheme = parts[0]; // upi://pay
     const queryString = parts[1] || '';
     
-    // Parse existing parameters
+    // Parse existing parameters - keep original encoding
     const params = {};
+    const paramOrder = []; // Preserve original order
+    
     if (queryString) {
       queryString.split('&').forEach(param => {
         const [key, value] = param.split('=');
         if (key && value) {
-          // Decode existing value to avoid double encoding
-          try {
-            params[key] = decodeURIComponent(value);
-          } catch (e) {
-            params[key] = value;
-          }
+          // Keep original encoded value - don't decode/re-encode
+          params[key] = value; // Keep as-is (already encoded)
+          paramOrder.push(key);
         }
       });
     }
     
-    // Clean and set required parameters
-    // pn (payee name) - REQUIRED by Google Pay/PhonePe
-    // IMPORTANT: Payee name should match bank's registered name for Google Pay
-    if (!params.pn || params.pn.trim() === '') {
-      params.pn = payeeName;
-    } else {
-      // Clean existing pn - remove trailing spaces and multiple spaces
-      params.pn = params.pn.trim().replace(/\s+/g, ' ');
-    }
-    
-    // Ensure payee name is not empty
-    if (!params.pn || params.pn.trim() === '') {
-      params.pn = payeeName || 'Merchant';
-    }
-    
-    // Validate and clean UPI ID (pa parameter) - CRITICAL for Google Pay
-    if (params.pa) {
-      params.pa = params.pa.trim();
-      // Remove any whitespace
-      params.pa = params.pa.replace(/\s+/g, '');
-      // Ensure it has @ symbol
-      if (!params.pa.includes('@')) {
-        console.warn('Invalid UPI ID format - missing @ symbol:', params.pa);
-      }
-    } else {
-      console.error('Missing UPI ID (pa parameter)');
-      return upiUrl.trim(); // Return original if no UPI ID
-    }
-    
-    // cu (currency) - REQUIRED
+    // Only add cu if missing (minimal change)
     if (!params.cu) {
       params.cu = 'INR';
-    }
-    
-    // tn (transaction note) - Optional but recommended
-    if (!params.tn) {
-      params.tn = 'Payment';
-    }
-    
-    // tr (transaction reference) - Generate unique one for Google Pay
-    // Google Pay requires unique, alphanumeric transaction reference
-    const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-    params.tr = `TXN${Date.now()}${randomSuffix}`;
-    
-    // aid (App ID) - Add if user has it and not already present
-    if (user.upiAid && user.upiAid.trim() !== '' && !params.aid) {
-      params.aid = user.upiAid.trim();
+      paramOrder.push('cu');
     }
     
     // IMPORTANT: Remove 'am' (amount) parameter - no amount limits
-    delete params.am;
+    if (params.am) {
+      delete params.am;
+      const index = paramOrder.indexOf('am');
+      if (index > -1) paramOrder.splice(index, 1);
+    }
     
-    // Reconstruct URL with properly encoded parameters
-    // Google Pay prefers parameter order: pa, pn, cu, tn, tr, aid
+    // Reconstruct URL preserving original order + any new params
     const paramPairs = [];
-    const paramOrder = ['pa', 'pn', 'cu', 'tn', 'tr', 'aid'];
     
-    // Add ordered parameters first (Google Pay prefers this order)
+    // Add params in original order
     paramOrder.forEach(key => {
-      if (params[key] && params[key].toString().trim() !== '') {
-        paramPairs.push(`${key}=${encodeURIComponent(params[key].toString().trim())}`);
+      if (params[key]) {
+        paramPairs.push(`${key}=${params[key]}`); // Already encoded
       }
     });
-    
-    // Add any other parameters that weren't in the order list
-    for (const [key, value] of Object.entries(params)) {
-      if (!paramOrder.includes(key) && value && value.toString().trim() !== '') {
-        paramPairs.push(`${key}=${encodeURIComponent(value.toString().trim())}`);
-      }
-    }
     
     // Reconstruct the full URL
     const newQueryString = paramPairs.join('&');
