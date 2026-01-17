@@ -66,7 +66,7 @@ const DEFAULT_CATEGORIES = {
   instagram: { icon: 'fab fa-instagram', name: 'Instagram', color: 'gradient' },
   facebook: { icon: 'fab fa-facebook', name: 'Facebook', color: '#1877F2' },
   whatsapp: { icon: 'fab fa-whatsapp', name: 'WhatsApp', color: '#25D366' },
-  payment: { icon: 'https://logos-world.net/wp-content/uploads/2021/08/CRED-Logo.png', name: 'Payment', color: '#25D366', isImage: true },
+  payment: { icon: '/cred-logo.png', name: 'Payment', color: '#25D366', isImage: true },
   website: { icon: 'fas fa-globe', name: 'Website', color: '#4285F4' },
   google: { icon: 'fab fa-google', name: 'Google Reviews', color: '#EA4335' },
   menu: { icon: 'fas fa-utensils', name: 'Menu Card', color: '#FF6B6B' },
