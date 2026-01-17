@@ -319,8 +319,8 @@
             }
             
             .icon-link img[src="/cred-logo.png"] {
-                width: 36px !important;
-                height: 36px !important;
+                width: 48px !important;
+                height: 48px !important;
             }
 
             .qr-download-section {
@@ -345,8 +345,8 @@
             }
             
             .icon-link img[src="/cred-logo.png"] {
-                width: 40px !important;
-                height: 40px !important;
+                width: 54px !important;
+                height: 54px !important;
             }
         }
 
@@ -362,8 +362,8 @@
             }
             
             .icon-link img[src="/cred-logo.png"] {
-                width: 46px !important;
-                height: 46px !important;
+                width: 63px !important;
+                height: 63px !important;
             }
         }
     </style>
@@ -404,7 +404,7 @@
                        class="icon-link <%= link.category %>"
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.category === 'payment') { %>
-                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 42px; height: 42px; object-fit: contain;">
+                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 57px; height: 57px; object-fit: contain;">
                         <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
@@ -429,7 +429,7 @@
                        class="icon-link <%= link.category %>"
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.category === 'payment') { %>
-                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 42px; height: 42px; object-fit: contain;">
+                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 57px; height: 57px; object-fit: contain;">
                         <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
