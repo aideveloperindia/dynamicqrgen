@@ -777,8 +777,8 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       `);
     }
 
-    // For menu category, display menu card image
-    if (link.category === 'menu' && link.menuCardImage && link.menuCardImage.trim() !== '') {
+    // For menu category, display menu card images
+    if (link.category === 'menu' && link.menuCardImages && link.menuCardImages.length > 0) {
       return res.send(`
         <!DOCTYPE html>
         <html>
@@ -842,7 +842,11 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
         <body>
           <div class="menu-container">
             <h1 class="menu-title">${link.displayName || 'Menu'}</h1>
-            <img src="${link.menuCardImage}" alt="Menu Card" class="menu-image">
+            <div class="menu-images-container">
+              ${link.menuCardImages.map((image, index) => 
+                `<img src="${image}" alt="Menu Card ${index + 1}" class="menu-image">`
+              ).join('')}
+            </div>
             <a href="/p/${user.uniqueSlug}" class="back-button">
               <i class="fas fa-arrow-left"></i> Back to Profile
             </a>
