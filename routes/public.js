@@ -642,6 +642,17 @@ function enhanceUPILink(upiUrl, user) {
       params.set('tr', `TXN${Date.now()}`);
     }
     
+    // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
+    if (user.upiAid && user.upiAid.trim() !== '' && !params.has('aid')) {
+      params.set('aid', user.upiAid);
+    }
+    
+    // IMPORTANT: Do NOT add 'am' (amount) parameter - let users enter any amount
+    // Removing any existing 'am' parameter to ensure no amount limit
+    if (params.has('am')) {
+      params.delete('am');
+    }
+    
     // Reconstruct the URL
     url.search = params.toString();
     return url.toString();
@@ -673,6 +684,14 @@ function enhanceUPILink(upiUrl, user) {
     if (!enhancedUrl.includes('tr=')) {
       enhancedUrl += `&tr=TXN${Date.now()}`;
     }
+    
+    // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
+    if (user.upiAid && user.upiAid.trim() !== '' && !enhancedUrl.includes('aid=')) {
+      enhancedUrl += `&aid=${encodeURIComponent(user.upiAid)}`;
+    }
+    
+    // IMPORTANT: Remove 'am' (amount) parameter if present - no amount limits
+    enhancedUrl = enhancedUrl.replace(/[&?]am=[^&]*/gi, '');
     
     return enhancedUrl;
   }

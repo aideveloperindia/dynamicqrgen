@@ -489,6 +489,18 @@
                             params.set('tr', 'TXN' + Date.now());
                         }
                         
+                        // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
+                        <% if (user.upiAid && user.upiAid.trim() !== '') { %>
+                            if (!params.has('aid')) {
+                                params.set('aid', '<%= user.upiAid %>');
+                            }
+                        <% } %>
+                        
+                        // IMPORTANT: Remove 'am' (amount) parameter if present - no amount limits
+                        if (params.has('am')) {
+                            params.delete('am');
+                        }
+                        
                         url.search = params.toString();
                         return url.toString();
                     } catch (e) {
@@ -509,6 +521,17 @@
                         if (!enhanced.includes('tr=')) {
                             enhanced += '&tr=TXN' + Date.now();
                         }
+                        
+                        // Add aid (App ID) if user has merchant account - REMOVES ₹2000 LIMIT
+                        <% if (user.upiAid && user.upiAid.trim() !== '') { %>
+                            if (!enhanced.includes('aid=')) {
+                                enhanced += '&aid=' + encodeURIComponent('<%= user.upiAid %>');
+                            }
+                        <% } %>
+                        
+                        // IMPORTANT: Remove 'am' (amount) parameter - no amount limits
+                        enhanced = enhanced.replace(/[&?]am=[^&]*/gi, '');
+                        
                         return enhanced;
                     }
                 }

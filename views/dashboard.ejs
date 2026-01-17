@@ -681,9 +681,14 @@
                 return;
             }
             
-            // Generate UPI link
+            // Generate UPI link - NO amount parameter (am) to allow any amount
             const encodedPayeeName = encodeURIComponent(payeeName);
-            const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodedPayeeName}&cu=INR`;
+            let upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodedPayeeName}&cu=INR`;
+            
+            // Add aid (App ID) if available - REMOVES ₹2000 LIMIT
+            <% if (user.upiAid && user.upiAid.trim() !== '') { %>
+                upiLink += `&aid=${encodeURIComponent('<%= user.upiAid %>')}`;
+            <% } %>
             
             // Auto-fill URL and display name
             document.getElementById('url').value = upiLink;
@@ -691,7 +696,7 @@
                 document.getElementById('displayName').value = 'Payment';
             }
             
-            showAlert('Payment link generated from your profile!', 'success');
+            showAlert('Payment link generated from your profile! No amount limits.', 'success');
         }
 
         document.getElementById('profileForm').addEventListener('submit', async (e) => {

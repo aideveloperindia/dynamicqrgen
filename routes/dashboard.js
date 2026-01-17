@@ -336,9 +336,14 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
         // If URL doesn't start with upi://, assume it's just UPI ID or needs generation
         if (!url.toLowerCase().startsWith('upi://') && !url.toLowerCase().startsWith('upiqr://')) {
           if (upiId) {
-            // Generate full UPI link from profile
+            // Generate full UPI link from profile - NO amount parameter (am) to allow any amount
             const encodedPayeeName = encodeURIComponent(payeeName);
             url = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodedPayeeName}&cu=INR`;
+            
+            // Add aid (App ID) if available - REMOVES ₹2000 LIMIT
+            if (user.upiAid && user.upiAid.trim() !== '') {
+              url += `&aid=${encodeURIComponent(user.upiAid)}`;
+            }
           } else {
             return res.status(400).json({ 
               success: false, 
@@ -346,9 +351,15 @@ router.post('/link', auth, upload.single('customIcon'), async (req, res) => {
             });
           }
         } else if (url.toLowerCase().startsWith('upi://') || url.toLowerCase().startsWith('upiqr://')) {
-          // URL is already a UPI link, but ensure it has required parameters
-          // The enhancement will happen when link is clicked (in public.js)
-          // Just save as-is for now
+          // URL is already a UPI link
+          // Remove any amount (am) parameter to ensure no amount limits
+          url = url.replace(/[&?]am=[^&]*/gi, '');
+          
+          // Add aid (App ID) if available and not already present - REMOVES ₹2000 LIMIT
+          if (user.upiAid && user.upiAid.trim() !== '' && !url.includes('aid=')) {
+            url += (url.includes('?') ? '&' : '?') + `aid=${encodeURIComponent(user.upiAid)}`;
+          }
+          
           url = url.trim();
         }
       }
