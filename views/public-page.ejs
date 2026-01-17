@@ -202,9 +202,12 @@
 
         .qr-buttons {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 12px;
             margin-top: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .download-btn {
@@ -222,9 +225,9 @@
             transition: all 0.3s ease;
             border: none;
             cursor: pointer;
-            width: 100%;
+            flex: 1;
+            min-width: 140px;
             max-width: 200px;
-            margin: 0 auto;
         }
 
         .download-btn:hover {
@@ -234,6 +237,144 @@
 
         .download-btn i {
             font-size: 16px;
+        }
+
+        .payment-details-container {
+            position: relative;
+            display: inline-block;
+            flex: 1;
+            min-width: 140px;
+            max-width: 200px;
+        }
+
+        .payment-details-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .payment-details-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .payment-details-btn i {
+            font-size: 16px;
+        }
+
+        .payment-dropdown {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 10px;
+            background: rgba(30, 30, 30, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 250px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .payment-dropdown.show {
+            display: block;
+        }
+
+        .payment-dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            color: #fff;
+        }
+
+        .payment-dropdown-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .payment-dropdown-label {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+
+        .payment-dropdown-value {
+            font-size: 15px;
+            color: #fff;
+            font-weight: 600;
+            word-break: break-all;
+            flex: 1;
+            text-align: left;
+            margin-right: 10px;
+        }
+
+        .copy-btn {
+            background: rgba(66, 133, 244, 0.2);
+            border: 1px solid rgba(66, 133, 244, 0.5);
+            color: #4285F4;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background: rgba(66, 133, 244, 0.3);
+            border-color: #4285F4;
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
+        .copy-btn.copied {
+            background: rgba(37, 211, 102, 0.2);
+            border-color: #25D366;
+            color: #25D366;
+        }
+
+        .payment-dropdown-download {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #4285F4, #25D366);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .payment-dropdown-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
         }
 
         .footer {
@@ -330,6 +471,21 @@
             .download-btn {
                 padding: 10px 18px;
                 font-size: 13px;
+            }
+
+            .qr-buttons {
+                flex-direction: column;
+            }
+
+            .payment-details-container {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            .payment-dropdown {
+                min-width: 220px;
+                left: 0;
+                transform: none;
             }
         }
 
@@ -446,15 +602,136 @@
                 <a href="/p/<%= user.uniqueSlug %>/download/dynamic-qr" download="dynamic-qr.png" class="download-btn">
                     <i class="fas fa-download"></i> Download Dynamic QR
                 </a>
-                <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
-                    <a href="/p/<%= user.uniqueSlug %>/download/payment-qr" download="payment-qr.png" class="download-btn">
-                        <i class="fas fa-download"></i> Download Payment QR
-                    </a>
-                <% } %>
+                <div class="payment-details-container">
+                    <button class="payment-details-btn" onclick="togglePaymentDetails()">
+                        <i class="fas fa-credit-card"></i> Payment Details
+                    </button>
+                    <div class="payment-dropdown" id="paymentDropdown">
+                        <% if (user.phoneNumber && user.phoneNumber.trim() !== '') { %>
+                            <div class="payment-dropdown-item">
+                                <div style="flex: 1;">
+                                    <div class="payment-dropdown-label">Phone Number</div>
+                                    <div class="payment-dropdown-value" id="phoneValue"><%= user.phoneNumber %></div>
+                                </div>
+                                <button class="copy-btn" onclick="copyToClipboard('<%= user.phoneNumber %>', this, 'phoneValue')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        <% } %>
+                        <% if (user.upiId && user.upiId.trim() !== '') { %>
+                            <div class="payment-dropdown-item">
+                                <div style="flex: 1;">
+                                    <div class="payment-dropdown-label">UPI ID</div>
+                                    <div class="payment-dropdown-value" id="upiValue"><%= user.upiId %></div>
+                                </div>
+                                <button class="copy-btn" onclick="copyToClipboard('<%= user.upiId %>', this, 'upiValue')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        <% } %>
+                        <% if (user.bankQrCode && user.bankQrCode.trim() !== '') { %>
+                            <a href="/p/<%= user.uniqueSlug %>/download/payment-qr" download="payment-qr.png" class="payment-dropdown-download">
+                                <i class="fas fa-download"></i> Download Payment QR
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
             </div>
         </div>
         
         <script>
+            // Toggle payment details dropdown
+            function togglePaymentDetails() {
+                const dropdown = document.getElementById('paymentDropdown');
+                dropdown.classList.toggle('show');
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const container = document.querySelector('.payment-details-container');
+                const dropdown = document.getElementById('paymentDropdown');
+                if (container && !container.contains(event.target) && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // Copy to clipboard function
+            function copyToClipboard(text, button, valueId) {
+                // Try modern clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showCopyFeedback(button);
+                    }).catch(function(err) {
+                        console.error('Clipboard API failed:', err);
+                        fallbackCopy(text, button);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    fallbackCopy(text, button);
+                }
+            }
+
+            function fallbackCopy(text, button) {
+                // Create temporary textarea
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showCopyFeedback(button);
+                    } else {
+                        // Last resort: select text for manual copy
+                        selectTextForCopy(text, button);
+                    }
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                    selectTextForCopy(text, button);
+                }
+                
+                document.body.removeChild(textarea);
+            }
+
+            function selectTextForCopy(text, button) {
+                // Create a temporary element with the text
+                const tempDiv = document.createElement('div');
+                tempDiv.style.position = 'fixed';
+                tempDiv.style.left = '-9999px';
+                tempDiv.textContent = text;
+                document.body.appendChild(tempDiv);
+                
+                const range = document.createRange();
+                range.selectNodeContents(tempDiv);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                try {
+                    document.execCommand('copy');
+                    showCopyFeedback(button);
+                } catch (err) {
+                    alert('Please copy manually: ' + text);
+                }
+                
+                document.body.removeChild(tempDiv);
+                selection.removeAllRanges();
+            }
+
+            function showCopyFeedback(button) {
+                const originalHTML = button.innerHTML;
+                button.classList.add('copied');
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                
+                setTimeout(function() {
+                    button.classList.remove('copied');
+                    button.innerHTML = originalHTML;
+                }, 2000);
+            }
+
             document.addEventListener('DOMContentLoaded', function() {
                 const upiLinks = document.querySelectorAll('a[data-upi-link]');
                 
