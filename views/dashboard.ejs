@@ -581,11 +581,11 @@
                     <!-- Menu-specific fields (shown only when menu category selected) -->
                     <div id="menuFields" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 107, 107, 0.1); border-radius: 8px; border: 1px solid rgba(255, 107, 107, 0.3);">
                         <div class="form-group">
-                            <label style="font-size: 13px; color: #ccc;">Menu Card Photo</label>
-                            <input type="file" id="menuCardImage" name="menuCardImage" accept="image/*">
-                            <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Upload your menu card image (Max 100KB). This will be displayed when customers click the menu link.</small>
-                            <div id="menuCardPreview" style="margin-top: 10px; display: none;">
-                                <img id="menuCardPreviewImg" src="" alt="Menu Card Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #333;">
+                            <label style="font-size: 13px; color: #ccc;">Menu Card Photos <small style="color: #888;">(Up to 3 images)</small></label>
+                            <input type="file" id="menuCardImage" name="menuCardImage" accept="image/*" multiple>
+                            <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Upload up to 3 menu card images (Max 100KB each). These will be displayed when customers click the menu link.</small>
+                            <div id="menuCardPreview" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <!-- Preview images will be added here -->
                             </div>
                         </div>
                     </div>
