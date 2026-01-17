@@ -22,7 +22,20 @@
 
 ## Who Provides App ID?
 
-### Option 1: Your Bank (Recommended)
+### ⚠️ Important: Google Pay & PhonePe are Apps, Not Providers
+
+**Google Pay and PhonePe are UPI apps** - they don't provide App ID directly. The App ID comes from:
+- ✅ **Your Bank** (that issued your UPI ID)
+- ✅ **Payment Service Provider (PSP)** working with your bank
+
+**Example:**
+- If your UPI ID is `9553267043-7@ybl` → `@ybl` means **Yes Bank**
+- You need to get App ID from **Yes Bank** (not from Google Pay/PhonePe)
+- Google Pay/PhonePe are just apps you use to make payments
+
+---
+
+### Option 1: Your Bank (Primary Method - For Google Pay/PhonePe Users)
 **Your bank provides App ID when you register as a UPI merchant.**
 
 #### For ICICI Bank:
