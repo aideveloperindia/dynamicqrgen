@@ -102,6 +102,15 @@
             border-top: 1px solid #333;
         }
 
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -246,6 +255,16 @@
 
         <div class="last-updated">
             <p>Last Updated: <%= new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+        </div>
+
+        <div class="footer">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>Built by</span>
+                <a href="https://aideveloperindia.store" target="_blank" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #888;">
+                    <img src="/images/A-logo-transparent.png" alt="AI Developer India" style="height: 20px; width: auto;">
+                    <span>AI Developer India</span>
+                </a>
+            </div>
         </div>
     </div>
 </body>
