@@ -816,13 +816,13 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       `);
     }
 
-    // For menu and products categories, display based on menu type
-    if (link.category === 'menu' || link.category === 'products') {
-      const menuType = link.menuType || (link.category === 'products' ? 'items' : 'images');
+    // For menu, products, and services categories, display based on menu type
+    if (link.category === 'menu' || link.category === 'products' || link.category === 'services') {
+      const menuType = link.menuType || (link.category === 'products' || link.category === 'services' ? 'items' : 'images');
       
       // Display menu/items in table format
       if (menuType === 'items' && link.menuItems && link.menuItems.length > 0) {
-        const pageTitle = link.category === 'products' ? 'Products' : 'Menu';
+        const pageTitle = link.category === 'products' ? 'Products' : (link.category === 'services' ? 'Services' : 'Menu');
         return res.send(`
           <!DOCTYPE html>
           <html>
@@ -957,7 +957,7 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
           </head>
           <body>
             <div class="menu-container">
-              <h1 class="menu-title">${link.displayName || (link.category === 'products' ? 'Products' : 'Menu')}</h1>
+              <h1 class="menu-title">${link.displayName || (link.category === 'products' ? 'Products' : (link.category === 'services' ? 'Services' : 'Menu'))}</h1>
               ${link.menuItems.map(category => `
                 <div class="menu-category">
                   <h2 class="category-name">${category.categoryName}</h2>
@@ -989,7 +989,7 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       }
       
       // Display menu card images (fallback to images if menuType is images)
-      // Products don't support images, only items
+      // Products and services don't support images, only items
       if (menuType === 'images' && link.category === 'menu' && link.menuCardImages && link.menuCardImages.length > 0) {
         return res.send(`
           <!DOCTYPE html>

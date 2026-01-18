@@ -963,6 +963,25 @@
                             setMenuType('items');
                         }
                     }
+                } else if (selectedCategory === 'services') {
+                    // Show menu fields when services category selected (same as products, only items)
+                    customIconGroup.style.display = 'none';
+                    document.getElementById('customIcon').required = false;
+                    if (paymentFields) paymentFields.style.display = 'none';
+                    if (menuFields) {
+                        menuFields.style.display = 'block';
+                        // Hide image upload option for services, only show items
+                        const menuTypeImages = document.getElementById('menuTypeImages');
+                        const menuTypeItems = document.getElementById('menuTypeItems');
+                        const menuImagesOption = document.getElementById('menuImagesOption');
+                        if (menuTypeImages) menuTypeImages.style.display = 'none';
+                        if (menuTypeItems) menuTypeItems.style.display = 'none';
+                        if (menuImagesOption) menuImagesOption.style.display = 'none';
+                        // Services only support items
+                        if (typeof setMenuType === 'function') {
+                            setMenuType('items');
+                        }
+                    }
                 } else {
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
@@ -1079,10 +1098,10 @@
             const linkId = document.getElementById('linkId').value;
             if (linkId) formData.append('linkId', linkId);
             
-            // Handle menu and products categories
-            if (selectedCategory === 'menu' || selectedCategory === 'products') {
-                // Products always use items, menu can use images or items
-                const menuType = selectedCategory === 'products' ? 'items' : (typeof currentMenuType !== 'undefined' ? currentMenuType : 'images');
+            // Handle menu, products, and services categories
+            if (selectedCategory === 'menu' || selectedCategory === 'products' || selectedCategory === 'services') {
+                // Products and services always use items, menu can use images or items
+                const menuType = (selectedCategory === 'products' || selectedCategory === 'services') ? 'items' : (typeof currentMenuType !== 'undefined' ? currentMenuType : 'images');
                 formData.append('menuType', menuType);
                 
                 if (menuType === 'items') {

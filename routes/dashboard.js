@@ -72,6 +72,7 @@ const DEFAULT_CATEGORIES = {
   maps: { icon: 'fas fa-map-marker-alt', name: 'Google Maps', color: '#4285F4' },
   menu: { icon: 'fas fa-utensils', name: 'Menu Card', color: '#FF6B6B' },
   products: { icon: 'fas fa-shopping-bag', name: 'Products', color: '#9C27B0' },
+  services: { icon: 'fas fa-concierge-bell', name: 'Services', color: '#FF9800' },
   youtube: { icon: 'fab fa-youtube', name: 'YouTube', color: '#FF0000' },
   twitter: { icon: 'fab fa-twitter', name: 'Twitter', color: '#1DA1F2' },
   linkedin: { icon: 'fab fa-linkedin', name: 'LinkedIn', color: '#0077B5' }
@@ -308,9 +309,9 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
   try {
     let { category, url, displayName, categoryType, linkId, order, menuType, menuItems, showDisplayName } = req.body;
     
-    // For menu and products categories, URL and displayName are optional
+    // For menu, products, and services categories, URL and displayName are optional
     // For other categories, URL is required
-    if (category !== 'menu' && category !== 'products') {
+    if (category !== 'menu' && category !== 'products' && category !== 'services') {
       if (!url) {
         return res.status(400).json({ success: false, message: 'URL is required' });
       }
@@ -339,6 +340,13 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
       url = url || '#';
       displayName = displayName || 'Products';
       menuType = menuType || 'items'; // Products always use items (no image option)
+    }
+    
+    // Set defaults for services category if not provided
+    if (category === 'services') {
+      url = url || '#';
+      displayName = displayName || 'Services';
+      menuType = menuType || 'items'; // Services always use items (no image option)
     }
     
     // For payment category, if URL is incomplete, auto-generate from user profile
@@ -418,10 +426,10 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
     let menuCardImages = [];
     let parsedMenuItems = [];
     
-    if (category === 'menu' || category === 'products') {
-      // Products category only supports items, not images
-      if (category === 'products') {
-        menuType = 'items'; // Force items for products
+    if (category === 'menu' || category === 'products' || category === 'services') {
+      // Products and services categories only support items, not images
+      if (category === 'products' || category === 'services') {
+        menuType = 'items'; // Force items for products and services
       }
       
       if (menuType === 'images' && category === 'menu') {
@@ -523,12 +531,12 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         link.order = parseInt(order) || 0;
         link.showDisplayName = showDisplayName === 'true' || showDisplayName === true;
         
-        if (category === 'menu' || category === 'products') {
-          // Products always use items
-          if (category === 'products') {
+        if (category === 'menu' || category === 'products' || category === 'services') {
+          // Products and services always use items
+          if (category === 'products' || category === 'services') {
             menuType = 'items';
           }
-          link.menuType = menuType || (category === 'products' ? 'items' : 'images');
+          link.menuType = menuType || (category === 'products' || category === 'services' ? 'items' : 'images');
           if (menuType === 'images' && category === 'menu') {
             if (menuCardImages.length > 0) {
               link.menuCardImages = menuCardImages;
@@ -570,12 +578,12 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         showDisplayName: showDisplayName === 'true' || showDisplayName === true
       };
       
-      if (category === 'menu' || category === 'products') {
-        // Products always use items
-        if (category === 'products') {
+      if (category === 'menu' || category === 'products' || category === 'services') {
+        // Products and services always use items
+        if (category === 'products' || category === 'services') {
           menuType = 'items';
         }
-        linkData.menuType = menuType || (category === 'products' ? 'items' : 'images');
+        linkData.menuType = menuType || (category === 'products' || category === 'services' ? 'items' : 'images');
         if (menuType === 'items') {
           linkData.menuItems = parsedMenuItems || [];
           linkData.menuCardImages = [];
