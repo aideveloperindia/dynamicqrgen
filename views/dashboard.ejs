@@ -880,7 +880,7 @@
                                 </div>
                             </div>
                             <div class="link-actions">
-                                <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>', <%= link.showDisplayName !== false %>)">Edit</button>
+                                <button class="btn btn-primary btn-small" onclick="editLink('<%= link._id %>', '<%= link.category %>', '<%= link.categoryType %>', '<%= link.url %>', '<%= link.displayName %>', <%= link.showDisplayName !== false %>, '<%= link.menuType || "images" %>', <%= JSON.stringify(link.menuItems || []) %>, <%= JSON.stringify(link.menuCardImages || []) %>)">Edit</button>
                                 <button class="btn btn-danger btn-small" onclick="deleteLink('<%= link._id %>')">Delete</button>
                             </div>
                         </div>
@@ -1143,7 +1143,7 @@
             }
         }
 
-        function editLink(id, category, type, url, displayName, showDisplayName) {
+        function editLink(id, category, type, url, displayName, showDisplayName, menuType, menuItems, menuCardImages) {
             toggleAddLinkForm();
             document.getElementById('linkId').value = id;
             document.getElementById('url').value = url;
@@ -1153,6 +1153,112 @@
             const categoryOption = document.querySelector(`[data-category="${category}"][data-type="${type}"]`);
             if (categoryOption) {
                 categoryOption.click();
+                
+                // Wait for menu fields to be shown, then load menu data
+                setTimeout(() => {
+                    if (category === 'menu') {
+                        // Parse menu data
+                        let parsedMenuType = menuType || 'images';
+                        let parsedMenuItems = [];
+                        let parsedMenuCardImages = [];
+                        
+                        try {
+                            if (typeof menuItems === 'string') {
+                                parsedMenuItems = JSON.parse(menuItems);
+                            } else if (Array.isArray(menuItems)) {
+                                parsedMenuItems = menuItems;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing menuItems:', e);
+                        }
+                        
+                        try {
+                            if (typeof menuCardImages === 'string') {
+                                parsedMenuCardImages = JSON.parse(menuCardImages);
+                            } else if (Array.isArray(menuCardImages)) {
+                                parsedMenuCardImages = menuCardImages;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing menuCardImages:', e);
+                        }
+                        
+                        // Set menu type
+                        if (typeof setMenuType === 'function') {
+                            setMenuType(parsedMenuType);
+                        }
+                        
+                        // Load menu images if type is 'images'
+                        if (parsedMenuType === 'images' && parsedMenuCardImages.length > 0) {
+                            const preview = document.getElementById('menuCardPreview');
+                            if (preview) {
+                                preview.innerHTML = '';
+                                parsedMenuCardImages.forEach((imageData, index) => {
+                                    const img = document.createElement('img');
+                                    img.src = imageData;
+                                    img.alt = 'Menu Card Preview ' + (index + 1);
+                                    img.style.cssText = 'max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid #333; margin: 5px; object-fit: contain; background: white; padding: 5px;';
+                                    preview.appendChild(img);
+                                });
+                                preview.style.display = 'flex';
+                            }
+                        }
+                        
+                        // Load menu items if type is 'items'
+                        if (parsedMenuType === 'items' && parsedMenuItems.length > 0) {
+                            const container = document.getElementById('menuCategoriesContainer');
+                            if (container) {
+                                container.innerHTML = '';
+                                parsedMenuItems.forEach((categoryData) => {
+                                    if (categoryData.categoryName && categoryData.items && categoryData.items.length > 0) {
+                                        menuCategoryCounter++;
+                                        const categoryId = 'menuCategory_' + menuCategoryCounter;
+                                        
+                                        const categoryDiv = document.createElement('div');
+                                        categoryDiv.id = categoryId;
+                                        categoryDiv.style.cssText = 'margin-bottom: 20px; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; border: 1px solid rgba(255, 107, 107, 0.3);';
+                                        
+                                        let itemsHTML = '';
+                                        categoryData.items.forEach((item) => {
+                                            const itemId = 'menuItem_' + Date.now() + '_' + Math.random();
+                                            itemsHTML += `
+                                                <div id="${itemId}" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                                                    <input type="text" class="item-name-input" placeholder="Item Name" value="${(item.name || '').replace(/"/g, '&quot;')}" 
+                                                           style="flex: 2; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 12px;">
+                                                    <input type="number" class="item-price-input" placeholder="Price (₹)" step="0.01" min="0" value="${item.price || 0}" 
+                                                           style="flex: 1; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 12px;">
+                                                    <button type="button" onclick="removeMenuItem('${itemId}')" 
+                                                            style="padding: 8px 12px; background: rgba(255, 0, 0, 0.3); border: 1px solid rgba(255, 0, 0, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 11px;">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            `;
+                                        });
+                                        
+                                        categoryDiv.innerHTML = `
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                                <input type="text" class="category-name-input" placeholder="Category Name (e.g., Veg, Non-Veg, Drinks)" value="${(categoryData.categoryName || '').replace(/"/g, '&quot;')}" 
+                                                       style="flex: 1; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 13px; margin-right: 10px;">
+                                                <button type="button" onclick="removeMenuCategory('${categoryId}')" 
+                                                        style="padding: 8px 12px; background: rgba(255, 0, 0, 0.3); border: 1px solid rgba(255, 0, 0, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 12px;">
+                                                    <i class="fas fa-trash"></i> Remove Category
+                                                </button>
+                                            </div>
+                                            <div class="menu-items-list" style="margin-bottom: 10px;">
+                                                ${itemsHTML}
+                                            </div>
+                                            <button type="button" onclick="addMenuItem('${categoryId}')" 
+                                                    style="padding: 6px 12px; background: rgba(255, 107, 107, 0.3); border: 1px solid rgba(255, 107, 107, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 11px;">
+                                                <i class="fas fa-plus"></i> Add Item
+                                            </button>
+                                        `;
+                                        
+                                        container.appendChild(categoryDiv);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }, 100);
             }
         }
 

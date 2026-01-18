@@ -496,6 +496,14 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
           if (menuType === 'images') {
             if (menuCardImages.length > 0) {
               link.menuCardImages = menuCardImages;
+            } else {
+              // If no new images uploaded, keep existing images
+              // (menuCardImages will be empty array if no new files)
+              // Only clear if explicitly switching from items to images
+              if (link.menuType === 'items') {
+                link.menuCardImages = [];
+              }
+              // Otherwise, keep existing menuCardImages
             }
             link.menuItems = []; // Clear menu items when switching to images
           } else if (menuType === 'items') {
