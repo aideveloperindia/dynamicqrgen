@@ -1030,6 +1030,33 @@
                 closeMobileMenu();
             });
         });
+
+        // Typewriter Animation for "Connections"
+        function typeWriter(element, text, speed = 100) {
+            let i = 0;
+            element.textContent = '';
+            
+            function type() {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    element.classList.add('complete');
+                }
+            }
+            
+            // Start typing after a short delay (after QR animation starts)
+            setTimeout(type, 800);
+        }
+
+        // Initialize typewriter effect when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            const typewriterElement = document.getElementById('typewriterText');
+            if (typewriterElement) {
+                typeWriter(typewriterElement, 'Connections', 80);
+            }
+        });
     </script>
 </body>
 </html>
