@@ -69,6 +69,7 @@ const DEFAULT_CATEGORIES = {
   payment: { icon: '/cred-logo.png', name: 'Payment', color: '#25D366', isImage: true },
   website: { icon: 'fas fa-globe', name: 'Website', color: '#4285F4' },
   google: { icon: 'fab fa-google', name: 'Google Reviews', color: '#EA4335' },
+  maps: { icon: 'fas fa-map-marker-alt', name: 'Google Maps', color: '#4285F4' },
   menu: { icon: 'fas fa-utensils', name: 'Menu Card', color: '#FF6B6B' },
   youtube: { icon: 'fab fa-youtube', name: 'YouTube', color: '#FF0000' },
   twitter: { icon: 'fab fa-twitter', name: 'Twitter', color: '#1DA1F2' },
