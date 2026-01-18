@@ -294,7 +294,36 @@
             }
         });
 
-        function showAlert(message, type) {
+        function showAlert(message, type, buttonElement) {
+            // If button is provided and it's a success message, show inline
+            if (buttonElement && type === 'success') {
+                // Remove any existing success message near this button
+                const existingMsg = buttonElement.parentElement.querySelector('.inline-success-message');
+                if (existingMsg) {
+                    existingMsg.remove();
+                }
+                
+                // Create inline success message
+                const successMsg = document.createElement('span');
+                successMsg.className = 'inline-success-message';
+                successMsg.textContent = ' ✓ Saved';
+                successMsg.style.cssText = 'color: #4CAF50; font-size: 14px; margin-left: 10px; font-weight: 500; animation: fadeIn 0.3s ease-in;';
+                
+                // Insert after the button
+                buttonElement.parentElement.insertBefore(successMsg, buttonElement.nextSibling);
+                
+                // Remove after 3 seconds (or keep for redirect messages)
+                if (!message.includes('Redirecting')) {
+                    setTimeout(() => {
+                        successMsg.style.animation = 'fadeOut 0.3s ease-out';
+                        setTimeout(() => successMsg.remove(), 300);
+                    }, 3000);
+                }
+                
+                return;
+            }
+            
+            // Fallback to alert div for errors or when no button provided
             alert.textContent = message;
             alert.className = `alert alert-${type}`;
             alert.style.display = 'block';
