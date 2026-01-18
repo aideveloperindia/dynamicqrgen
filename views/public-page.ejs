@@ -552,7 +552,7 @@
                 <img src="<%= user.logo %>" alt="<%= user.businessName || user.name %>" class="business-logo">
             <% } %>
             <h2 class="business-name"><%= user.businessName || user.name %></h2>
-            <% if (user.phoneNumber && user.phoneNumber.trim() !== '') { %>
+            <% if (user.phoneNumber && user.phoneNumber.trim() !== '' && user.showCallButton !== false) { %>
                 <a href="tel:<%= user.phoneNumber.replace(/\s+/g, '').replace(/[^0-9+]/g, '') %>" class="call-button">
                     <i class="fas fa-phone"></i> Call
                 </a>

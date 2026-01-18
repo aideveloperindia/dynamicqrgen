@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  showCallButton: {
+    type: Boolean,
+    default: true
+  },
   businessName: {
     type: String,
     default: ''

@@ -165,7 +165,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
       return res.status(403).json({ success: false, message: 'Authentication required' });
     }
 
-    const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid, paymentLink } = req.body;
+    const { businessName, phoneNumber, address, upiId, upiPayeeName, upiAid, paymentLink, showCallButton } = req.body;
     const logoFile = req.files && req.files['logo'] ? req.files['logo'][0] : null;
     const bankQrCodeFile = req.files && req.files['bankQrCode'] ? req.files['bankQrCode'][0] : null;
     const user = await User.findById(req.user._id);
@@ -178,6 +178,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
     if (businessName !== undefined) user.businessName = businessName || '';
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || '';
     if (address !== undefined) user.address = address || '';
+    if (showCallButton !== undefined) user.showCallButton = showCallButton === 'true' || showCallButton === true;
     
     // Handle UPI ID - extract aid parameter if present in full URL
     if (upiId !== undefined) {
