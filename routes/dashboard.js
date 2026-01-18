@@ -297,7 +297,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
 // Add or update a link
 router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, { name: 'menuCardImage', maxCount: 3 }]), handleMulterError, async (req, res) => {
   try {
-    let { category, url, displayName, categoryType, linkId, order, menuType, menuItems } = req.body;
+    let { category, url, displayName, categoryType, linkId, order, menuType, menuItems, showDisplayName } = req.body;
     
     // For menu category, URL and displayName are optional
     // For other categories, they are required
@@ -488,6 +488,7 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         link.displayName = displayName;
         link.icon = icon;
         link.order = parseInt(order) || 0;
+        link.showDisplayName = showDisplayName === 'true' || showDisplayName === true;
         
         if (category === 'menu') {
           link.menuType = menuType || 'images';
@@ -520,7 +521,8 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         url,
         icon,
         displayName,
-        order: parseInt(order) || 0
+        order: parseInt(order) || 0,
+        showDisplayName: showDisplayName === 'true' || showDisplayName === true
       };
       
       if (category === 'menu') {

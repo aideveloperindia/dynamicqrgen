@@ -27,6 +27,10 @@ const linkSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  showDisplayName: {
+    type: Boolean,
+    default: true
+  },
   order: {
     type: Number,
     default: 0

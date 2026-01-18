@@ -587,7 +587,7 @@
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>
-                        <% if (link.displayName && link.displayName.trim() !== '') { %>
+                        <% if (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '') { %>
                             <span class="icon-link-label"><%= link.displayName %></span>
                         <% } %>
                     </a>
@@ -615,7 +615,7 @@
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>
-                        <% if (link.displayName && link.displayName.trim() !== '') { %>
+                        <% if (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '') { %>
                             <span class="icon-link-label"><%= link.displayName %></span>
                         <% } %>
                     </a>
