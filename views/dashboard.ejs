@@ -580,12 +580,40 @@
                     
                     <!-- Menu-specific fields (shown only when menu category selected) -->
                     <div id="menuFields" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 107, 107, 0.1); border-radius: 8px; border: 1px solid rgba(255, 107, 107, 0.3);">
-                        <div class="form-group">
-                            <label style="font-size: 13px; color: #ccc;">Menu Card Photos <small style="color: #888;">(Up to 3 images)</small></label>
-                            <input type="file" id="menuCardImage" name="menuCardImage" accept="image/*" multiple>
-                            <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Upload up to 3 menu card images (Max 100KB each). These will be displayed when customers click the menu link.</small>
-                            <div id="menuCardPreview" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                <!-- Preview images will be added here -->
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="font-size: 14px; color: #ccc; margin-bottom: 10px; display: block;">Menu Type</label>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="menu-type-btn" id="menuTypeImages" onclick="setMenuType('images')" style="flex: 1; padding: 10px; background: rgba(255, 107, 107, 0.2); border: 2px solid rgba(255, 107, 107, 0.5); border-radius: 8px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                                    <i class="fas fa-images"></i> Upload Images
+                                </button>
+                                <button type="button" class="menu-type-btn" id="menuTypeItems" onclick="setMenuType('items')" style="flex: 1; padding: 10px; background: rgba(255, 107, 107, 0.2); border: 2px solid rgba(255, 107, 107, 0.5); border-radius: 8px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                                    <i class="fas fa-list"></i> Create Menu Items
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Upload Option -->
+                        <div id="menuImagesOption" style="display: none;">
+                            <div class="form-group">
+                                <label style="font-size: 13px; color: #ccc;">Menu Card Photos <small style="color: #888;">(Up to 3 images)</small></label>
+                                <input type="file" id="menuCardImage" name="menuCardImage" accept="image/*" multiple>
+                                <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Upload up to 3 menu card images (Max 100KB each). These will be displayed when customers click the menu link.</small>
+                                <div id="menuCardPreview" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <!-- Preview images will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Menu Items Option -->
+                        <div id="menuItemsOption" style="display: none;">
+                            <div class="form-group">
+                                <label style="font-size: 13px; color: #ccc; margin-bottom: 10px; display: block;">Create Categories and Items</label>
+                                <div id="menuCategoriesContainer">
+                                    <!-- Categories will be added here dynamically -->
+                                </div>
+                                <button type="button" onclick="addMenuCategory()" style="margin-top: 15px; padding: 8px 16px; background: rgba(255, 107, 107, 0.3); border: 1px solid rgba(255, 107, 107, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 12px;">
+                                    <i class="fas fa-plus"></i> Add Category
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -621,6 +649,142 @@
                                 preview.style.display = 'none';
                             }
                         });
+                        
+                        // Menu type management
+                        let currentMenuType = 'images';
+                        let menuCategoryCounter = 0;
+                        
+                        function setMenuType(type) {
+                            currentMenuType = type;
+                            const imagesBtn = document.getElementById('menuTypeImages');
+                            const itemsBtn = document.getElementById('menuTypeItems');
+                            const imagesOption = document.getElementById('menuImagesOption');
+                            const itemsOption = document.getElementById('menuItemsOption');
+                            
+                            if (type === 'images') {
+                                imagesBtn.style.background = 'rgba(255, 107, 107, 0.5)';
+                                imagesBtn.style.borderColor = 'rgba(255, 107, 107, 1)';
+                                itemsBtn.style.background = 'rgba(255, 107, 107, 0.2)';
+                                itemsBtn.style.borderColor = 'rgba(255, 107, 107, 0.5)';
+                                imagesOption.style.display = 'block';
+                                itemsOption.style.display = 'none';
+                            } else {
+                                itemsBtn.style.background = 'rgba(255, 107, 107, 0.5)';
+                                itemsBtn.style.borderColor = 'rgba(255, 107, 107, 1)';
+                                imagesBtn.style.background = 'rgba(255, 107, 107, 0.2)';
+                                imagesBtn.style.borderColor = 'rgba(255, 107, 107, 0.5)';
+                                imagesOption.style.display = 'none';
+                                itemsOption.style.display = 'block';
+                            }
+                        }
+                        
+                        function addMenuCategory() {
+                            menuCategoryCounter++;
+                            const categoryId = 'menuCategory_' + menuCategoryCounter;
+                            const container = document.getElementById('menuCategoriesContainer');
+                            
+                            const categoryDiv = document.createElement('div');
+                            categoryDiv.id = categoryId;
+                            categoryDiv.style.cssText = 'margin-bottom: 20px; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; border: 1px solid rgba(255, 107, 107, 0.3);';
+                            
+                            categoryDiv.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <input type="text" class="category-name-input" placeholder="Category Name (e.g., Veg, Non-Veg, Drinks)" 
+                                           style="flex: 1; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 13px; margin-right: 10px;">
+                                    <button type="button" onclick="removeMenuCategory('${categoryId}')" 
+                                            style="padding: 8px 12px; background: rgba(255, 0, 0, 0.3); border: 1px solid rgba(255, 0, 0, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 12px;">
+                                        <i class="fas fa-trash"></i> Remove Category
+                                    </button>
+                                </div>
+                                <div class="menu-items-list" style="margin-bottom: 10px;">
+                                    <!-- Items will be added here -->
+                                </div>
+                                <button type="button" onclick="addMenuItem('${categoryId}')" 
+                                        style="padding: 6px 12px; background: rgba(255, 107, 107, 0.3); border: 1px solid rgba(255, 107, 107, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 11px;">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            `;
+                            
+                            container.appendChild(categoryDiv);
+                        }
+                        
+                        function addMenuItem(categoryId) {
+                            const categoryDiv = document.getElementById(categoryId);
+                            if (!categoryDiv) return;
+                            
+                            const itemsList = categoryDiv.querySelector('.menu-items-list');
+                            const itemId = 'menuItem_' + Date.now();
+                            
+                            const itemDiv = document.createElement('div');
+                            itemDiv.id = itemId;
+                            itemDiv.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+                            
+                            itemDiv.innerHTML = `
+                                <input type="text" class="item-name-input" placeholder="Item Name" 
+                                       style="flex: 2; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 12px;">
+                                <input type="number" class="item-price-input" placeholder="Price (₹)" step="0.01" min="0" 
+                                       style="flex: 1; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 12px;">
+                                <button type="button" onclick="removeMenuItem('${itemId}')" 
+                                        style="padding: 8px 12px; background: rgba(255, 0, 0, 0.3); border: 1px solid rgba(255, 0, 0, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 11px;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            
+                            itemsList.appendChild(itemDiv);
+                        }
+                        
+                        function removeMenuCategory(categoryId) {
+                            const categoryDiv = document.getElementById(categoryId);
+                            if (categoryDiv) {
+                                categoryDiv.remove();
+                            }
+                        }
+                        
+                        function removeMenuItem(itemId) {
+                            const itemDiv = document.getElementById(itemId);
+                            if (itemDiv) {
+                                itemDiv.remove();
+                            }
+                        }
+                        
+                        function getMenuItems() {
+                            const categories = [];
+                            const categoryDivs = document.querySelectorAll('#menuCategoriesContainer > div');
+                            
+                            categoryDivs.forEach(categoryDiv => {
+                                const categoryNameInput = categoryDiv.querySelector('.category-name-input');
+                                const categoryName = categoryNameInput ? categoryNameInput.value.trim() : '';
+                                
+                                if (categoryName) {
+                                    const items = [];
+                                    const itemDivs = categoryDiv.querySelectorAll('.menu-items-list > div');
+                                    
+                                    itemDivs.forEach(itemDiv => {
+                                        const itemNameInput = itemDiv.querySelector('.item-name-input');
+                                        const itemPriceInput = itemDiv.querySelector('.item-price-input');
+                                        
+                                        const itemName = itemNameInput ? itemNameInput.value.trim() : '';
+                                        const itemPrice = itemPriceInput ? parseFloat(itemPriceInput.value) : 0;
+                                        
+                                        if (itemName && !isNaN(itemPrice) && itemPrice >= 0) {
+                                            items.push({
+                                                name: itemName,
+                                                price: itemPrice
+                                            });
+                                        }
+                                    });
+                                    
+                                    if (items.length > 0) {
+                                        categories.push({
+                                            categoryName: categoryName,
+                                            items: items
+                                        });
+                                    }
+                                }
+                            });
+                            
+                            return categories;
+                        }
                     </script>
 
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -702,7 +866,13 @@
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
                     if (paymentFields) paymentFields.style.display = 'none';
-                    if (menuFields) menuFields.style.display = 'block';
+                    if (menuFields) {
+                        menuFields.style.display = 'block';
+                        // Initialize menu type to images by default
+                        if (typeof setMenuType === 'function') {
+                            setMenuType('images');
+                        }
+                    }
                 } else {
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
@@ -817,6 +987,17 @@
             const linkId = document.getElementById('linkId').value;
             if (linkId) formData.append('linkId', linkId);
             
+            // Handle menu category
+            if (selectedCategory === 'menu') {
+                const menuType = typeof currentMenuType !== 'undefined' ? currentMenuType : 'images';
+                formData.append('menuType', menuType);
+                
+                if (menuType === 'items') {
+                    const menuItems = typeof getMenuItems === 'function' ? getMenuItems() : [];
+                    formData.append('menuItems', JSON.stringify(menuItems));
+                }
+            }
+            
             if (selectedCategoryType === 'custom') {
                 const fileInput = document.getElementById('customIcon');
                 if (fileInput.files[0]) {
@@ -878,6 +1059,24 @@
             selectedCategoryType = null;
             document.querySelectorAll('.category-option').forEach(opt => opt.classList.remove('selected'));
             document.getElementById('customIconGroup').style.display = 'none';
+            
+            // Reset menu fields
+            const menuFields = document.getElementById('menuFields');
+            if (menuFields) {
+                menuFields.style.display = 'none';
+                const menuCategoriesContainer = document.getElementById('menuCategoriesContainer');
+                if (menuCategoriesContainer) {
+                    menuCategoriesContainer.innerHTML = '';
+                }
+                const menuCardPreview = document.getElementById('menuCardPreview');
+                if (menuCardPreview) {
+                    menuCardPreview.innerHTML = '';
+                    menuCardPreview.style.display = 'none';
+                }
+                if (typeof setMenuType === 'function') {
+                    setMenuType('images');
+                }
+            }
         }
 
         function editLink(id, category, type, url, displayName) {

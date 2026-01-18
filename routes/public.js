@@ -777,83 +777,260 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       `);
     }
 
-    // For menu category, display menu card images
-    if (link.category === 'menu' && link.menuCardImages && link.menuCardImages.length > 0) {
-      return res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${user.businessName || user.name} - Menu</title>
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-              background: #000000;
-              min-height: 100vh;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              padding: 20px;
-            }
-            .menu-container {
-              max-width: 800px;
-              width: 100%;
-              text-align: center;
-            }
-            .menu-title {
-              color: #fff;
-              font-size: 24px;
-              font-weight: 600;
-              margin-bottom: 20px;
-            }
-            .menu-image {
-              max-width: 100%;
-              height: auto;
-              border-radius: 12px;
-              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-              background: white;
-              padding: 10px;
-            }
-            .back-button {
-              display: inline-block;
-              margin-top: 20px;
-              padding: 12px 24px;
-              background: linear-gradient(135deg, #4285F4, #25D366);
-              color: white;
-              text-decoration: none;
-              border-radius: 12px;
-              font-weight: 600;
-              font-size: 14px;
-              transition: all 0.3s ease;
-            }
-            .back-button:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
-            }
-          </style>
-        </head>
-        <body>
-          <div class="menu-container">
-            <h1 class="menu-title">${link.displayName || 'Menu'}</h1>
-            <div class="menu-images-container">
-              ${link.menuCardImages.map((image, index) => 
-                `<img src="${image}" alt="Menu Card ${index + 1}" class="menu-image">`
-              ).join('')}
+    // For menu category, display based on menu type
+    if (link.category === 'menu') {
+      const menuType = link.menuType || 'images';
+      
+      // Display menu items in table format
+      if (menuType === 'items' && link.menuItems && link.menuItems.length > 0) {
+        return res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${user.businessName || user.name} - Menu</title>
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                background: #000000;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                padding: 20px;
+              }
+              .menu-container {
+                max-width: 900px;
+                width: 100%;
+                text-align: center;
+              }
+              .menu-title {
+                color: #fff;
+                font-size: 28px;
+                font-weight: 600;
+                margin-bottom: 30px;
+              }
+              .menu-category {
+                margin-bottom: 40px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+              }
+              .category-name {
+                color: #fff;
+                font-size: 22px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                text-align: left;
+                padding-bottom: 10px;
+                border-bottom: 2px solid rgba(255, 107, 107, 0.5);
+              }
+              .menu-table {
+                width: 100%;
+                border-collapse: collapse;
+                background: rgba(255, 255, 255, 0.03);
+                border-radius: 8px;
+                overflow: hidden;
+              }
+              .menu-table thead {
+                background: rgba(255, 107, 107, 0.2);
+              }
+              .menu-table th {
+                color: #fff;
+                padding: 15px;
+                text-align: left;
+                font-weight: 600;
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-bottom: 2px solid rgba(255, 107, 107, 0.3);
+              }
+              .menu-table th:first-child {
+                width: 60%;
+              }
+              .menu-table th:last-child {
+                width: 40%;
+                text-align: right;
+              }
+              .menu-table td {
+                color: #fff;
+                padding: 15px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                font-size: 15px;
+              }
+              .menu-table tbody tr:hover {
+                background: rgba(255, 107, 107, 0.1);
+              }
+              .menu-table tbody tr:last-child td {
+                border-bottom: none;
+              }
+              .item-name {
+                color: #fff;
+                font-weight: 500;
+              }
+              .item-price {
+                color: #fff;
+                text-align: right;
+                font-weight: 600;
+                color: #FF6B6B;
+              }
+              .back-button {
+                display: inline-block;
+                margin-top: 30px;
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #4285F4, #25D366);
+                color: white;
+                text-decoration: none;
+                border-radius: 12px;
+                font-weight: 600;
+                font-size: 14px;
+                transition: all 0.3s ease;
+              }
+              .back-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+              }
+              @media (max-width: 768px) {
+                .menu-container {
+                  padding: 10px;
+                }
+                .menu-table {
+                  font-size: 13px;
+                }
+                .menu-table th,
+                .menu-table td {
+                  padding: 10px 8px;
+                }
+                .category-name {
+                  font-size: 18px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="menu-container">
+              <h1 class="menu-title">${link.displayName || 'Menu'}</h1>
+              ${link.menuItems.map(category => `
+                <div class="menu-category">
+                  <h2 class="category-name">${category.categoryName}</h2>
+                  <table class="menu-table">
+                    <thead>
+                      <tr>
+                        <th>Item Name</th>
+                        <th>Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${category.items.map(item => `
+                        <tr>
+                          <td class="item-name">${item.name}</td>
+                          <td class="item-price">₹${item.price.toFixed(2)}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `).join('')}
+              <a href="/p/${user.uniqueSlug}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to ${user.businessName || user.name}
+              </a>
             </div>
-            <a href="/p/${user.uniqueSlug}" class="back-button">
-              <i class="fas fa-arrow-left"></i> Back to Profile
-            </a>
-          </div>
-        </body>
-        </html>
-      `);
+          </body>
+          </html>
+        `);
+      }
+      
+      // Display menu card images (fallback to images if menuType is images)
+      if (menuType === 'images' && link.menuCardImages && link.menuCardImages.length > 0) {
+        return res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${user.businessName || user.name} - Menu</title>
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                background: #000000;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                padding: 20px;
+              }
+              .menu-container {
+                max-width: 800px;
+                width: 100%;
+                text-align: center;
+              }
+              .menu-title {
+                color: #fff;
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 20px;
+              }
+              .menu-images-container {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+              }
+              .menu-image {
+                max-width: 100%;
+                height: auto;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                background: white;
+                padding: 10px;
+              }
+              .back-button {
+                display: inline-block;
+                margin-top: 20px;
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #4285F4, #25D366);
+                color: white;
+                text-decoration: none;
+                border-radius: 12px;
+                font-weight: 600;
+                font-size: 14px;
+                transition: all 0.3s ease;
+              }
+              .back-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+              }
+            </style>
+          </head>
+          <body>
+            <div class="menu-container">
+              <h1 class="menu-title">${link.displayName || 'Menu'}</h1>
+              <div class="menu-images-container">
+                ${link.menuCardImages.map((image, index) => 
+                  `<img src="${image}" alt="Menu Card ${index + 1}" class="menu-image">`
+                ).join('')}
+              </div>
+              <a href="/p/${user.uniqueSlug}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to ${user.businessName || user.name}
+              </a>
+            </div>
+          </body>
+          </html>
+        `);
+      }
     }
 
     // For regular links, redirect normally

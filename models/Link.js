@@ -39,6 +39,30 @@ const linkSchema = new mongoose.Schema({
     type: [String], // Menu card images (base64 data URLs array) - for menu category, up to 3 images
     default: []
   },
+  menuItems: {
+    type: [{
+      categoryName: {
+        type: String,
+        required: true
+      },
+      items: [{
+        name: {
+          type: String,
+          required: true
+        },
+        price: {
+          type: Number,
+          required: true
+        }
+      }]
+    }],
+    default: []
+  },
+  menuType: {
+    type: String,
+    enum: ['images', 'items'], // 'images' for menuCardImages, 'items' for menuItems
+    default: 'images'
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -297,7 +297,7 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
 // Add or update a link
 router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, { name: 'menuCardImage', maxCount: 3 }]), handleMulterError, async (req, res) => {
   try {
-    let { category, url, displayName, categoryType, linkId, order } = req.body;
+    let { category, url, displayName, categoryType, linkId, order, menuType, menuItems } = req.body;
     
     // For menu category, URL and displayName are optional
     // For other categories, they are required
@@ -311,6 +311,7 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
     if (category === 'menu') {
       url = url || '#';
       displayName = displayName || 'Menu';
+      menuType = menuType || 'images'; // Default to images if not specified
     }
     
     // For payment category, if URL is incomplete, auto-generate from user profile
@@ -387,41 +388,96 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
 
     // Handle menu card images upload (for menu category) - up to 3 images
     let menuCardImages = [];
+    let parsedMenuItems = [];
+    
     if (category === 'menu') {
-      const menuCardFiles = req.files && req.files['menuCardImage'] ? req.files['menuCardImage'] : [];
-      
-      // Limit to 3 images
-      const filesToProcess = menuCardFiles.slice(0, 3);
-      
-      if (filesToProcess.length > 0) {
-        for (const menuCardFile of filesToProcess) {
-          try {
-            // Check file size before processing
-            if (menuCardFile.size > 100 * 1024) {
-              console.warn('Menu card file size exceeds limit:', menuCardFile.size);
+      if (menuType === 'images') {
+        // Handle image uploads
+        const menuCardFiles = req.files && req.files['menuCardImage'] ? req.files['menuCardImage'] : [];
+        
+        // Limit to 3 images
+        const filesToProcess = menuCardFiles.slice(0, 3);
+        
+        if (filesToProcess.length > 0) {
+          for (const menuCardFile of filesToProcess) {
+            try {
+              // Check file size before processing
+              if (menuCardFile.size > 100 * 1024) {
+                console.warn('Menu card file size exceeds limit:', menuCardFile.size);
+                return res.status(400).json({ 
+                  success: false, 
+                  message: 'Menu card image is too large. Maximum size is 100KB per image. Please compress your images.' 
+                });
+              }
+              const imageDataUrl = await compressAndConvertToDataUrl(menuCardFile.buffer, menuCardFile.mimetype);
+              menuCardImages.push(imageDataUrl);
+            } catch (menuError) {
+              console.error('Menu card processing error:', menuError);
               return res.status(400).json({ 
                 success: false, 
-                message: 'Menu card image is too large. Maximum size is 100KB per image. Please compress your images.' 
+                message: 'Error processing menu card: ' + (menuError.message || 'Unknown error') 
               });
             }
-            const imageDataUrl = await compressAndConvertToDataUrl(menuCardFile.buffer, menuCardFile.mimetype);
-            menuCardImages.push(imageDataUrl);
-          } catch (menuError) {
-            console.error('Menu card processing error:', menuError);
-            return res.status(400).json({ 
-              success: false, 
-              message: 'Error processing menu card: ' + (menuError.message || 'Unknown error') 
-            });
+          }
+        } else if (linkId) {
+          // If updating and no new files, keep existing menu card images
+          const existingLink = await Link.findById(linkId);
+          if (existingLink) {
+            menuCardImages = existingLink.menuCardImages || [];
           }
         }
-      } else if (linkId) {
-        // If updating and no new files, keep existing menu card images
-        const existingLink = await Link.findById(linkId);
-        if (existingLink) {
-          menuCardImages = existingLink.menuCardImages || [];
+      } else if (menuType === 'items') {
+        // Handle menu items (categories with items and prices)
+        try {
+          if (menuItems && typeof menuItems === 'string') {
+            parsedMenuItems = JSON.parse(menuItems);
+          } else if (Array.isArray(menuItems)) {
+            parsedMenuItems = menuItems;
+          }
+          
+          // Validate menu items structure
+          if (parsedMenuItems && parsedMenuItems.length > 0) {
+            for (const category of parsedMenuItems) {
+              if (!category.categoryName || !category.items || !Array.isArray(category.items)) {
+                return res.status(400).json({ 
+                  success: false, 
+                  message: 'Invalid menu items structure. Each category must have a name and items array.' 
+                });
+              }
+              for (const item of category.items) {
+                if (!item.name || item.price === undefined || item.price === null) {
+                  return res.status(400).json({ 
+                    success: false, 
+                    message: 'Each menu item must have a name and price.' 
+                  });
+                }
+                // Ensure price is a number
+                item.price = parseFloat(item.price);
+                if (isNaN(item.price) || item.price < 0) {
+                  return res.status(400).json({ 
+                    success: false, 
+                    message: 'Menu item price must be a valid positive number.' 
+                  });
+                }
+              }
+            }
+          }
+        } catch (parseError) {
+          console.error('Menu items parse error:', parseError);
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Error parsing menu items: ' + (parseError.message || 'Invalid format') 
+          });
+        }
+        
+        // If updating and no new menu items provided, keep existing
+        if (linkId && (!parsedMenuItems || parsedMenuItems.length === 0)) {
+          const existingLink = await Link.findById(linkId);
+          if (existingLink) {
+            parsedMenuItems = existingLink.menuItems || [];
+          }
         }
       }
-      // For new menu link, menu card images are optional
     }
 
     if (linkId) {
@@ -432,25 +488,57 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         link.displayName = displayName;
         link.icon = icon;
         link.order = parseInt(order) || 0;
-        if (menuCardImages.length > 0) {
-          link.menuCardImages = menuCardImages;
+        
+        if (category === 'menu') {
+          link.menuType = menuType || 'images';
+          if (menuType === 'images') {
+            if (menuCardImages.length > 0) {
+              link.menuCardImages = menuCardImages;
+            }
+            link.menuItems = []; // Clear menu items when switching to images
+          } else if (menuType === 'items') {
+            link.menuItems = parsedMenuItems || [];
+            link.menuCardImages = []; // Clear images when switching to items
+          }
+        } else {
+          // Clear menu-related fields for non-menu categories
+          link.menuCardImages = [];
+          link.menuItems = [];
+          link.menuType = 'images';
         }
+        
         await link.save();
         return res.json({ success: true, message: 'Link updated successfully', link });
       }
       return res.status(404).json({ success: false, message: 'Link not found' });
     } else {
       // Create new link
-      const link = new Link({
+      const linkData = {
         userId: req.user._id,
         category: category || 'custom',
         categoryType: categoryType || 'default',
         url,
         icon,
         displayName,
-        order: parseInt(order) || 0,
-        menuCardImages: menuCardImages || []
-      });
+        order: parseInt(order) || 0
+      };
+      
+      if (category === 'menu') {
+        linkData.menuType = menuType || 'images';
+        if (menuType === 'items') {
+          linkData.menuItems = parsedMenuItems || [];
+          linkData.menuCardImages = [];
+        } else {
+          linkData.menuCardImages = menuCardImages || [];
+          linkData.menuItems = [];
+        }
+      } else {
+        linkData.menuCardImages = [];
+        linkData.menuItems = [];
+        linkData.menuType = 'images';
+      }
+      
+      const link = new Link(linkData);
       await link.save();
       return res.json({ success: true, message: 'Link added successfully', link });
     }
