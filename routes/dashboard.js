@@ -179,7 +179,13 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
     if (businessName !== undefined) user.businessName = businessName || '';
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || '';
     if (address !== undefined) user.address = address || '';
-    if (showCallButton !== undefined) user.showCallButton = showCallButton === 'true' || showCallButton === true;
+    // Handle showCallButton checkbox - if undefined, it means unchecked (false)
+    if (showCallButton !== undefined) {
+      user.showCallButton = showCallButton === 'true' || showCallButton === true;
+    } else {
+      // If checkbox is not in request (unchecked), set to false
+      user.showCallButton = false;
+    }
     
     // Handle UPI ID - extract aid parameter if present in full URL
     if (upiId !== undefined) {
