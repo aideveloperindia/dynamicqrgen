@@ -148,7 +148,7 @@ router.get('/generate', auth, async (req, res) => {
         // Calculate canvas dimensions
         const qrSize = 500;
         const padding = 40;
-        const textHeight = 80; // Increased for better text visibility
+        const textHeight = 120; // Increased to accommodate 3 lines
         const canvasWidth = qrSize + (padding * 2);
         const canvasHeight = qrSize + (padding * 2) + textHeight;
         
@@ -162,43 +162,71 @@ router.get('/generate', auth, async (req, res) => {
         // Draw QR code
         ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
         
-        // Draw business name below QR code with font fallback
+        // Draw business name with proper wrapping
         ctx.fillStyle = '#000000';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
-        // Center the text
         const textX = canvasWidth / 2;
-        const textY = qrSize + padding + 15; // Slightly more spacing
+        const textY = qrSize + padding + 10;
+        const maxWidth = qrSize - 40; // More margin for text
+        const fontSize = 24; // Reduced font size
+        const lineHeight = 32; // Line height for wrapped text
         
-        // Draw text with word wrapping if needed
-        const maxWidth = qrSize - 20; // Slight margin for text
+        // Set font
+        ctx.font = `bold ${fontSize}px Arial`;
+        
+        // Improved word wrapping that handles long words
         const words = businessName.split(' ');
-        let line = '';
-        let y = textY;
+        const lines = [];
+        let currentLine = '';
         
-        for (let n = 0; n < words.length; n++) {
-          const testLine = line + words[n] + ' ';
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const metrics = ctx.measureText(testLine);
           
-          // Use font fallback to find a working font
-          const { font, metrics } = renderTextWithFallback(ctx, testLine, textX, y, maxWidth);
-          ctx.font = font;
-          const testWidth = metrics.width;
-          
-          if (testWidth > maxWidth && n > 0) {
-            ctx.fillText(line.trim(), textX, y);
-            line = words[n] + ' ';
-            y += 40; // Line height
+          if (metrics.width > maxWidth && currentLine) {
+            // Current line is full, start new line
+            lines.push(currentLine);
+            currentLine = word;
+            
+            // If single word is too long, break it
+            const wordMetrics = ctx.measureText(word);
+            if (wordMetrics.width > maxWidth) {
+              // Break long word into characters
+              let charLine = '';
+              for (let j = 0; j < word.length; j++) {
+                const testCharLine = charLine + word[j];
+                const charMetrics = ctx.measureText(testCharLine);
+                if (charMetrics.width > maxWidth && charLine) {
+                  lines.push(charLine);
+                  charLine = word[j];
+                } else {
+                  charLine = testCharLine;
+                }
+              }
+              if (charLine) {
+                currentLine = charLine;
+              } else {
+                currentLine = '';
+              }
+            }
           } else {
-            line = testLine;
+            currentLine = testLine;
           }
         }
-        // Draw the last line
-        if (line.trim()) {
-          const { font } = renderTextWithFallback(ctx, line.trim(), textX, y, maxWidth);
-          ctx.font = font;
-          ctx.fillText(line.trim(), textX, y);
+        
+        // Add the last line
+        if (currentLine) {
+          lines.push(currentLine);
         }
+        
+        // Draw all lines (max 3 lines)
+        const linesToDraw = lines.slice(0, 3);
+        linesToDraw.forEach((line, index) => {
+          ctx.fillText(line.trim(), textX, textY + (index * lineHeight));
+        });
         
         // Convert canvas to base64 data URL
         finalQrDataUrl = canvas.toDataURL('image/png');
@@ -290,7 +318,7 @@ router.get('/get', auth, async (req, res) => {
         
         const qrSize = 500;
         const padding = 40;
-        const textHeight = 80; // Increased for better text visibility
+        const textHeight = 120; // Increased to accommodate 3 lines
         const canvasWidth = qrSize + (padding * 2);
         const canvasHeight = qrSize + (padding * 2) + textHeight;
         
@@ -301,39 +329,71 @@ router.get('/get', auth, async (req, res) => {
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
         
+        // Draw business name with proper wrapping
         ctx.fillStyle = '#000000';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
         const textX = canvasWidth / 2;
-        const textY = qrSize + padding + 15; // Slightly more spacing
-        const maxWidth = qrSize - 20; // Slight margin for text
-        const words = businessName.split(' ');
-        let line = '';
-        let y = textY;
+        const textY = qrSize + padding + 10;
+        const maxWidth = qrSize - 40; // More margin for text
+        const fontSize = 24; // Reduced font size
+        const lineHeight = 32; // Line height for wrapped text
         
-        for (let n = 0; n < words.length; n++) {
-          const testLine = line + words[n] + ' ';
+        // Set font
+        ctx.font = `bold ${fontSize}px Arial`;
+        
+        // Improved word wrapping that handles long words
+        const words = businessName.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const metrics = ctx.measureText(testLine);
           
-          // Use font fallback to find a working font
-          const { font, metrics } = renderTextWithFallback(ctx, testLine, textX, y, maxWidth);
-          ctx.font = font;
-          const testWidth = metrics.width;
-          
-          if (testWidth > maxWidth && n > 0) {
-            ctx.fillText(line.trim(), textX, y);
-            line = words[n] + ' ';
-            y += 40;
+          if (metrics.width > maxWidth && currentLine) {
+            // Current line is full, start new line
+            lines.push(currentLine);
+            currentLine = word;
+            
+            // If single word is too long, break it
+            const wordMetrics = ctx.measureText(word);
+            if (wordMetrics.width > maxWidth) {
+              // Break long word into characters
+              let charLine = '';
+              for (let j = 0; j < word.length; j++) {
+                const testCharLine = charLine + word[j];
+                const charMetrics = ctx.measureText(testCharLine);
+                if (charMetrics.width > maxWidth && charLine) {
+                  lines.push(charLine);
+                  charLine = word[j];
+                } else {
+                  charLine = testCharLine;
+                }
+              }
+              if (charLine) {
+                currentLine = charLine;
+              } else {
+                currentLine = '';
+              }
+            }
           } else {
-            line = testLine;
+            currentLine = testLine;
           }
         }
-        // Draw the last line
-        if (line.trim()) {
-          const { font } = renderTextWithFallback(ctx, line.trim(), textX, y, maxWidth);
-          ctx.font = font;
-          ctx.fillText(line.trim(), textX, y);
+        
+        // Add the last line
+        if (currentLine) {
+          lines.push(currentLine);
         }
+        
+        // Draw all lines (max 3 lines)
+        const linesToDraw = lines.slice(0, 3);
+        linesToDraw.forEach((line, index) => {
+          ctx.fillText(line.trim(), textX, textY + (index * lineHeight));
+        });
         
         finalQrDataUrl = canvas.toDataURL('image/png');
         console.log('✅ QR code with business name generated successfully');
