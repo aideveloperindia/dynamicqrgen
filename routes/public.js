@@ -816,8 +816,8 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       `);
     }
 
-    // For menu category, display based on menu type
-    if (link.category === 'menu') {
+    // For menu and products categories, display based on menu type
+    if (link.category === 'menu' || link.category === 'products') {
       const menuType = link.menuType || 'images';
       
       // Display menu items in table format

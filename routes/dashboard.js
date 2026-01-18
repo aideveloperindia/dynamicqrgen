@@ -71,6 +71,7 @@ const DEFAULT_CATEGORIES = {
   google: { icon: 'fab fa-google', name: 'Google Reviews', color: '#EA4335' },
   maps: { icon: 'fas fa-map-marker-alt', name: 'Google Maps', color: '#4285F4' },
   menu: { icon: 'fas fa-utensils', name: 'Menu Card', color: '#FF6B6B' },
+  products: { icon: 'fas fa-shopping-bag', name: 'Products', color: '#9C27B0' },
   youtube: { icon: 'fab fa-youtube', name: 'YouTube', color: '#FF0000' },
   twitter: { icon: 'fab fa-twitter', name: 'Twitter', color: '#1DA1F2' },
   linkedin: { icon: 'fab fa-linkedin', name: 'LinkedIn', color: '#0077B5' }
@@ -301,9 +302,9 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
   try {
     let { category, url, displayName, categoryType, linkId, order, menuType, menuItems, showDisplayName } = req.body;
     
-    // For menu category, URL and displayName are optional
+    // For menu and products categories, URL and displayName are optional
     // For other categories, URL is required
-    if (category !== 'menu') {
+    if (category !== 'menu' && category !== 'products') {
       if (!url) {
         return res.status(400).json({ success: false, message: 'URL is required' });
       }
@@ -325,6 +326,13 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
       url = url || '#';
       displayName = displayName || 'Menu';
       menuType = menuType || 'images'; // Default to images if not specified
+    }
+    
+    // Set defaults for products category if not provided
+    if (category === 'products') {
+      url = url || '#';
+      displayName = displayName || 'Products';
+      menuType = menuType || 'items'; // Products always use items (no image option)
     }
     
     // For payment category, if URL is incomplete, auto-generate from user profile
@@ -400,11 +408,17 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
     }
 
     // Handle menu card images upload (for menu category) - up to 3 images
+    // Products category only supports items (no images)
     let menuCardImages = [];
     let parsedMenuItems = [];
     
-    if (category === 'menu') {
-      if (menuType === 'images') {
+    if (category === 'menu' || category === 'products') {
+      // Products category only supports items, not images
+      if (category === 'products') {
+        menuType = 'items'; // Force items for products
+      }
+      
+      if (menuType === 'images' && category === 'menu') {
         // Handle image uploads
         const menuCardFiles = req.files && req.files['menuCardImage'] ? req.files['menuCardImage'] : [];
         
@@ -503,9 +517,13 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         link.order = parseInt(order) || 0;
         link.showDisplayName = showDisplayName === 'true' || showDisplayName === true;
         
-        if (category === 'menu') {
-          link.menuType = menuType || 'images';
-          if (menuType === 'images') {
+        if (category === 'menu' || category === 'products') {
+          // Products always use items
+          if (category === 'products') {
+            menuType = 'items';
+          }
+          link.menuType = menuType || (category === 'products' ? 'items' : 'images');
+          if (menuType === 'images' && category === 'menu') {
             if (menuCardImages.length > 0) {
               link.menuCardImages = menuCardImages;
             } else {
@@ -546,8 +564,12 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         showDisplayName: showDisplayName === 'true' || showDisplayName === true
       };
       
-      if (category === 'menu') {
-        linkData.menuType = menuType || 'images';
+      if (category === 'menu' || category === 'products') {
+        // Products always use items
+        if (category === 'products') {
+          menuType = 'items';
+        }
+        linkData.menuType = menuType || (category === 'products' ? 'items' : 'images');
         if (menuType === 'items') {
           linkData.menuItems = parsedMenuItems || [];
           linkData.menuCardImages = [];

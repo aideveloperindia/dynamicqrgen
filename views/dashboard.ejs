@@ -1055,9 +1055,10 @@
             const linkId = document.getElementById('linkId').value;
             if (linkId) formData.append('linkId', linkId);
             
-            // Handle menu category
-            if (selectedCategory === 'menu') {
-                const menuType = typeof currentMenuType !== 'undefined' ? currentMenuType : 'images';
+            // Handle menu and products categories
+            if (selectedCategory === 'menu' || selectedCategory === 'products') {
+                // Products always use items, menu can use images or items
+                const menuType = selectedCategory === 'products' ? 'items' : (typeof currentMenuType !== 'undefined' ? currentMenuType : 'images');
                 formData.append('menuType', menuType);
                 
                 if (menuType === 'items') {
