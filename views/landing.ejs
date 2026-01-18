@@ -702,6 +702,21 @@
         }
 
         /* Responsive */
+        @media (max-width: 1024px) {
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .nav-link {
+                font-size: 0.9rem;
+            }
+
+            .btn-signup {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+
         @media (max-width: 768px) {
             .navbar {
                 padding: 1rem;
@@ -715,13 +730,9 @@
                 display: flex; /* Show hamburger on mobile */
             }
 
-            .nav-link {
-                font-size: 0.9rem;
-            }
-
-            .btn-signup {
-                padding: 0.6rem 1.2rem;
-                font-size: 0.9rem;
+            .logo-nav {
+                position: static;
+                transform: none;
             }
 
             .hero {
