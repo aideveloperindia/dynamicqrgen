@@ -25,7 +25,7 @@ const linkSchema = new mongoose.Schema({
   },
   displayName: {
     type: String,
-    required: true
+    default: ''
   },
   showDisplayName: {
     type: Boolean,

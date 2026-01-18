@@ -301,10 +301,21 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
     let { category, url, displayName, categoryType, linkId, order, menuType, menuItems, showDisplayName } = req.body;
     
     // For menu category, URL and displayName are optional
-    // For other categories, they are required
+    // For other categories, URL is required
     if (category !== 'menu') {
-      if (!url || !displayName) {
-        return res.status(400).json({ success: false, message: 'URL and display name are required' });
+      if (!url) {
+        return res.status(400).json({ success: false, message: 'URL is required' });
+      }
+      
+      // If showDisplayName is true, displayName must be provided
+      const shouldShowDisplayName = showDisplayName === 'true' || showDisplayName === true;
+      if (shouldShowDisplayName && (!displayName || displayName.trim() === '')) {
+        return res.status(400).json({ success: false, message: 'Display name is required when "Show display name" is checked' });
+      }
+      
+      // If displayName is empty and showDisplayName is false, set empty string
+      if (!displayName) {
+        displayName = '';
       }
     }
     
