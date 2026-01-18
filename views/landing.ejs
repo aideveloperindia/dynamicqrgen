@@ -294,37 +294,6 @@
             }
         }
 
-        /* QR Stomp Animation */
-        .qr-stomp {
-            display: inline-block;
-            opacity: 1;
-            animation: stomp 0.8s ease-out 0.5s;
-            animation-fill-mode: both;
-        }
-
-        @keyframes stomp {
-            0% {
-                transform: scale(1) translateY(0);
-            }
-            50% {
-                transform: scale(1.3) translateY(-10px);
-            }
-            60% {
-                transform: scale(0.9) translateY(5px);
-            }
-            70% {
-                transform: scale(1.1) translateY(-3px);
-            }
-            80% {
-                transform: scale(0.95) translateY(2px);
-            }
-            90% {
-                transform: scale(1.05) translateY(-1px);
-            }
-            100% {
-                transform: scale(1) translateY(0);
-            }
-        }
 
         /* Typewriter Animation */
         .typewriter-text {
@@ -804,7 +773,7 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>One <span class="qr-stomp">QR</span> Code.<br>Infinite <span class="highlight typewriter-text" id="typewriterText"></span>.</h1>
+            <h1>One QR Code.<br>Infinite <span class="highlight typewriter-text" id="typewriterText"></span>.</h1>
             <p>Create a dynamic QR code that links to all your social media, payment methods, website, and more. Your customers scan once, connect everywhere.</p>
             <div class="cta-buttons">
                 <a href="/login" class="btn-primary">
