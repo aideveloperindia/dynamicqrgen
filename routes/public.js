@@ -818,17 +818,18 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
 
     // For menu and products categories, display based on menu type
     if (link.category === 'menu' || link.category === 'products') {
-      const menuType = link.menuType || 'images';
+      const menuType = link.menuType || (link.category === 'products' ? 'items' : 'images');
       
-      // Display menu items in table format
+      // Display menu/items in table format
       if (menuType === 'items' && link.menuItems && link.menuItems.length > 0) {
+        const pageTitle = link.category === 'products' ? 'Products' : 'Menu';
         return res.send(`
           <!DOCTYPE html>
           <html>
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${user.businessName || user.name} - Menu</title>
+            <title>${user.businessName || user.name} - ${pageTitle}</title>
             <style>
               * {
                 margin: 0;
@@ -956,7 +957,7 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
           </head>
           <body>
             <div class="menu-container">
-              <h1 class="menu-title">${link.displayName || 'Menu'}</h1>
+              <h1 class="menu-title">${link.displayName || (link.category === 'products' ? 'Products' : 'Menu')}</h1>
               ${link.menuItems.map(category => `
                 <div class="menu-category">
                   <h2 class="category-name">${category.categoryName}</h2>
@@ -988,7 +989,8 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       }
       
       // Display menu card images (fallback to images if menuType is images)
-      if (menuType === 'images' && link.menuCardImages && link.menuCardImages.length > 0) {
+      // Products don't support images, only items
+      if (menuType === 'images' && link.category === 'menu' && link.menuCardImages && link.menuCardImages.length > 0) {
         return res.send(`
           <!DOCTYPE html>
           <html>
