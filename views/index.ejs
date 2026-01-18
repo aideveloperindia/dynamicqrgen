@@ -93,11 +93,14 @@
             flex-direction: column;
             align-items: center;
             gap: 8px;
-            padding: 10px;
-            min-width: 60px;
-            min-height: 60px;
+            padding: 12px;
+            min-width: 70px;
+            min-height: 70px;
             justify-content: center;
             -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            user-select: none;
         }
 
         .icon-link:hover {
@@ -113,6 +116,7 @@
         .icon-link i {
             font-size: 42px;
             transition: all 0.2s ease;
+            pointer-events: none;
         }
 
         /* Instagram - gradient icon */
@@ -165,32 +169,56 @@
             }
 
             .icons-container {
-                gap: 20px;
+                gap: 25px;
                 padding: 15px 5px;
             }
 
             .icons-row {
-                gap: 25px;
+                gap: 20px;
+                justify-content: space-around;
+                width: 100%;
             }
 
             .icon-link {
-                min-width: 50px;
-                min-height: 50px;
-                padding: 8px;
+                min-width: 65px;
+                min-height: 65px;
+                padding: 12px;
+                flex: 0 0 auto;
             }
 
             .icon-link i {
-                font-size: 36px;
+                font-size: 40px;
             }
 
             .footer {
                 padding-top: 30px;
                 padding-bottom: 15px;
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .footer-logo {
-                height: 18px;
+                height: 16px;
+            }
+
+            .footer-content {
+                gap: 6px;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 360px) {
+            .icons-row {
+                gap: 15px;
+            }
+
+            .icon-link {
+                min-width: 60px;
+                min-height: 60px;
+                padding: 10px;
+            }
+
+            .icon-link i {
+                font-size: 36px;
             }
         }
 
@@ -200,8 +228,13 @@
                 gap: 40px;
             }
 
+            .icon-link {
+                min-width: 75px;
+                min-height: 75px;
+            }
+
             .icon-link i {
-                font-size: 40px;
+                font-size: 44px;
             }
         }
 
@@ -211,8 +244,25 @@
                 gap: 50px;
             }
 
+            .icon-link {
+                min-width: 80px;
+                min-height: 80px;
+            }
+
             .icon-link i {
                 font-size: 48px;
+            }
+        }
+
+        /* Large Desktop */
+        @media (min-width: 1024px) {
+            .icon-link {
+                min-width: 90px;
+                min-height: 90px;
+            }
+
+            .icon-link i {
+                font-size: 52px;
             }
         }
 

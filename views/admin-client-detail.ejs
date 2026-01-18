@@ -157,6 +157,70 @@
             padding: 40px;
             color: #ff4444;
         }
+
+        /* Mobile First - Base styles for mobile */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .back-btn, .logout-btn {
+                padding: 8px 14px;
+                font-size: 13px;
+                margin-right: 5px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .card-title {
+                font-size: 18px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .info-label {
+                font-size: 12px;
+            }
+
+            .info-value {
+                font-size: 14px;
+            }
+
+            .link-item {
+                flex-direction: column;
+                gap: 10px;
+                padding: 12px;
+            }
+
+            .link-info {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
