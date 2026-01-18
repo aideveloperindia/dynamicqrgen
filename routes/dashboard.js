@@ -66,7 +66,7 @@ const DEFAULT_CATEGORIES = {
   instagram: { icon: 'fab fa-instagram', name: 'Instagram', color: 'gradient' },
   facebook: { icon: 'fab fa-facebook', name: 'Facebook', color: '#1877F2' },
   whatsapp: { icon: 'fab fa-whatsapp', name: 'WhatsApp', color: '#25D366' },
-  payment: { icon: '/cred-logo.png', name: 'Payment', color: '#25D366', isImage: true },
+  payment: { icon: '/UPI-Logo.png', name: 'Payment', color: '#25D366', isImage: true },
   website: { icon: 'fas fa-globe', name: 'Website', color: '#4285F4' },
   google: { icon: 'fab fa-google', name: 'Google Reviews', color: '#EA4335' },
   maps: { icon: 'fas fa-map-marker-alt', name: 'Google Maps', color: '#4285F4' },
@@ -349,8 +349,10 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
       menuType = menuType || 'items'; // Services always use items (no image option)
     }
     
-    // For payment category, if URL is incomplete, auto-generate from user profile
+    // For payment category, set default display name and handle URL
     if (category === 'payment' && categoryType === 'default') {
+      // Set default display name for payment (cannot be changed by user)
+      displayName = 'Bharathpe/CRED';
       const user = await User.findById(req.user._id);
       if (user) {
         // Check if URL is just UPI ID or incomplete
@@ -411,9 +413,9 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         return res.status(400).json({ success: false, message: 'Custom category requires icon upload' });
       }
     } else if (categoryType === 'default' && DEFAULT_CATEGORIES[category]) {
-      // For payment category, use Cred logo URL
+      // For payment category, use UPI logo URL
       if (category === 'payment' && DEFAULT_CATEGORIES[category].isImage) {
-        icon = DEFAULT_CATEGORIES[category].icon; // This is the Cred logo URL
+        icon = DEFAULT_CATEGORIES[category].icon; // This is the UPI logo URL
       } else {
         icon = DEFAULT_CATEGORIES[category].icon;
       }

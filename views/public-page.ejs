@@ -581,7 +581,7 @@
                        class="icon-link <%= link.category %>"
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.category === 'payment') { %>
-                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
+                            <img src="/UPI-Logo.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
                         <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>
@@ -609,7 +609,7 @@
                        class="icon-link <%= link.category %>"
                        <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
                         <% if (link.category === 'payment') { %>
-                            <img src="/cred-logo.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
+                            <img src="/UPI-Logo.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
                         <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                             <img src="<%= link.icon %>" alt="<%= link.displayName %>">
                         <% } else { %>

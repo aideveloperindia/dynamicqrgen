@@ -871,7 +871,7 @@
                             <div class="link-info">
                                 <div class="link-icon">
                                     <% if (link.category === 'payment') { %>
-                                        <img src="/cred-logo.png" alt="Payment" style="width: 40px; height: 40px; object-fit: contain;">
+                                        <img src="/UPI-Logo.png" alt="Payment" style="width: 40px; height: 40px; object-fit: contain;">
                                     <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
                                         <img src="<%= link.icon %>" style="width: 20px; height: 20px; object-fit: contain;">
                                     <% } else { %>
@@ -927,6 +927,14 @@
                         // Don't auto-generate - let user choose
                     }
                     if (menuFields) menuFields.style.display = 'none';
+                    // Set default display name for payment and make it read-only
+                    const displayNameInput = document.getElementById('displayName');
+                    if (displayNameInput) {
+                        displayNameInput.value = 'Bharathpe/CRED';
+                        displayNameInput.readOnly = true;
+                        displayNameInput.style.background = 'rgba(255, 255, 255, 0.1)';
+                        displayNameInput.style.cursor = 'not-allowed';
+                    }
                 } else if (selectedCategory === 'menu') {
                     // Show menu fields when menu category selected
                     customIconGroup.style.display = 'none';
@@ -1021,7 +1029,7 @@
             // Auto-fill URL and display name
             document.getElementById('url').value = upiLink;
             if (!document.getElementById('displayName').value) {
-                document.getElementById('displayName').value = 'Payment';
+                // Don't auto-set display name for payment - it's handled in category selection
             }
             
             showAlert('Payment link generated!', 'success');
