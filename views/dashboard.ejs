@@ -934,9 +934,33 @@
                     if (paymentFields) paymentFields.style.display = 'none';
                     if (menuFields) {
                         menuFields.style.display = 'block';
+                        // Show both image and items options for menu
+                        const menuTypeImages = document.getElementById('menuTypeImages');
+                        const menuTypeItems = document.getElementById('menuTypeItems');
+                        if (menuTypeImages) menuTypeImages.style.display = 'flex';
+                        if (menuTypeItems) menuTypeItems.style.display = 'flex';
                         // Initialize menu type to images by default
                         if (typeof setMenuType === 'function') {
                             setMenuType('images');
+                        }
+                    }
+                } else if (selectedCategory === 'products') {
+                    // Show menu fields when products category selected (same as menu, but only items)
+                    customIconGroup.style.display = 'none';
+                    document.getElementById('customIcon').required = false;
+                    if (paymentFields) paymentFields.style.display = 'none';
+                    if (menuFields) {
+                        menuFields.style.display = 'block';
+                        // Hide image upload option for products, only show items
+                        const menuTypeImages = document.getElementById('menuTypeImages');
+                        const menuTypeItems = document.getElementById('menuTypeItems');
+                        const menuImagesOption = document.getElementById('menuImagesOption');
+                        if (menuTypeImages) menuTypeImages.style.display = 'none';
+                        if (menuTypeItems) menuTypeItems.style.display = 'none';
+                        if (menuImagesOption) menuImagesOption.style.display = 'none';
+                        // Products only support items
+                        if (typeof setMenuType === 'function') {
+                            setMenuType('items');
                         }
                     }
                 } else {
