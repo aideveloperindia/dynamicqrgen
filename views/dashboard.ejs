@@ -935,6 +935,11 @@
                         displayNameInput.style.background = 'rgba(255, 255, 255, 0.1)';
                         displayNameInput.style.cursor = 'not-allowed';
                     }
+                    // Ensure checkbox is checked by default for payment
+                    const showDisplayNameCheckbox = document.getElementById('showDisplayName');
+                    if (showDisplayNameCheckbox) {
+                        showDisplayNameCheckbox.checked = true;
+                    }
                 } else if (selectedCategory === 'menu') {
                     // Show menu fields when menu category selected
                     customIconGroup.style.display = 'none';
