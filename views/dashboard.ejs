@@ -1012,8 +1012,9 @@
                 }
                 
                 const data = await response.json();
+                const submitBtn = document.querySelector('#profileForm button[type="submit"]');
                 if (data.success) {
-                    showAlert('Profile updated', 'success');
+                    showAlert('Profile updated', 'success', submitBtn);
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert(data.message || 'Error updating profile', 'error');
@@ -1083,7 +1084,7 @@
                 
                 const data = await response.json();
                 if (data.success) {
-                    showAlert('Link saved', 'success');
+                    showAlert('Link saved', 'success', submitBtn);
                     cancelAddLink();
                     setTimeout(() => location.reload(), 1000);
                 } else {
@@ -1404,7 +1405,34 @@
             }
         }
 
-        function showAlert(message, type) {
+        function showAlert(message, type, buttonElement) {
+            // If button is provided, show message next to it
+            if (buttonElement && type === 'success') {
+                // Remove any existing success message near this button
+                const existingMsg = buttonElement.parentElement.querySelector('.inline-success-message');
+                if (existingMsg) {
+                    existingMsg.remove();
+                }
+                
+                // Create inline success message
+                const successMsg = document.createElement('span');
+                successMsg.className = 'inline-success-message';
+                successMsg.textContent = ' ✓ Saved';
+                successMsg.style.cssText = 'color: #4CAF50; font-size: 14px; margin-left: 10px; font-weight: 500; animation: fadeIn 0.3s ease-in;';
+                
+                // Insert after the button
+                buttonElement.parentElement.insertBefore(successMsg, buttonElement.nextSibling);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    successMsg.style.animation = 'fadeOut 0.3s ease-out';
+                    setTimeout(() => successMsg.remove(), 300);
+                }, 3000);
+                
+                return;
+            }
+            
+            // Fallback to container for errors or when no button provided
             const container = document.getElementById('alert-container');
             const alert = document.createElement('div');
             alert.className = `alert alert-${type}`;

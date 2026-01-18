@@ -145,6 +145,28 @@
             color: white;
         }
 
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+        }
+
         .footer {
             margin-top: 30px;
             padding-top: 20px;
@@ -255,7 +277,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showAlert('Profile completed successfully! Redirecting...', 'success');
+                    showAlert('Profile completed successfully! Redirecting...', 'success', submitBtn);
                     setTimeout(() => {
                         window.location.href = '/dashboard';
                     }, 1500);
