@@ -353,6 +353,10 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
     if (category === 'payment' && categoryType === 'default') {
       // Set default display name for payment (cannot be changed by user)
       displayName = 'Bharathpe/CRED';
+      // Set showDisplayName to true by default for payment
+      if (showDisplayName === undefined || showDisplayName === '') {
+        showDisplayName = 'true';
+      }
       const user = await User.findById(req.user._id);
       if (user) {
         // Check if URL is just UPI ID or incomplete
