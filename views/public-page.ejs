@@ -587,7 +587,13 @@
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>
-                        <% if (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '') { %>
+                        <% 
+                        // For payment category, always show display name if it exists
+                        const shouldShowLabel = link.category === 'payment' 
+                          ? (link.displayName && link.displayName.trim() !== '')
+                          : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
+                        %>
+                        <% if (shouldShowLabel) { %>
                             <span class="icon-link-label"><%= link.displayName %></span>
                         <% } %>
                     </a>
@@ -615,7 +621,13 @@
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>
-                        <% if (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '') { %>
+                        <% 
+                        // For payment category, always show display name if it exists
+                        const shouldShowLabel = link.category === 'payment' 
+                          ? (link.displayName && link.displayName.trim() !== '')
+                          : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
+                        %>
+                        <% if (shouldShowLabel) { %>
                             <span class="icon-link-label"><%= link.displayName %></span>
                         <% } %>
                     </a>
