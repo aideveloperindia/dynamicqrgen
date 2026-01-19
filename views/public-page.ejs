@@ -1183,6 +1183,23 @@
         }
 
         function selectRating(rating) {
+            // If clicking the same star that's already selected, deselect all (clear rating)
+            if (selectedRating === rating) {
+                selectedRating = 0;
+                const stars = document.querySelectorAll('.feedback-star');
+                stars.forEach(star => {
+                    star.classList.remove('active');
+                });
+                
+                // Clear feedback message
+                document.getElementById('feedbackMessage').textContent = '';
+                
+                // Hide submit button
+                document.getElementById('feedbackSubmitBtn').style.display = 'none';
+                return;
+            }
+            
+            // Otherwise, set the new rating
             selectedRating = rating;
             const stars = document.querySelectorAll('.feedback-star');
             stars.forEach((star, index) => {
