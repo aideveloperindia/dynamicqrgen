@@ -535,7 +535,12 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         link.displayName = displayName;
         link.icon = icon;
         link.order = parseInt(order) || 0;
-        link.showDisplayName = showDisplayName === 'true' || showDisplayName === true;
+        // For payment category, always set showDisplayName to true
+        if (category === 'payment') {
+          link.showDisplayName = true;
+        } else {
+          link.showDisplayName = showDisplayName === 'true' || showDisplayName === true;
+        }
         
         if (category === 'menu' || category === 'products' || category === 'services') {
           // Products and services always use items
@@ -581,7 +586,8 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
         icon,
         displayName,
         order: parseInt(order) || 0,
-        showDisplayName: showDisplayName === 'true' || showDisplayName === true
+        // For payment category, always set showDisplayName to true
+        showDisplayName: category === 'payment' ? true : (showDisplayName === 'true' || showDisplayName === true)
       };
       
       if (category === 'menu' || category === 'products' || category === 'services') {
