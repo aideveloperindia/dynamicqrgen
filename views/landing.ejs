@@ -929,6 +929,16 @@
                     </a>
                 </div>
             </div>
+            <div class="footer-stats" id="footerStats">
+                <div class="footer-stat-item">
+                    <span class="stat-label">Users:</span>
+                    <span class="stat-value" id="footerUsersCount">-</span>
+                </div>
+                <div class="footer-stat-item">
+                    <span class="stat-label">Clients:</span>
+                    <span class="stat-value" id="footerClientsCount">-</span>
+                </div>
+            </div>
         </div>
     </footer>
 
@@ -1049,7 +1059,32 @@
             if (typewriterElement) {
                 typeWriter(typewriterElement, 'Connections', 80);
             }
+            
+            // Load footer statistics
+            loadFooterStats();
         });
+
+        // Load footer statistics
+        async function loadFooterStats() {
+            try {
+                const response = await fetch('/p/api/settings');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const usersEl = document.getElementById('footerUsersCount');
+                    const clientsEl = document.getElementById('footerClientsCount');
+                    if (usersEl) usersEl.textContent = data.usersCount.toLocaleString('en-IN') || '0';
+                    if (clientsEl) clientsEl.textContent = data.clientsCount.toLocaleString('en-IN') || '0';
+                }
+            } catch (error) {
+                console.error('Error loading footer stats:', error);
+                // Set defaults on error
+                const usersEl = document.getElementById('footerUsersCount');
+                const clientsEl = document.getElementById('footerClientsCount');
+                if (usersEl) usersEl.textContent = '0';
+                if (clientsEl) clientsEl.textContent = '0';
+            }
+        }
     </script>
 </body>
 </html>

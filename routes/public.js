@@ -4,6 +4,7 @@ const connectDB = require('../config/database');
 const User = require('../models/User');
 const Link = require('../models/Link');
 const Feedback = require('../models/Feedback');
+const Settings = require('../models/Settings');
 const path = require('path');
 const fs = require('fs');
 const Razorpay = require('razorpay');
@@ -1536,6 +1537,26 @@ router.post('/:slug/feedback', async (req, res) => {
   } catch (error) {
     console.error('Feedback submission error:', error);
     res.status(500).json({ success: false, message: 'Error submitting feedback' });
+  }
+});
+
+// Get public settings (for footer display on all pages)
+router.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await Settings.getSettings();
+    res.json({
+      success: true,
+      usersCount: settings.usersCount || 0,
+      clientsCount: settings.clientsCount || 0
+    });
+  } catch (error) {
+    console.error('Get public settings error:', error);
+    // Return defaults if error
+    res.json({
+      success: true,
+      usersCount: 0,
+      clientsCount: 0
+    });
   }
 });
 

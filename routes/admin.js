@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Link = require('../models/Link');
 const Admin = require('../models/Admin');
 const Feedback = require('../models/Feedback');
+const Settings = require('../models/Settings');
 const bcrypt = require('bcryptjs');
 
 // Admin authentication middleware - Requires password authentication
@@ -362,6 +363,59 @@ router.post('/clients/:id/activate', adminAuth, async (req, res) => {
   } catch (error) {
     console.error('Account activation error:', error);
     res.status(500).json({ success: false, message: 'Error activating account' });
+  }
+});
+
+// Get settings (for admin dashboard)
+router.get('/settings', adminAuth, async (req, res) => {
+  try {
+    const settings = await Settings.getSettings();
+    res.json({
+      success: true,
+      settings: {
+        usersCount: settings.usersCount || 0,
+        clientsCount: settings.clientsCount || 0
+      }
+    });
+  } catch (error) {
+    console.error('Get settings error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching settings' });
+  }
+});
+
+// Update settings (for admin dashboard)
+router.post('/settings', adminAuth, async (req, res) => {
+  try {
+    const { usersCount, clientsCount } = req.body;
+    
+    // Validate inputs
+    const users = parseInt(usersCount);
+    const clients = parseInt(clientsCount);
+    
+    if (isNaN(users) || users < 0) {
+      return res.status(400).json({ success: false, message: 'Invalid users count' });
+    }
+    if (isNaN(clients) || clients < 0) {
+      return res.status(400).json({ success: false, message: 'Invalid clients count' });
+    }
+
+    const settings = await Settings.getSettings();
+    settings.usersCount = users;
+    settings.clientsCount = clients;
+    settings.updatedAt = new Date();
+    await settings.save();
+
+    res.json({
+      success: true,
+      message: 'Settings updated successfully',
+      settings: {
+        usersCount: settings.usersCount,
+        clientsCount: settings.clientsCount
+      }
+    });
+  } catch (error) {
+    console.error('Update settings error:', error);
+    res.status(500).json({ success: false, message: 'Error updating settings' });
   }
 });
 

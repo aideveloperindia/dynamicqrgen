@@ -427,6 +427,52 @@
             align-items: center;
             gap: 8px;
             text-decoration: none;
+        }
+
+        .footer-stats {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: right;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 16px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .footer-stat-item {
+            color: #ffffff;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .footer-stat-item .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-right: 6px;
+        }
+
+        .footer-stat-item .stat-value {
+            font-weight: 600;
+            color: #4CAF50;
+        }
+
+        @media (max-width: 768px) {
+            .footer-stats {
+                position: static;
+                text-align: center;
+                margin-top: 20px;
+                flex-direction: row;
+                justify-content: center;
+                gap: 20px;
+                background: transparent;
+                padding: 0;
+            }
+        }
             color: #ffffff;
             transition: opacity 0.3s ease;
         }
@@ -1112,6 +1158,16 @@
             <div style="margin-top: 12px;">
                 <a href="/terms" class="footer-link" style="font-size: 11px; opacity: 0.7;">Terms & Conditions</a>
             </div>
+            <div class="footer-stats" id="footerStats">
+                <div class="footer-stat-item">
+                    <span class="stat-label">Users:</span>
+                    <span class="stat-value" id="footerUsersCount">-</span>
+                </div>
+                <div class="footer-stat-item">
+                    <span class="stat-label">Clients:</span>
+                    <span class="stat-value" id="footerClientsCount">-</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1423,6 +1479,33 @@
             document.querySelectorAll('.feedback-star').forEach(star => {
                 star.classList.remove('hover');
             });
+        });
+
+        // Load footer statistics
+        async function loadFooterStats() {
+            try {
+                const response = await fetch('/p/api/settings');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const usersEl = document.getElementById('footerUsersCount');
+                    const clientsEl = document.getElementById('footerClientsCount');
+                    if (usersEl) usersEl.textContent = data.usersCount.toLocaleString('en-IN') || '0';
+                    if (clientsEl) clientsEl.textContent = data.clientsCount.toLocaleString('en-IN') || '0';
+                }
+            } catch (error) {
+                console.error('Error loading footer stats:', error);
+                // Set defaults on error
+                const usersEl = document.getElementById('footerUsersCount');
+                const clientsEl = document.getElementById('footerClientsCount');
+                if (usersEl) usersEl.textContent = '0';
+                if (clientsEl) clientsEl.textContent = '0';
+            }
+        }
+
+        // Load footer stats on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFooterStats();
         });
     </script>
 </body>
