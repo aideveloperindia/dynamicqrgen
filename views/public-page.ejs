@@ -144,6 +144,14 @@
             line-height: 1.2;
         }
 
+        /* Allow payment label to wrap into two lines */
+        .icon-link-label.payment-label {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            line-height: 1.15;
+        }
+
         .icon-link:hover {
             transform: scale(1.1);
             opacity: 0.8;
@@ -594,7 +602,11 @@
                           : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
                         %>
                         <% if (shouldShowLabel) { %>
-                            <span class="icon-link-label"><%= link.displayName %></span>
+                            <% if (link.category === 'payment') { %>
+                                <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
+                            <% } else { %>
+                                <span class="icon-link-label"><%= link.displayName %></span>
+                            <% } %>
                         <% } %>
                     </a>
                 <% }); %>
@@ -628,7 +640,11 @@
                           : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
                         %>
                         <% if (shouldShowLabel) { %>
-                            <span class="icon-link-label"><%= link.displayName %></span>
+                            <% if (link.category === 'payment') { %>
+                                <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
+                            <% } else { %>
+                                <span class="icon-link-label"><%= link.displayName %></span>
+                            <% } %>
                         <% } %>
                     </a>
                 <% }); %>
