@@ -796,6 +796,209 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* Feedback Modal Styles */
+        .feedback-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            touch-action: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .feedback-modal.show {
+            display: flex;
+        }
+
+        .feedback-modal-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .feedback-modal-content.swiping {
+            transition: none;
+        }
+
+        .feedback-modal-title {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .feedback-modal-subtitle {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .feedback-stars {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .feedback-star {
+            font-size: 32px;
+            color: #444;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            padding: 5px;
+            min-width: 44px;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-star:hover {
+            transform: scale(1.2);
+        }
+
+        .feedback-star.active {
+            color: #FFD700;
+        }
+
+        .feedback-star.hover {
+            color: #FFA500;
+        }
+
+        .feedback-submit-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4285F4, #25D366);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px;
+        }
+
+        .feedback-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+        }
+
+        .feedback-submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #aaa;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .feedback-close:hover {
+            color: #fff;
+        }
+
+        /* Floating Feedback Button - Hovering Overlay */
+        .feedback-button {
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4285F4, #25D366);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 99999 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: transform;
+        }
+
+        .feedback-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.5);
+        }
+
+        .feedback-button:active {
+            transform: scale(0.95);
+        }
+
+        .feedback-button.submitted {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            font-size: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .feedback-modal-content {
+                padding: 20px;
+            }
+
+            .feedback-modal-title {
+                font-size: 18px;
+            }
+
+            .feedback-star {
+                font-size: 28px;
+            }
+
+            .feedback-button {
+                width: 56px;
+                height: 56px;
+                top: 15px !important;
+                right: 15px !important;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1149,6 +1352,204 @@
                 if (clientsEl) clientsEl.textContent = '0';
             }
         }
+
+        // Feedback System for Landing Page
+        const feedbackKey = 'qr_feedback_landing';
+        let selectedRating = 0;
+        
+        // Check if user has already submitted feedback
+        (function() {
+            const hasGivenFeedback = localStorage.getItem(feedbackKey) === 'true';
+            const feedbackButton = document.getElementById('feedbackButton');
+            const feedbackButtonText = document.getElementById('feedbackButtonText');
+            
+            if (hasGivenFeedback) {
+                feedbackButton.classList.add('submitted');
+                feedbackButtonText.textContent = 'Change';
+            }
+        })();
+        
+        // Open feedback modal
+        function openFeedbackModal() {
+            const hasGivenFeedback = localStorage.getItem(feedbackKey) === 'true';
+            const previousRating = parseInt(localStorage.getItem('qr_feedback_rating_landing') || '0');
+            
+            selectedRating = 0;
+            document.querySelectorAll('.feedback-star').forEach(star => {
+                star.classList.remove('active');
+            });
+            document.getElementById('feedbackMessage').textContent = '';
+            document.getElementById('feedbackSubmitBtn').style.display = 'none';
+            
+            if (hasGivenFeedback && previousRating > 0) {
+                setTimeout(function() {
+                    selectRating(previousRating);
+                }, 100);
+            }
+            
+            document.getElementById('feedbackModal').classList.add('show');
+        }
+
+        function selectRating(rating) {
+            if (selectedRating === rating) {
+                selectedRating = 0;
+                const stars = document.querySelectorAll('.feedback-star');
+                stars.forEach(star => {
+                    star.classList.remove('active');
+                });
+                document.getElementById('feedbackMessage').textContent = '';
+                document.getElementById('feedbackSubmitBtn').style.display = 'none';
+                return;
+            }
+            
+            selectedRating = rating;
+            const stars = document.querySelectorAll('.feedback-star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+            
+            const messageEl = document.getElementById('feedbackMessage');
+            let message = '';
+            if (rating >= 4) {
+                message = 'Very Useful';
+            } else if (rating >= 1) {
+                message = 'Good Idea';
+            }
+            messageEl.textContent = message;
+            document.getElementById('feedbackSubmitBtn').style.display = 'block';
+        }
+
+        function submitFeedbackByRating() {
+            if (selectedRating === 0) {
+                showThankYouMessage();
+                closeFeedbackModal();
+                return;
+            }
+            
+            // For landing page, just store locally (no backend submission)
+            localStorage.setItem(feedbackKey, 'true');
+            localStorage.setItem('qr_feedback_rating_landing', selectedRating.toString());
+            
+            const feedbackButton = document.getElementById('feedbackButton');
+            const feedbackButtonText = document.getElementById('feedbackButtonText');
+            feedbackButton.classList.add('submitted');
+            feedbackButtonText.textContent = 'Change';
+            
+            closeFeedbackModal();
+            showThankYouMessage();
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('show');
+        }
+
+        function showThankYouMessage() {
+            const thankYou = document.createElement('div');
+            thankYou.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(76, 175, 80, 0.9);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 10001;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                animation: slideUp 0.3s ease;
+            `;
+            thankYou.textContent = 'Thank you for your feedback!';
+            document.body.appendChild(thankYou);
+            
+            setTimeout(function() {
+                thankYou.style.opacity = '0';
+                thankYou.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    document.body.removeChild(thankYou);
+                }, 300);
+            }, 3000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('feedbackModal').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('feedback-close')) {
+                closeFeedbackModal();
+            }
+        });
+
+        // Swipe-to-close for mobile
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let isSwiping = false;
+        const modalContent = document.querySelector('.feedback-modal-content');
+        
+        modalContent.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            isSwiping = false;
+        });
+        
+        modalContent.addEventListener('touchmove', function(e) {
+            if (!touchStartY || !touchStartX) return;
+            
+            const touchY = e.touches[0].clientY;
+            const touchX = e.touches[0].clientX;
+            const deltaY = touchY - touchStartY;
+            const deltaX = touchX - touchStartX;
+            
+            if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+                isSwiping = true;
+                modalContent.classList.add('swiping');
+                const swipeDistance = Math.max(0, deltaY);
+                modalContent.style.transform = `translateY(${swipeDistance}px)`;
+                const opacity = Math.max(0.7, 1 - (swipeDistance / 200));
+                modalContent.style.opacity = opacity;
+            }
+        });
+        
+        modalContent.addEventListener('touchend', function(e) {
+            if (isSwiping) {
+                const touchY = e.changedTouches[0].clientY;
+                const deltaY = touchY - touchStartY;
+                
+                if (deltaY > 100) {
+                    closeFeedbackModal();
+                } else {
+                    modalContent.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    modalContent.style.transform = 'translateY(0)';
+                    modalContent.style.opacity = '1';
+                }
+                modalContent.classList.remove('swiping');
+                touchStartY = 0;
+                touchStartX = 0;
+                isSwiping = false;
+            }
+        });
+
+        // Star hover effects
+        document.getElementById('feedbackStars').addEventListener('mouseover', function(e) {
+            if (e.target.classList.contains('feedback-star')) {
+                const rating = parseInt(e.target.getAttribute('data-rating'));
+                document.querySelectorAll('.feedback-star').forEach((star, index) => {
+                    if (index < rating) {
+                        star.classList.add('hover');
+                    } else {
+                        star.classList.remove('hover');
+                    }
+                });
+            }
+        });
+
+        document.getElementById('feedbackStars').addEventListener('mouseleave', function() {
+            document.querySelectorAll('.feedback-star').forEach(star => {
+                star.classList.remove('hover');
+            });
+        });
     </script>
 </body>
 </html>
