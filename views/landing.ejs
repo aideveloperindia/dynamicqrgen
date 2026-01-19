@@ -1209,6 +1209,30 @@
         </div>
     </footer>
 
+    <!-- Floating Feedback Button -->
+    <button class="feedback-button" id="feedbackButton" onclick="openFeedbackModal()">
+        <span id="feedbackButtonText">Feedback</span>
+    </button>
+
+    <!-- Feedback Modal -->
+    <div class="feedback-modal" id="feedbackModal">
+        <div class="feedback-modal-content" style="position: relative;">
+            <span class="feedback-close" onclick="closeFeedbackModal()">&times;</span>
+            <h2 class="feedback-modal-title">Rate Your Experience</h2>
+            <p class="feedback-modal-subtitle">How useful was this website?</p>
+            <p class="feedback-swipe-hint" style="color: #666; font-size: 12px; margin-top: -10px; margin-bottom: 15px; display: none;">Swipe down to close</p>
+            <div class="feedback-stars" id="feedbackStars">
+                <span class="feedback-star" data-rating="1" onclick="selectRating(1)">★</span>
+                <span class="feedback-star" data-rating="2" onclick="selectRating(2)">★</span>
+                <span class="feedback-star" data-rating="3" onclick="selectRating(3)">★</span>
+                <span class="feedback-star" data-rating="4" onclick="selectRating(4)">★</span>
+                <span class="feedback-star" data-rating="5" onclick="selectRating(5)">★</span>
+            </div>
+            <div id="feedbackMessage" style="color: #aaa; font-size: 14px; margin: 15px 0; min-height: 20px;"></div>
+            <button class="feedback-submit-btn" id="feedbackSubmitBtn" onclick="submitFeedbackByRating()" style="display: none;">Submit</button>
+        </div>
+    </div>
+
     <script>
         // Scroll animations
         const observerOptions = {
