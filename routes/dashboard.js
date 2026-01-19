@@ -72,7 +72,8 @@ const DEFAULT_CATEGORIES = {
   maps: { icon: 'fas fa-map-marker-alt', name: 'Google Maps', color: '#4285F4' },
   menu: { icon: 'fas fa-utensils', name: 'Menu Card', color: '#FF6B6B' },
   products: { icon: 'fas fa-shopping-bag', name: 'Products', color: '#9C27B0' },
-  services: { icon: 'fas fa-concierge-bell', name: 'Services', color: '#FF9800' },
+  // Generic services icon (briefcase) to represent any service type
+  services: { icon: 'fas fa-briefcase', name: 'Services', color: '#FF9800' },
   youtube: { icon: 'fab fa-youtube', name: 'YouTube', color: '#FF0000' },
   twitter: { icon: 'fab fa-twitter', name: 'Twitter', color: '#1DA1F2' },
   linkedin: { icon: 'fab fa-linkedin', name: 'LinkedIn', color: '#0077B5' }
