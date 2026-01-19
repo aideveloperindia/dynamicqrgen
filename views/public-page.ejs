@@ -767,11 +767,11 @@
             }
         }
 
-        /* Floating Feedback Button */
+        /* Floating Feedback Button - Hovering Overlay */
         .feedback-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
             width: 60px;
             height: 60px;
             border-radius: 50%;
@@ -780,7 +780,7 @@
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            z-index: 9999;
+            z-index: 99999 !important;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -790,6 +790,10 @@
             transition: all 0.3s ease;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            /* Ensure it stays floating on scroll */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: transform;
         }
 
         .feedback-button:hover {
@@ -810,10 +814,15 @@
             .feedback-button {
                 width: 56px;
                 height: 56px;
-                bottom: 15px;
-                right: 15px;
+                bottom: 15px !important;
+                right: 15px !important;
                 font-size: 11px;
             }
+        }
+
+        /* Ensure body doesn't interfere with fixed positioning */
+        body {
+            overflow-x: hidden;
         }
     </style>
 </head>
