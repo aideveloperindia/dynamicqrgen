@@ -3,6 +3,7 @@ const router = express.Router();
 const connectDB = require('../config/database');
 const User = require('../models/User');
 const Link = require('../models/Link');
+const Feedback = require('../models/Feedback');
 const path = require('path');
 const fs = require('fs');
 const Razorpay = require('razorpay');
@@ -1478,6 +1479,63 @@ router.get('/:slug/download/payment-qr', async (req, res) => {
   } catch (error) {
     console.error('Payment QR download error:', error);
     res.status(500).send('Error downloading QR code');
+  }
+});
+
+// Submit feedback
+router.post('/:slug/feedback', async (req, res) => {
+  try {
+    const user = await User.findOne({ uniqueSlug: req.params.slug });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const { rating } = req.body;
+    
+    // Validate rating
+    const ratingNum = parseInt(rating);
+    if (isNaN(ratingNum) || ratingNum < 0 || ratingNum > 5) {
+      return res.status(400).json({ success: false, message: 'Invalid rating' });
+    }
+
+    // Determine feedback type based on rating
+    // 0 stars (no click/enter) = "not_useful"
+    // 1-3 stars = "good_idea"
+    // 4-5 stars = "very_useful"
+    let feedbackType;
+    if (ratingNum === 0) {
+      feedbackType = 'not_useful';
+    } else if (ratingNum >= 1 && ratingNum <= 3) {
+      feedbackType = 'good_idea';
+    } else if (ratingNum >= 4 && ratingNum <= 5) {
+      feedbackType = 'very_useful';
+    } else {
+      feedbackType = 'not_useful'; // Default fallback
+    }
+
+    // Check if this is an update (user changing their feedback)
+    // We'll still create a new entry for analytics, but mark it as an update
+    const isUpdate = req.body.isUpdate || false;
+
+    // Create feedback entry (always create new for analytics tracking)
+    const feedback = new Feedback({
+      userId: user._id,
+      rating: ratingNum,
+      feedbackType: feedbackType
+    });
+
+    await feedback.save();
+
+    res.json({ 
+      success: true, 
+      message: isUpdate ? 'Feedback updated successfully' : 'Feedback submitted successfully',
+      feedbackType: feedbackType,
+      isUpdate: isUpdate
+    });
+  } catch (error) {
+    console.error('Feedback submission error:', error);
+    res.status(500).json({ success: false, message: 'Error submitting feedback' });
   }
 });
 

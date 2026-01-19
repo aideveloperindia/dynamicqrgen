@@ -551,6 +551,224 @@
                 height: 84px !important;
             }
         }
+
+        /* Feedback Modal Styles */
+        .feedback-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            touch-action: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .feedback-modal.show {
+            display: flex;
+        }
+
+        .feedback-modal-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .feedback-modal-content.swiping {
+            transition: none;
+        }
+
+        .feedback-modal-title {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .feedback-modal-subtitle {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .feedback-stars {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .feedback-star {
+            font-size: 32px;
+            color: #444;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            padding: 5px;
+            min-width: 44px;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-star:hover {
+            transform: scale(1.2);
+        }
+
+        .feedback-star.active {
+            color: #FFD700;
+        }
+
+        .feedback-star.hover {
+            color: #FFA500;
+        }
+
+
+        .feedback-submit-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4285F4, #25D366);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px;
+        }
+
+        .feedback-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+        }
+
+        .feedback-submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #aaa;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .feedback-close:hover {
+            color: #fff;
+        }
+
+        @media (max-width: 480px) {
+            .feedback-modal-content {
+                padding: 20px;
+            }
+
+            .feedback-modal-title {
+                font-size: 18px;
+            }
+
+            .feedback-star {
+                font-size: 28px;
+            }
+            
+            .feedback-swipe-hint {
+                display: block !important;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* Floating Feedback Button */
+        .feedback-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4285F4, #25D366);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .feedback-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.5);
+        }
+
+        .feedback-button:active {
+            transform: scale(0.95);
+        }
+
+        .feedback-button.submitted {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            font-size: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .feedback-button {
+                width: 56px;
+                height: 56px;
+                bottom: 15px;
+                right: 15px;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -896,5 +1114,299 @@
             </div>
         </div>
     </div>
+
+    <!-- Floating Feedback Button -->
+    <button class="feedback-button" id="feedbackButton" onclick="openFeedbackModal()">
+        <span id="feedbackButtonText">Feedback</span>
+    </button>
+
+    <!-- Feedback Modal -->
+    <div class="feedback-modal" id="feedbackModal">
+        <div class="feedback-modal-content" style="position: relative;">
+            <span class="feedback-close" onclick="closeFeedbackModal()">&times;</span>
+            <h2 class="feedback-modal-title">Rate Your Experience</h2>
+            <p class="feedback-modal-subtitle">How useful was this QR code page?</p>
+            <p class="feedback-swipe-hint" style="color: #666; font-size: 12px; margin-top: -10px; margin-bottom: 15px; display: none;">Swipe down to close</p>
+            <div class="feedback-stars" id="feedbackStars">
+                <span class="feedback-star" data-rating="1" onclick="selectRating(1)">★</span>
+                <span class="feedback-star" data-rating="2" onclick="selectRating(2)">★</span>
+                <span class="feedback-star" data-rating="3" onclick="selectRating(3)">★</span>
+                <span class="feedback-star" data-rating="4" onclick="selectRating(4)">★</span>
+                <span class="feedback-star" data-rating="5" onclick="selectRating(5)">★</span>
+            </div>
+            <div id="feedbackMessage" style="color: #aaa; font-size: 14px; margin: 15px 0; min-height: 20px;"></div>
+            <button class="feedback-submit-btn" id="feedbackSubmitBtn" onclick="submitFeedbackByRating()" style="display: none;">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        // Simple feedback system - floating button approach
+        const slug = '<%= user.uniqueSlug %>';
+        const feedbackKey = `qr_feedback_${slug}`;
+        let selectedRating = 0;
+        
+        // Check if user has already submitted feedback
+        (function() {
+            const hasGivenFeedback = localStorage.getItem(feedbackKey) === 'true';
+            const feedbackButton = document.getElementById('feedbackButton');
+            const feedbackButtonText = document.getElementById('feedbackButtonText');
+            
+            if (hasGivenFeedback) {
+                // Update button to show "Change" if feedback already given
+                feedbackButton.classList.add('submitted');
+                feedbackButtonText.textContent = 'Change';
+            }
+        })();
+        
+        // Open feedback modal
+        function openFeedbackModal() {
+            const hasGivenFeedback = localStorage.getItem(feedbackKey) === 'true';
+            const previousRating = parseInt(localStorage.getItem(`qr_feedback_rating_${slug}`) || '0');
+            
+            // Reset selected rating
+            selectedRating = 0;
+            document.querySelectorAll('.feedback-star').forEach(star => {
+                star.classList.remove('active');
+            });
+            document.getElementById('feedbackMessage').textContent = '';
+            document.getElementById('feedbackSubmitBtn').style.display = 'none';
+            
+            // If changing feedback, pre-select previous rating
+            if (hasGivenFeedback && previousRating > 0) {
+                setTimeout(function() {
+                    selectRating(previousRating);
+                }, 100);
+            }
+            
+            // Show modal
+            document.getElementById('feedbackModal').classList.add('show');
+        }
+
+        function selectRating(rating) {
+            selectedRating = rating;
+            const stars = document.querySelectorAll('.feedback-star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+            
+            // Show feedback message based on rating
+            const messageEl = document.getElementById('feedbackMessage');
+            let message = '';
+            if (rating >= 4) {
+                message = 'Very Useful';
+            } else if (rating >= 1) {
+                message = 'Good Idea';
+            }
+            messageEl.textContent = message;
+            
+            // Show submit button
+            document.getElementById('feedbackSubmitBtn').style.display = 'block';
+        }
+
+        function submitFeedbackByRating() {
+            if (selectedRating === 0) {
+                // If no rating selected, treat as "not useful" (0 stars)
+                submitFeedback('not_useful', 0);
+            } else {
+                // Determine feedback type based on rating
+                let feedbackType;
+                if (selectedRating >= 4) {
+                    feedbackType = 'very_useful';
+                } else if (selectedRating >= 1) {
+                    feedbackType = 'good_idea';
+                } else {
+                    feedbackType = 'not_useful';
+                }
+                submitFeedback(feedbackType, selectedRating);
+            }
+        }
+
+        function submitFeedback(feedbackType, rating) {
+            // If rating not provided, use selectedRating
+            if (!rating) {
+                rating = selectedRating;
+            }
+            
+            // If still no rating, default to 0 (not useful)
+            if (!rating || rating === 0) {
+                rating = 0;
+            }
+
+            const slug = '<%= user.uniqueSlug %>';
+            const submitBtn = document.getElementById('feedbackSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            // Check if this is a feedback update
+            const isUpdate = localStorage.getItem(`qr_feedback_${slug}`) === 'true';
+            
+            fetch(`/p/${slug}/feedback`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ rating: rating, isUpdate: isUpdate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mark feedback as given for THIS client
+                    localStorage.setItem(feedbackKey, 'true');
+                    
+                    // Store feedback details for "Change feedback" feature
+                    localStorage.setItem(`qr_feedback_rating_${slug}`, rating.toString());
+                    localStorage.setItem(`qr_feedback_type_${slug}`, feedbackType);
+                    localStorage.setItem(`qr_feedback_time_${slug}`, Date.now().toString());
+                    
+                    // Update button to show "Change"
+                    const feedbackButton = document.getElementById('feedbackButton');
+                    const feedbackButtonText = document.getElementById('feedbackButtonText');
+                    feedbackButton.classList.add('submitted');
+                    feedbackButtonText.textContent = 'Change';
+                    
+                    // Close modal
+                    closeFeedbackModal();
+                    
+                    // Show thank you message
+                    showThankYouMessage();
+                } else {
+                    alert('Failed to submit feedback. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit';
+                }
+            })
+            .catch(error => {
+                console.error('Feedback submission error:', error);
+                alert('Error submitting feedback. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+            });
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('show');
+        }
+
+        function showThankYouMessage() {
+            // Create a subtle thank you notification
+            const thankYou = document.createElement('div');
+            thankYou.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(76, 175, 80, 0.9);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 10001;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                animation: slideUp 0.3s ease;
+            `;
+            thankYou.textContent = 'Thank you for your feedback!';
+            document.body.appendChild(thankYou);
+            
+            setTimeout(function() {
+                thankYou.style.opacity = '0';
+                thankYou.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    document.body.removeChild(thankYou);
+                }, 300);
+            }, 3000);
+        }
+
+        // Close modal when clicking outside or X button
+        document.getElementById('feedbackModal').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('feedback-close')) {
+                closeFeedbackModal();
+            }
+        });
+        
+        // Swipe-to-close functionality for mobile
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let isSwiping = false;
+        const modalContent = document.querySelector('.feedback-modal-content');
+        
+        modalContent.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            isSwiping = false;
+        });
+        
+        modalContent.addEventListener('touchmove', function(e) {
+            if (!touchStartY || !touchStartX) return;
+            
+            const touchY = e.touches[0].clientY;
+            const touchX = e.touches[0].clientX;
+            const deltaY = touchY - touchStartY;
+            const deltaX = Math.abs(touchX - touchStartX);
+            
+            // Only allow vertical swipe (downward)
+            if (deltaY > 0 && deltaY > deltaX && deltaY > 30) {
+                isSwiping = true;
+                modalContent.classList.add('swiping');
+                const swipeDistance = Math.min(deltaY, 200);
+                modalContent.style.transform = `translateY(${swipeDistance}px)`;
+                
+                // Add opacity fade as user swipes
+                const opacity = Math.max(0.7, 1 - (swipeDistance / 200));
+                modalContent.style.opacity = opacity;
+            }
+        });
+        
+        modalContent.addEventListener('touchend', function(e) {
+            if (isSwiping) {
+                const touchY = e.changedTouches[0].clientY;
+                const deltaY = touchY - touchStartY;
+                
+                // If swiped down more than 100px, close modal
+                if (deltaY > 100) {
+                    closeFeedbackModal();
+                } else {
+                    // Snap back with animation
+                    modalContent.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    modalContent.style.transform = 'translateY(0)';
+                    modalContent.style.opacity = '1';
+                    
+                    setTimeout(function() {
+                        modalContent.classList.remove('swiping');
+                        modalContent.style.transform = '';
+                        modalContent.style.transition = '';
+                    }, 300);
+                }
+            }
+            
+            touchStartY = 0;
+            touchStartX = 0;
+            isSwiping = false;
+        });
+
+        // Star hover effect
+        document.querySelectorAll('.feedback-star').forEach(star => {
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                const stars = document.querySelectorAll('.feedback-star');
+                stars.forEach((s, index) => {
+                    if (index < rating) {
+                        s.classList.add('hover');
+                    } else {
+                        s.classList.remove('hover');
+                    }
+                });
+            });
+        });
+
+        document.getElementById('feedbackStars').addEventListener('mouseleave', function() {
+            document.querySelectorAll('.feedback-star').forEach(star => {
+                star.classList.remove('hover');
+            });
+        });
+    </script>
 </body>
 </html>

@@ -270,6 +270,7 @@
 
                 const client = data.client;
                 const links = data.links || [];
+                const feedback = data.feedback || { veryUseful: 0, goodIdea: 0, notUseful: 0, total: 0 };
 
                 const isActive = client.subscriptionActive && 
                                new Date(client.subscriptionEndDate) > new Date();
@@ -363,6 +364,28 @@
                             <div class="info-item">
                                 <div class="info-label">Has QR Code</div>
                                 <div class="info-value">${client.qrCode ? 'Yes' : 'No'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2 class="card-title">User Feedback Statistics</h2>
+                        <div class="info-grid">
+                            <div class="info-item" style="background: linear-gradient(135deg, #4CAF50, #45a049);">
+                                <div class="info-label" style="color: rgba(255, 255, 255, 0.9);">Very Useful</div>
+                                <div class="info-value" style="color: #fff; font-size: 24px; font-weight: bold;">${feedback.veryUseful || 0}</div>
+                            </div>
+                            <div class="info-item" style="background: linear-gradient(135deg, #4285F4, #357ae8);">
+                                <div class="info-label" style="color: rgba(255, 255, 255, 0.9);">Good Idea</div>
+                                <div class="info-value" style="color: #fff; font-size: 24px; font-weight: bold;">${feedback.goodIdea || 0}</div>
+                            </div>
+                            <div class="info-item" style="background: linear-gradient(135deg, #ff4444, #e63939);">
+                                <div class="info-label" style="color: rgba(255, 255, 255, 0.9);">Not Useful</div>
+                                <div class="info-value" style="color: #fff; font-size: 24px; font-weight: bold;">${feedback.notUseful || 0}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Total Feedback</div>
+                                <div class="info-value" style="font-size: 24px; font-weight: bold;">${feedback.total || 0}</div>
                             </div>
                         </div>
                     </div>

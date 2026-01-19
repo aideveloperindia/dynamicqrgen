@@ -255,6 +255,28 @@
             </div>
         </div>
 
+        <div class="section" style="margin-bottom: 25px;">
+            <h2 class="section-title">User Feedback Statistics</h2>
+            <div class="stats-grid" id="feedbackStatsGrid">
+                <div class="stat-card" style="background: linear-gradient(135deg, #4CAF50, #45a049);">
+                    <h3>Very Useful</h3>
+                    <div class="value" id="veryUsefulCount" style="color: #fff;">-</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4285F4, #357ae8);">
+                    <h3>Good Idea</h3>
+                    <div class="value" id="goodIdeaCount" style="color: #fff;">-</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #ff4444, #e63939);">
+                    <h3>Not Useful</h3>
+                    <div class="value" id="notUsefulCount" style="color: #fff;">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Feedback</h3>
+                    <div class="value" id="totalFeedback">-</div>
+                </div>
+            </div>
+        </div>
+
         <div class="section">
             <h2 class="section-title">All Clients</h2>
             <div id="clientsTable">
@@ -278,6 +300,14 @@
                     document.getElementById('totalQRCodes').textContent = data.stats.totalQRCodes;
                     document.getElementById('totalRevenue').textContent = `₹${data.stats.totalRevenue.toLocaleString('en-IN')}`;
                     document.getElementById('recentClients').textContent = data.stats.recentClients;
+                    
+                    // Load feedback statistics
+                    if (data.stats.feedback) {
+                        document.getElementById('veryUsefulCount').textContent = data.stats.feedback.veryUseful || 0;
+                        document.getElementById('goodIdeaCount').textContent = data.stats.feedback.goodIdea || 0;
+                        document.getElementById('notUsefulCount').textContent = data.stats.feedback.notUseful || 0;
+                        document.getElementById('totalFeedback').textContent = data.stats.feedback.total || 0;
+                    }
                 }
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -308,6 +338,7 @@
                                     <th>Paid</th>
                                     <th>Subscription</th>
                                     <th>Activated</th>
+                                    <th>Feedback</th>
                                     <th>Joined</th>
                                     <th>Actions</th>
                                 </tr>
@@ -322,6 +353,12 @@
                                        new Date(client.subscriptionEndDate).toLocaleDateString('en-IN') : 'N/A';
                         const isPaid = client.paymentCompleted || false;
                         const isActivated = client.accountActivated || false;
+                        
+                        // Feedback stats
+                        const feedback = client.feedback || { veryUseful: 0, goodIdea: 0, notUseful: 0, total: 0 };
+                        const feedbackText = feedback.total > 0 
+                            ? `VU: ${feedback.veryUseful}, GI: ${feedback.goodIdea}, NU: ${feedback.notUseful}`
+                            : 'No feedback';
                         
                         html += `
                             <tr>
@@ -343,6 +380,9 @@
                                     <span class="badge ${isActivated ? 'badge-active' : 'badge-inactive'}">
                                         ${isActivated ? 'Yes' : 'No'}
                                     </span>
+                                </td>
+                                <td style="font-size: 11px; color: #aaa;">
+                                    ${feedbackText}
                                 </td>
                                 <td>${new Date(client.createdAt).toLocaleDateString('en-IN')}</td>
                                 <td>

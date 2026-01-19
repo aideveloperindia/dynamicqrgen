@@ -4,6 +4,7 @@ const connectDB = require('../config/database');
 const User = require('../models/User');
 const Link = require('../models/Link');
 const Admin = require('../models/Admin');
+const Feedback = require('../models/Feedback');
 const bcrypt = require('bcryptjs');
 
 // Admin authentication middleware - Requires password authentication
@@ -195,6 +196,12 @@ router.get('/stats', adminAuth, async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentClients = await User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } });
 
+    // Feedback statistics (aggregate across all clients)
+    const veryUsefulCount = await Feedback.countDocuments({ feedbackType: 'very_useful' });
+    const goodIdeaCount = await Feedback.countDocuments({ feedbackType: 'good_idea' });
+    const notUsefulCount = await Feedback.countDocuments({ feedbackType: 'not_useful' });
+    const totalFeedback = veryUsefulCount + goodIdeaCount + notUsefulCount;
+
     res.json({
       success: true,
       stats: {
@@ -203,7 +210,13 @@ router.get('/stats', adminAuth, async (req, res) => {
         totalLinks,
         totalQRCodes,
         totalRevenue,
-        recentClients
+        recentClients,
+        feedback: {
+          veryUseful: veryUsefulCount,
+          goodIdea: goodIdeaCount,
+          notUseful: notUsefulCount,
+          total: totalFeedback
+        }
       }
     });
   } catch (error) {
@@ -227,9 +240,29 @@ router.get('/clients', adminAuth, async (req, res) => {
 
     const total = await User.countDocuments();
 
+    // Get feedback stats for each client
+    const clientsWithFeedback = await Promise.all(
+      clients.map(async (client) => {
+        const veryUseful = await Feedback.countDocuments({ userId: client._id, feedbackType: 'very_useful' });
+        const goodIdea = await Feedback.countDocuments({ userId: client._id, feedbackType: 'good_idea' });
+        const notUseful = await Feedback.countDocuments({ userId: client._id, feedbackType: 'not_useful' });
+        const totalFeedback = veryUseful + goodIdea + notUseful;
+
+        return {
+          ...client.toObject(),
+          feedback: {
+            veryUseful,
+            goodIdea,
+            notUseful,
+            total: totalFeedback
+          }
+        };
+      })
+    );
+
     res.json({
       success: true,
-      clients,
+      clients: clientsWithFeedback,
       pagination: {
         page,
         limit,
@@ -253,10 +286,22 @@ router.get('/clients/:id/api', adminAuth, async (req, res) => {
 
     const links = await Link.find({ userId: client._id, isActive: true }).sort({ order: 1 });
 
+    // Get feedback statistics for this client
+    const veryUseful = await Feedback.countDocuments({ userId: client._id, feedbackType: 'very_useful' });
+    const goodIdea = await Feedback.countDocuments({ userId: client._id, feedbackType: 'good_idea' });
+    const notUseful = await Feedback.countDocuments({ userId: client._id, feedbackType: 'not_useful' });
+    const totalFeedback = veryUseful + goodIdea + notUseful;
+
     res.json({
       success: true,
       client,
-      links
+      links,
+      feedback: {
+        veryUseful,
+        goodIdea,
+        notUseful,
+        total: totalFeedback
+      }
     });
   } catch (error) {
     console.error('Admin client details error:', error);
