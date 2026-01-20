@@ -212,6 +212,10 @@
             color: #FF6B6B;
         }
 
+        .icon-link.bar i {
+            color: #FFB800;
+        }
+
         .qr-download-section {
             width: 100%;
             text-align: center;
@@ -861,52 +865,37 @@
         <div class="icons-container">
             <% 
             const linksArray = links || [];
-            // Include all links including payment
-            const topRow = linksArray.slice(0, 3);
-            const bottomRow = linksArray.slice(3);
+            
+            // Group links by category type
+            const foodDrinksCategories = ['menu', 'bar', 'products', 'services'];
+            const socialMediaCategories = ['instagram', 'facebook', 'whatsapp', 'youtube', 'twitter', 'linkedin', 'google'];
+            const otherCategories = ['website', 'maps'];
+            
+            // Separate links into groups
+            const foodDrinksLinks = linksArray.filter(link => foodDrinksCategories.includes(link.category));
+            const socialMediaLinks = linksArray.filter(link => socialMediaCategories.includes(link.category));
+            const otherLinks = linksArray.filter(link => otherCategories.includes(link.category));
+            const paymentLinks = linksArray.filter(link => link.category === 'payment');
+            const customLinks = linksArray.filter(link => 
+                !foodDrinksCategories.includes(link.category) && 
+                !socialMediaCategories.includes(link.category) && 
+                !otherCategories.includes(link.category) && 
+                link.category !== 'payment'
+            );
+            
+            // Combine groups in order: food/drinks, social media, others/custom, payment
+            const groupedLinks = [
+                ...foodDrinksLinks,
+                ...socialMediaLinks,
+                ...otherLinks,
+                ...customLinks,
+                ...paymentLinks
+            ];
             %>
             
-            <% if (topRow.length > 0) { %>
-            <div class="icons-row top-row">
-                <% topRow.forEach((link) => { %>
-                    <% 
-                    const isUPILink = link.url && (
-                        link.url.toLowerCase().startsWith('upi://') ||
-                        link.url.toLowerCase().startsWith('upiqr://')
-                    );
-                    const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
-                    %>
-                    <a href="<%= linkHref %>" 
-                       class="icon-link <%= link.category %>"
-                       <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
-                        <% if (link.category === 'payment') { %>
-                            <img src="/images/cred-icon.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
-                        <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
-                            <img src="<%= link.icon %>" alt="<%= link.displayName %>">
-                        <% } else { %>
-                            <i class="<%= link.icon %>"></i>
-                        <% } %>
-                        <% 
-                        // For payment category, always show display name if it exists
-                        const shouldShowLabel = link.category === 'payment' 
-                          ? (link.displayName && link.displayName.trim() !== '')
-                          : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
-                        %>
-                        <% if (shouldShowLabel) { %>
-                            <% if (link.category === 'payment') { %>
-                                <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
-                            <% } else { %>
-                                <span class="icon-link-label"><%= link.displayName %></span>
-                            <% } %>
-                        <% } %>
-                    </a>
-                <% }); %>
-            </div>
-            <% } %>
-            
-            <% if (bottomRow.length > 0) { %>
-            <div class="icons-row bottom-row">
-                <% bottomRow.forEach((link) => { %>
+            <% if (groupedLinks.length > 0) { %>
+            <div class="icons-row">
+                <% groupedLinks.forEach((link) => { %>
                     <% 
                     const isUPILink = link.url && (
                         link.url.toLowerCase().startsWith('upi://') ||
@@ -1238,9 +1227,9 @@
             const feedbackButtonText = document.getElementById('feedbackButtonText');
             
             if (hasGivenFeedback) {
-                // Update button to show "Change" if feedback already given
+                // Update button to show "Feedback" if feedback already given
                 feedbackButton.classList.add('submitted');
-                feedbackButtonText.textContent = 'Change';
+                feedbackButtonText.textContent = 'Feedback';
             }
         })();
         
@@ -1365,11 +1354,11 @@
                     localStorage.setItem(`qr_feedback_type_${slug}`, feedbackType);
                     localStorage.setItem(`qr_feedback_time_${slug}`, Date.now().toString());
                     
-                    // Update button to show "Change"
+                    // Update button to show "Feedback"
                     const feedbackButton = document.getElementById('feedbackButton');
                     const feedbackButtonText = document.getElementById('feedbackButtonText');
                     feedbackButton.classList.add('submitted');
-                    feedbackButtonText.textContent = 'Change';
+                    feedbackButtonText.textContent = 'Feedback';
                     
                     // Close modal
                     closeFeedbackModal();

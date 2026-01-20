@@ -71,6 +71,7 @@ const DEFAULT_CATEGORIES = {
   google: { icon: 'fab fa-google', name: 'Google Reviews', color: '#EA4335' },
   maps: { icon: 'fas fa-map-marker-alt', name: 'Google Maps', color: '#4285F4' },
   menu: { icon: 'fas fa-utensils', name: 'Menu Card', color: '#FF6B6B' },
+  bar: { icon: 'fas fa-cocktail', name: 'Bar', color: '#FFB800' },
   products: { icon: 'fas fa-shopping-bag', name: 'Products', color: '#9C27B0' },
   // Generic services icon (briefcase) to represent any service type
   services: { icon: 'fas fa-briefcase', name: 'Services', color: '#FF9800' },
@@ -433,10 +434,10 @@ router.post('/link', auth, upload.fields([{ name: 'customIcon', maxCount: 1 }, {
     let menuCardImages = [];
     let parsedMenuItems = [];
     
-    if (category === 'menu' || category === 'products' || category === 'services') {
-      // Products and services categories only support items, not images
-      if (category === 'products' || category === 'services') {
-        menuType = 'items'; // Force items for products and services
+    if (category === 'menu' || category === 'bar' || category === 'products' || category === 'services') {
+      // Bar, products and services categories only support items, not images
+      if (category === 'bar' || category === 'products' || category === 'services') {
+        menuType = 'items'; // Force items for bar, products and services
       }
       
       if (menuType === 'images' && category === 'menu') {

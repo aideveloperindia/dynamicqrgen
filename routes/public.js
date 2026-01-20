@@ -818,13 +818,13 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
       `);
     }
 
-    // For menu, products, and services categories, display based on menu type
-    if (link.category === 'menu' || link.category === 'products' || link.category === 'services') {
-      const menuType = link.menuType || (link.category === 'products' || link.category === 'services' ? 'items' : 'images');
+    // For menu, bar, products, and services categories, display based on menu type
+    if (link.category === 'menu' || link.category === 'bar' || link.category === 'products' || link.category === 'services') {
+      const menuType = link.menuType || (link.category === 'bar' || link.category === 'products' || link.category === 'services' ? 'items' : 'images');
       
       // Display menu/items in table format
       if (menuType === 'items' && link.menuItems && link.menuItems.length > 0) {
-        const pageTitle = link.category === 'products' ? 'Products' : (link.category === 'services' ? 'Services' : 'Menu');
+        const pageTitle = link.category === 'bar' ? 'Bar' : (link.category === 'products' ? 'Products' : (link.category === 'services' ? 'Services' : 'Menu'));
         return res.send(`
           <!DOCTYPE html>
           <html>
@@ -959,7 +959,7 @@ router.get('/:slug/redirect/:linkId', async (req, res) => {
           </head>
           <body>
             <div class="menu-container">
-              <h1 class="menu-title">${link.displayName || (link.category === 'products' ? 'Products' : (link.category === 'services' ? 'Services' : 'Menu'))}</h1>
+              <h1 class="menu-title">${link.displayName || (link.category === 'bar' ? 'Bar' : (link.category === 'products' ? 'Products' : (link.category === 'services' ? 'Services' : 'Menu')))}</h1>
               ${link.menuItems.map(category => `
                 <div class="menu-category">
                   <h2 class="category-name">${category.categoryName}</h2>

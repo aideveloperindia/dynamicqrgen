@@ -957,21 +957,21 @@
                             setMenuType('images');
                         }
                     }
-                } else if (selectedCategory === 'products') {
-                    // Show menu fields when products category selected (same as menu, but only items)
+                } else if (selectedCategory === 'bar' || selectedCategory === 'products') {
+                    // Show menu fields when bar or products category selected (same as menu, but only items)
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
                     if (paymentFields) paymentFields.style.display = 'none';
                     if (menuFields) {
                         menuFields.style.display = 'block';
-                        // Hide image upload option for products, only show items
+                        // Hide image upload option for bar/products, only show items
                         const menuTypeImages = document.getElementById('menuTypeImages');
                         const menuTypeItems = document.getElementById('menuTypeItems');
                         const menuImagesOption = document.getElementById('menuImagesOption');
                         if (menuTypeImages) menuTypeImages.style.display = 'none';
                         if (menuTypeItems) menuTypeItems.style.display = 'none';
                         if (menuImagesOption) menuImagesOption.style.display = 'none';
-                        // Products only support items
+                        // Bar and products only support items
                         if (typeof setMenuType === 'function') {
                             setMenuType('items');
                         }
@@ -1111,10 +1111,10 @@
             const linkId = document.getElementById('linkId').value;
             if (linkId) formData.append('linkId', linkId);
             
-            // Handle menu, products, and services categories
-            if (selectedCategory === 'menu' || selectedCategory === 'products' || selectedCategory === 'services') {
-                // Products and services always use items, menu can use images or items
-                const menuType = (selectedCategory === 'products' || selectedCategory === 'services') ? 'items' : (typeof currentMenuType !== 'undefined' ? currentMenuType : 'images');
+            // Handle menu, bar, products, and services categories
+            if (selectedCategory === 'menu' || selectedCategory === 'bar' || selectedCategory === 'products' || selectedCategory === 'services') {
+                // Bar, products and services always use items, menu can use images or items
+                const menuType = (selectedCategory === 'bar' || selectedCategory === 'products' || selectedCategory === 'services') ? 'items' : (typeof currentMenuType !== 'undefined' ? currentMenuType : 'images');
                 formData.append('menuType', menuType);
                 
                 if (menuType === 'items') {
@@ -1218,9 +1218,10 @@
                 
                 // Wait for menu fields to be shown, then load menu data
                 setTimeout(() => {
-                    if (category === 'menu') {
+                    if (category === 'menu' || category === 'bar' || category === 'products' || category === 'services') {
                         // Parse menu data
-                        let parsedMenuType = menuType || 'images';
+                        // Bar, products, and services always use 'items', menu can use 'images' or 'items'
+                        let parsedMenuType = menuType || (category === 'menu' ? 'images' : 'items');
                         let parsedMenuItems = [];
                         let parsedMenuCardImages = [];
                         
@@ -1249,8 +1250,8 @@
                             setMenuType(parsedMenuType);
                         }
                         
-                        // Load menu images if type is 'images'
-                        if (parsedMenuType === 'images' && parsedMenuCardImages.length > 0) {
+                        // Load menu images if type is 'images' (only for menu category)
+                        if (parsedMenuType === 'images' && category === 'menu' && parsedMenuCardImages.length > 0) {
                             const preview = document.getElementById('menuCardPreview');
                             if (preview) {
                                 preview.innerHTML = '';
