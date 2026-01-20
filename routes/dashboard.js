@@ -183,8 +183,9 @@ router.post('/update-profile', auth, upload.fields([{ name: 'logo', maxCount: 1 
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || '';
     if (address !== undefined) user.address = address || '';
     // Handle showCallButton checkbox - if undefined, it means unchecked (false)
+    // Checkbox sends 'on' when checked, or is undefined when unchecked
     if (showCallButton !== undefined) {
-      user.showCallButton = showCallButton === 'true' || showCallButton === true;
+      user.showCallButton = showCallButton === 'true' || showCallButton === true || showCallButton === 'on';
     } else {
       // If checkbox is not in request (unchecked), set to false
       user.showCallButton = false;

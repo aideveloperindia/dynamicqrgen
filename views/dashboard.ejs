@@ -466,7 +466,7 @@
                     <label>Phone Number</label>
                     <input type="tel" name="phoneNumber" value="<%= user.phoneNumber || '' %>" placeholder="+91 9876543210">
                     <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer;">
-                        <input type="checkbox" name="showCallButton" <%= user.showCallButton !== false ? 'checked' : '' %> style="width: 18px; height: 18px; cursor: pointer;">
+                        <input type="checkbox" name="showCallButton" value="true" <%= user.showCallButton !== false ? 'checked' : '' %> style="width: 18px; height: 18px; cursor: pointer;">
                         <span style="color: #ccc; font-size: 14px;">Show call button on client page</span>
                     </label>
                 </div>
