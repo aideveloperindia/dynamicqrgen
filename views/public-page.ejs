@@ -550,7 +550,7 @@
                 width: 36px;
                 height: 36px;
             }
-            
+
             .icon-link img[src="/images/cred-icon.png"] {
                 width: 72px !important;
                 height: 72px !important;
@@ -882,26 +882,21 @@
                 !otherCategories.includes(link.category) && 
                 link.category !== 'payment'
             );
-            
-            // Combine groups in order: food/drinks, social media, others/custom, payment
-            const groupedLinks = [
-                ...foodDrinksLinks,
-                ...socialMediaLinks,
-                ...otherLinks,
-                ...customLinks,
-                ...paymentLinks
-            ];
             %>
             
-            <% if (groupedLinks.length > 0) { %>
+            <!-- Food/Drinks Row: Menu, Bar, Products, Services -->
+            <% if (foodDrinksLinks.length > 0) { %>
             <div class="icons-row">
-                <% groupedLinks.forEach((link) => { %>
+                <% foodDrinksLinks.forEach((link) => { %>
                     <% 
                     const isUPILink = link.url && (
                         link.url.toLowerCase().startsWith('upi://') ||
                         link.url.toLowerCase().startsWith('upiqr://')
                     );
                     const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
+                    const shouldShowLabel = link.category === 'payment' 
+                      ? (link.displayName && link.displayName.trim() !== '')
+                      : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
                     %>
                     <a href="<%= linkHref %>" 
                        class="icon-link <%= link.category %>"
@@ -913,12 +908,144 @@
                         <% } else { %>
                             <i class="<%= link.icon %>"></i>
                         <% } %>
-                        <% 
-                        // For payment category, always show display name if it exists
-                        const shouldShowLabel = link.category === 'payment' 
-                          ? (link.displayName && link.displayName.trim() !== '')
-                          : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
-                        %>
+                        <% if (shouldShowLabel) { %>
+                            <% if (link.category === 'payment') { %>
+                                <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
+                            <% } else { %>
+                                <span class="icon-link-label"><%= link.displayName %></span>
+                            <% } %>
+                        <% } %>
+                    </a>
+                <% }); %>
+            </div>
+            <% } %>
+            
+            <!-- Social Media Row -->
+            <% if (socialMediaLinks.length > 0) { %>
+            <div class="icons-row">
+                <% socialMediaLinks.forEach((link) => { %>
+                    <% 
+                    const isUPILink = link.url && (
+                        link.url.toLowerCase().startsWith('upi://') ||
+                        link.url.toLowerCase().startsWith('upiqr://')
+                    );
+                    const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
+                    const shouldShowLabel = link.category === 'payment' 
+                      ? (link.displayName && link.displayName.trim() !== '')
+                      : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
+                    %>
+                    <a href="<%= linkHref %>" 
+                       class="icon-link <%= link.category %>"
+                       <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
+                        <% if (link.category === 'payment') { %>
+                            <img src="/images/cred-icon.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
+                        <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                            <img src="<%= link.icon %>" alt="<%= link.displayName %>">
+                        <% } else { %>
+                            <i class="<%= link.icon %>"></i>
+                        <% } %>
+                        <% if (shouldShowLabel) { %>
+                            <% if (link.category === 'payment') { %>
+                                <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
+                            <% } else { %>
+                                <span class="icon-link-label"><%= link.displayName %></span>
+                            <% } %>
+                        <% } %>
+                    </a>
+                <% }); %>
+            </div>
+            <% } %>
+            
+            <!-- Others Row: Website, Maps, Custom -->
+            <% if (otherLinks.length > 0 || customLinks.length > 0) { %>
+            <div class="icons-row">
+                <% otherLinks.forEach((link) => { %>
+                    <% 
+                    const isUPILink = link.url && (
+                        link.url.toLowerCase().startsWith('upi://') ||
+                        link.url.toLowerCase().startsWith('upiqr://')
+                    );
+                    const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
+                    const shouldShowLabel = link.category === 'payment' 
+                      ? (link.displayName && link.displayName.trim() !== '')
+                      : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
+                    %>
+                    <a href="<%= linkHref %>" 
+                       class="icon-link <%= link.category %>"
+                       <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
+                        <% if (link.category === 'payment') { %>
+                            <img src="/images/cred-icon.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
+                        <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                            <img src="<%= link.icon %>" alt="<%= link.displayName %>">
+                        <% } else { %>
+                            <i class="<%= link.icon %>"></i>
+                        <% } %>
+                        <% if (shouldShowLabel) { %>
+                            <% if (link.category === 'payment') { %>
+                                <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
+                            <% } else { %>
+                                <span class="icon-link-label"><%= link.displayName %></span>
+                            <% } %>
+                        <% } %>
+                    </a>
+                <% }); %>
+                <% customLinks.forEach((link) => { %>
+                    <% 
+                    const isUPILink = link.url && (
+                        link.url.toLowerCase().startsWith('upi://') ||
+                        link.url.toLowerCase().startsWith('upiqr://')
+                    );
+                    const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
+                    const shouldShowLabel = link.category === 'payment' 
+                      ? (link.displayName && link.displayName.trim() !== '')
+                      : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
+                    %>
+                    <a href="<%= linkHref %>" 
+                       class="icon-link <%= link.category %>"
+                       <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
+                        <% if (link.category === 'payment') { %>
+                            <img src="/images/cred-icon.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
+                        <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                            <img src="<%= link.icon %>" alt="<%= link.displayName %>">
+                        <% } else { %>
+                            <i class="<%= link.icon %>"></i>
+                        <% } %>
+                        <% if (shouldShowLabel) { %>
+                            <% if (link.category === 'payment') { %>
+                                <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
+                            <% } else { %>
+                                <span class="icon-link-label"><%= link.displayName %></span>
+                            <% } %>
+                        <% } %>
+                    </a>
+                <% }); %>
+        </div>
+            <% } %>
+            
+            <!-- Payment Row -->
+            <% if (paymentLinks.length > 0) { %>
+            <div class="icons-row">
+                <% paymentLinks.forEach((link) => { %>
+                    <% 
+                    const isUPILink = link.url && (
+                        link.url.toLowerCase().startsWith('upi://') ||
+                        link.url.toLowerCase().startsWith('upiqr://')
+                    );
+                    const linkHref = isUPILink ? link.url : `/p/${user.uniqueSlug}/redirect/${link._id}`;
+                    const shouldShowLabel = link.category === 'payment' 
+                      ? (link.displayName && link.displayName.trim() !== '')
+                      : (link.showDisplayName !== false && link.displayName && link.displayName.trim() !== '');
+                    %>
+                    <a href="<%= linkHref %>" 
+                       class="icon-link <%= link.category %>"
+                       <% if (isUPILink) { %>data-upi-link="<%= link.url %>"<% } %>>
+                        <% if (link.category === 'payment') { %>
+                            <img src="/images/cred-icon.png" alt="<%= link.displayName %>" style="width: 76px; height: 76px; object-fit: contain;">
+                        <% } else if (link.categoryType === 'custom' && (link.icon.startsWith('data:image') || link.icon.startsWith('/'))) { %>
+                            <img src="<%= link.icon %>" alt="<%= link.displayName %>">
+                        <% } else { %>
+                            <i class="<%= link.icon %>"></i>
+                        <% } %>
                         <% if (shouldShowLabel) { %>
                             <% if (link.category === 'payment') { %>
                                 <span class="icon-link-label payment-label"><%- (link.displayName || '').replace('/', '/<br>') %></span>
@@ -951,8 +1078,8 @@
                                 <button class="copy-btn" onclick="copyToClipboard('<%= user.phoneNumber %>', this, 'phoneValue')">
                                     <i class="fas fa-copy"></i> Copy
                                 </button>
-                            </div>
-                        <% } %>
+            </div>
+            <% } %>
                         <% if (user.upiId && user.upiId.trim() !== '') { %>
                             <div class="payment-dropdown-item">
                                 <div style="flex: 1;">
@@ -1171,20 +1298,20 @@
                 <div class="footer-built-by">
                     <span style="color: #ffffff;">Built by</span>
                     <a href="https://aideveloperindia.store" class="footer-link" target="_blank" style="color: #ffffff;">
-                        <img src="/images/A-logo-transparent.png" alt="AI Developer India" class="footer-logo">
+                    <img src="/images/A-logo-transparent.png" alt="AI Developer India" class="footer-logo">
                         <span>AI Developer India</span>
-                    </a>
-                </div>
+                </a>
+            </div>
                 <!-- HIDDEN FOR NOW - Website Statistics feature (kept as module for future use) -->
                 <div class="footer-stats" id="footerStats" style="display: none;">
                     <div class="footer-stat-item">
                         <span class="stat-label">Users:</span>
                         <span class="stat-value" id="footerUsersCount">-</span>
-                    </div>
+        </div>
                     <div class="footer-stat-item">
                         <span class="stat-label">Clients:</span>
                         <span class="stat-value" id="footerClientsCount">-</span>
-                    </div>
+    </div>
                 </div>
             </div>
         </div>
