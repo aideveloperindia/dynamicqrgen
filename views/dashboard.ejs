@@ -597,7 +597,7 @@
                                     <% if (defaultCategories[cat].isImage) { %>
                                         <img src="<%= defaultCategories[cat].icon %>" alt="<%= defaultCategories[cat].name %>" style="width: 24px; height: 24px; object-fit: contain;">
                                     <% } else { %>
-                                        <i class="<%= defaultCategories[cat].icon %>"></i>
+                                    <i class="<%= defaultCategories[cat].icon %>"></i>
                                     <% } %>
                                     <span><%= defaultCategories[cat].name %></span>
                                 </div>
@@ -683,10 +683,58 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group" id="customIconGroup" style="display: none;">
                         <label>Icon</label>
                         <input type="file" id="customIcon" name="customIcon" accept="image/*">
+                    </div>
+                    
+                    <!-- Custom-specific fields (shown only when custom category selected) -->
+                    <div id="customFields" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="font-size: 14px; color: #ccc; margin-bottom: 10px; display: block;">Custom Link Type</label>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="custom-type-btn" id="customTypeUrl" onclick="setCustomType('url')" style="flex: 1; padding: 10px; background: rgba(66, 133, 244, 0.2); border: 2px solid rgba(66, 133, 244, 0.5); border-radius: 8px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                                    <i class="fas fa-link"></i> URL Link
+                                </button>
+                                <button type="button" class="custom-type-btn" id="customTypeImages" onclick="setCustomType('images')" style="flex: 1; padding: 10px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                                    <i class="fas fa-images"></i> Upload Images
+                                </button>
+                                <button type="button" class="custom-type-btn" id="customTypeItems" onclick="setCustomType('items')" style="flex: 1; padding: 10px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                                    <i class="fas fa-list"></i> Create Items
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- URL Option (default) -->
+                        <div id="customUrlOption" style="display: block;">
+                            <!-- URL field is already shown above, no additional fields needed -->
+                        </div>
+                        
+                        <!-- Images Upload Option -->
+                        <div id="customImagesOption" style="display: none;">
+                            <div class="form-group">
+                                <label style="font-size: 13px; color: #ccc;">Photos <small style="color: #888;">(Up to 3 images)</small></label>
+                                <input type="file" id="customCardImage" name="customCardImage" accept="image/*" multiple>
+                                <small style="color: #888; font-size: 11px; margin-top: 4px; display: block;">Upload up to 3 images (Max 100KB each). These will be displayed when customers click the link.</small>
+                                <div id="customCardPreview" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <!-- Preview images will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Items Option -->
+                        <div id="customItemsOption" style="display: none;">
+                            <div class="form-group">
+                                <label style="font-size: 13px; color: #ccc; margin-bottom: 10px; display: block;">Create Categories and Items</label>
+                                <div id="customCategoriesContainer">
+                                    <!-- Categories will be added here dynamically -->
+                                </div>
+                                <button type="button" onclick="addCustomCategory()" style="margin-top: 15px; padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; cursor: pointer; font-size: 12px;">
+                                    <i class="fas fa-plus"></i> Add Category
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <script>
@@ -851,6 +899,182 @@
                             
                             return categories;
                         }
+                        
+                        // Custom type management
+                        let currentCustomType = 'url';
+                        
+                        function setCustomType(type) {
+                            currentCustomType = type;
+                            const urlBtn = document.getElementById('customTypeUrl');
+                            const imagesBtn = document.getElementById('customTypeImages');
+                            const itemsBtn = document.getElementById('customTypeItems');
+                            const urlOption = document.getElementById('customUrlOption');
+                            const imagesOption = document.getElementById('customImagesOption');
+                            const itemsOption = document.getElementById('customItemsOption');
+                            
+                            // Reset all buttons
+                            [urlBtn, imagesBtn, itemsBtn].forEach(btn => {
+                                if (btn) {
+                                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                                    btn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                }
+                            });
+                            
+                            // Hide all options
+                            if (urlOption) urlOption.style.display = 'none';
+                            if (imagesOption) imagesOption.style.display = 'none';
+                            if (itemsOption) itemsOption.style.display = 'none';
+                            
+                            if (type === 'url') {
+                                if (urlBtn) {
+                                    urlBtn.style.background = 'rgba(66, 133, 244, 0.5)';
+                                    urlBtn.style.borderColor = 'rgba(66, 133, 244, 1)';
+                                }
+                                if (urlOption) urlOption.style.display = 'block';
+                            } else if (type === 'images') {
+                                if (imagesBtn) {
+                                    imagesBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+                                    imagesBtn.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                                }
+                                if (imagesOption) imagesOption.style.display = 'block';
+                            } else if (type === 'items') {
+                                if (itemsBtn) {
+                                    itemsBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+                                    itemsBtn.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                                }
+                                if (itemsOption) itemsOption.style.display = 'block';
+                            }
+                        }
+                        
+                        // Custom category counter
+                        let customCategoryCounter = 0;
+                        
+                        function addCustomCategory() {
+                            customCategoryCounter++;
+                            const categoryId = 'customCategory_' + customCategoryCounter;
+                            const container = document.getElementById('customCategoriesContainer');
+                            
+                            const categoryDiv = document.createElement('div');
+                            categoryDiv.id = categoryId;
+                            categoryDiv.style.cssText = 'margin-bottom: 20px; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);';
+                            
+                            categoryDiv.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <input type="text" class="custom-category-name-input" placeholder="Category Name" 
+                                           style="flex: 1; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 13px; margin-right: 10px;">
+                                    <button type="button" onclick="removeCustomCategory('${categoryId}')" 
+                                            style="padding: 8px 12px; background: rgba(255, 0, 0, 0.3); border: 1px solid rgba(255, 0, 0, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 12px;">
+                                        <i class="fas fa-trash"></i> Remove Category
+                                    </button>
+                                </div>
+                                <div class="custom-items-list" style="margin-bottom: 10px;">
+                                    <!-- Items will be added here -->
+                                </div>
+                                <button type="button" onclick="addCustomItem('${categoryId}')" 
+                                        style="padding: 6px 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; cursor: pointer; font-size: 11px;">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            `;
+                            
+                            container.appendChild(categoryDiv);
+                        }
+                        
+                        function addCustomItem(categoryId) {
+                            const categoryDiv = document.getElementById(categoryId);
+                            if (!categoryDiv) return;
+                            
+                            const itemsList = categoryDiv.querySelector('.custom-items-list');
+                            const itemId = 'customItem_' + Date.now();
+                            
+                            const itemDiv = document.createElement('div');
+                            itemDiv.id = itemId;
+                            itemDiv.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+                            
+                            itemDiv.innerHTML = `
+                                <input type="text" class="custom-item-name-input" placeholder="Item Name" 
+                                       style="flex: 2; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 12px;">
+                                <input type="number" class="custom-item-price-input" placeholder="Price (₹)" step="0.01" min="0" 
+                                       style="flex: 1; padding: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 12px;">
+                                <button type="button" onclick="removeCustomItem('${itemId}')" 
+                                        style="padding: 8px 12px; background: rgba(255, 0, 0, 0.3); border: 1px solid rgba(255, 0, 0, 0.5); border-radius: 6px; color: #fff; cursor: pointer; font-size: 11px;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            
+                            itemsList.appendChild(itemDiv);
+                        }
+                        
+                        function removeCustomItem(itemId) {
+                            const itemDiv = document.getElementById(itemId);
+                            if (itemDiv) itemDiv.remove();
+                        }
+                        
+                        function removeCustomCategory(categoryId) {
+                            const categoryDiv = document.getElementById(categoryId);
+                            if (categoryDiv) categoryDiv.remove();
+                        }
+                        
+                        function getCustomItems() {
+                            const categories = [];
+                            const categoryDivs = document.querySelectorAll('#customCategoriesContainer > div');
+                            
+                            categoryDivs.forEach(categoryDiv => {
+                                const categoryNameInput = categoryDiv.querySelector('.custom-category-name-input');
+                                const categoryName = categoryNameInput ? categoryNameInput.value.trim() : '';
+                                
+                                if (categoryName) {
+                                    const items = [];
+                                    const itemDivs = categoryDiv.querySelectorAll('.custom-items-list > div');
+                                    
+                                    itemDivs.forEach(itemDiv => {
+                                        const itemNameInput = itemDiv.querySelector('.custom-item-name-input');
+                                        const itemPriceInput = itemDiv.querySelector('.custom-item-price-input');
+                                        
+                                        const itemName = itemNameInput ? itemNameInput.value.trim() : '';
+                                        const itemPrice = itemPriceInput ? parseFloat(itemPriceInput.value) : 0;
+                                        
+                                        if (itemName && !isNaN(itemPrice) && itemPrice >= 0) {
+                                            items.push({
+                                                name: itemName,
+                                                price: itemPrice
+                                            });
+                                        }
+                                    });
+                                    
+                                    if (items.length > 0) {
+                                        categories.push({
+                                            categoryName: categoryName,
+                                            items: items
+                                        });
+                                    }
+                                }
+                            });
+                            
+                            return categories;
+                        }
+                        
+                        // Preview custom card images (up to 3)
+                        document.getElementById('customCardImage')?.addEventListener('change', function(e) {
+                            const files = Array.from(e.target.files).slice(0, 3); // Limit to 3 files
+                            const preview = document.getElementById('customCardPreview');
+                            
+                            // Clear existing previews
+                            if (preview) preview.innerHTML = '';
+                            
+                            if (files.length > 0 && preview) {
+                                files.forEach((file, index) => {
+                                    const reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        const img = document.createElement('img');
+                                        img.src = e.target.result;
+                                        img.alt = 'Custom Preview ' + (index + 1);
+                                        img.style.cssText = 'max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid #333; margin: 5px; object-fit: contain; background: white; padding: 5px;';
+                                        preview.appendChild(img);
+                                    };
+                                    reader.readAsDataURL(file);
+                                });
+                            }
+                        });
                     </script>
 
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -880,7 +1104,7 @@
                                 </div>
                                 <div>
                                     <strong><%= link.displayName %></strong>
-                                    <span><%= link.url %></span>
+                                <span><%= link.url %></span>
                                 </div>
                             </div>
                             <div class="link-actions">
@@ -900,7 +1124,7 @@
     <script>
         let selectedCategory = null;
         let selectedCategoryType = null;
-        
+
         document.querySelectorAll('.category-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.category-option').forEach(opt => opt.classList.remove('selected'));
@@ -916,12 +1140,20 @@
                 if (selectedCategoryType === 'custom') {
                     customIconGroup.style.display = 'block';
                     document.getElementById('customIcon').required = true;
+                    const customFields = document.getElementById('customFields');
+                    if (customFields) customFields.style.display = 'block';
+                    // Set default custom type to 'url'
+                    if (typeof setCustomType === 'function') {
+                        setCustomType('url');
+                    }
                     if (paymentFields) paymentFields.style.display = 'none';
                     if (menuFields) menuFields.style.display = 'none';
                 } else if (selectedCategory === 'payment') {
                     // Show payment fields when payment category selected
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
+                    const customFields = document.getElementById('customFields');
+                    if (customFields) customFields.style.display = 'none';
                     if (paymentFields) {
                         paymentFields.style.display = 'block';
                         // Don't auto-generate - let user choose
@@ -944,6 +1176,8 @@
                     // Show menu fields when menu category selected
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
+                    const customFields = document.getElementById('customFields');
+                    if (customFields) customFields.style.display = 'none';
                     if (paymentFields) paymentFields.style.display = 'none';
                     if (menuFields) {
                         menuFields.style.display = 'block';
@@ -961,6 +1195,8 @@
                     // Show menu fields when bar or products category selected (same as menu, but only items)
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
+                    const customFields = document.getElementById('customFields');
+                    if (customFields) customFields.style.display = 'none';
                     if (paymentFields) paymentFields.style.display = 'none';
                     if (menuFields) {
                         menuFields.style.display = 'block';
@@ -980,6 +1216,8 @@
                     // Show menu fields when services category selected (same as products, only items)
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
+                    const customFields = document.getElementById('customFields');
+                    if (customFields) customFields.style.display = 'none';
                     if (paymentFields) paymentFields.style.display = 'none';
                     if (menuFields) {
                         menuFields.style.display = 'block';
@@ -998,12 +1236,14 @@
                 } else {
                     customIconGroup.style.display = 'none';
                     document.getElementById('customIcon').required = false;
+                    const customFields = document.getElementById('customFields');
+                    if (customFields) customFields.style.display = 'none';
                     if (paymentFields) paymentFields.style.display = 'none';
                     if (menuFields) menuFields.style.display = 'none';
                 }
             });
         });
-        
+
         function generatePaymentLink() {
             // Generate from profile values (server-side)
             const upiId = '<%= user.upiId || '' %>';
@@ -1120,14 +1360,41 @@
                 if (menuType === 'items') {
                     const menuItems = typeof getMenuItems === 'function' ? getMenuItems() : [];
                     formData.append('menuItems', JSON.stringify(menuItems));
+                } else if (menuType === 'images') {
+                    const menuCardImageInput = document.getElementById('menuCardImage');
+                    if (menuCardImageInput && menuCardImageInput.files) {
+                        Array.from(menuCardImageInput.files).forEach((file, index) => {
+                            formData.append('menuCardImage', file);
+                        });
+                    }
                 }
             }
             
+            // Handle custom category with three types: url, images, items
             if (selectedCategoryType === 'custom') {
                 const fileInput = document.getElementById('customIcon');
                 if (fileInput.files[0]) {
                     formData.append('customIcon', fileInput.files[0]);
                 }
+                
+                // Determine custom type (default to 'url' if not set)
+                const customType = typeof currentCustomType !== 'undefined' ? currentCustomType : 'url';
+                formData.append('menuType', customType);
+                
+                if (customType === 'images') {
+                    // Handle custom images upload
+                    const customCardImageInput = document.getElementById('customCardImage');
+                    if (customCardImageInput && customCardImageInput.files) {
+                        Array.from(customCardImageInput.files).forEach((file, index) => {
+                            formData.append('menuCardImage', file);
+                        });
+                    }
+                } else if (customType === 'items') {
+                    // Handle custom items
+                    const customItems = typeof getCustomItems === 'function' ? getCustomItems() : [];
+                    formData.append('menuItems', JSON.stringify(customItems));
+                }
+                // For 'url' type, no additional data needed (URL is already in formData)
             }
 
             const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -1515,13 +1782,13 @@
                     <img src="/images/A-logo-transparent.png" alt="AI Developer India" style="height: 20px; width: auto; display: block;">
                     <span>AI Developer India</span>
                 </a>
-            </div>
+                    </div>
             <!-- HIDDEN FOR NOW - Website Statistics feature (kept as module for future use) -->
             <div class="footer-stats" id="footerStats" style="display: none;">
                 <div class="footer-stat-item" style="color: #666; font-size: 12px;">
                     <span class="stat-label" style="font-size: 12px; opacity: 0.7; margin-right: 6px;">Users:</span>
                     <span class="stat-value" id="footerUsersCount" style="font-weight: 600; color: #4CAF50; font-size: 12px;">-</span>
-                </div>
+                    </div>
                 <div class="footer-stat-item" style="color: #666; font-size: 12px;">
                     <span class="stat-label" style="font-size: 12px; opacity: 0.7; margin-right: 6px;">Clients:</span>
                     <span class="stat-value" id="footerClientsCount" style="font-weight: 600; color: #4CAF50; font-size: 12px;">-</span>
